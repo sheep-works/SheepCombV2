@@ -1,0 +1,6 @@
+[submodule "SheepSpindle"]
+	path = SheepSpindle
+	url = git@github.com:sheep-works/SheepSpindle.git
+[submodule "SheepShuttle"]
+	path = SheepShuttle
+	url = git@github.com:sheep-works/SheepShuttle.git
