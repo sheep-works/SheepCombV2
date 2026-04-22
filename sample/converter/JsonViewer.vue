@@ -117,8 +117,8 @@ const acceptedExt = computed(() => {
 })
 
 const dropLabel = computed(() => {
-  if (mode.value === 'raw') return 'JSON ファイルをドロップまたはクリックして選択'
-  return 'JSONL ファイルをドロップまたはクリックして選択'
+  if (mode.value === 'raw') return 'JSON ファイルをドロチE�Eまた�EクリチE��して選抁E
+  return 'JSONL ファイルをドロチE�Eまた�EクリチE��して選抁E
 })
 
 // --- Methods ---
@@ -277,7 +277,7 @@ function resetAll() {
     >
       <p v-if="!hasData" class="jc-drop-label">{{ dropLabel }}</p>
       <div v-else>
-        <p class="jc-loaded-label">✓ File Loaded</p>
+        <p class="jc-loaded-label">✁EFile Loaded</p>
         <p class="jc-file-name">{{ fileName }}</p>
       </div>
       <input
@@ -294,22 +294,22 @@ function resetAll() {
       <textarea
         v-model="piniaInput"
         class="jc-textarea"
-        placeholder="Pinia ストアの JSON 文字列をここに貼り付け…"
+        placeholder="Pinia ストアの JSON 斁E���Eをここに貼り付け…"
         rows="6"
       ></textarea>
       <p v-if="piniaError" class="jc-parse-error">⚠ {{ piniaError }}</p>
-      <button @click="parsePiniaState" class="jc-btn jc-btn-parse" :disabled="!piniaInput.trim()">解析</button>
+      <button @click="parsePiniaState" class="jc-btn jc-btn-parse" :disabled="!piniaInput.trim()">解极E/button>
     </div>
 
     <!-- ===================== MODE 1: Chunked JSONL ===================== -->
     <template v-if="mode === 'chunked' && chunks.length">
       <div class="jc-controls">
-        <button @click="crtChunkIdx--" :disabled="crtChunkIdx <= 0" class="jc-btn">← Previous</button>
+        <button @click="crtChunkIdx--" :disabled="crtChunkIdx <= 0" class="jc-btn">ↁEPrevious</button>
         <div class="jc-chunk-info">
           Chunk {{ crtChunkIdx + 1 }} / {{ chunks.length }}
           <span class="jc-chunk-chars">({{ crtChunkChars.toLocaleString() }} chars)</span>
         </div>
-        <button @click="crtChunkIdx++" :disabled="crtChunkIdx >= chunks.length - 1" class="jc-btn">Next →</button>
+        <button @click="crtChunkIdx++" :disabled="crtChunkIdx >= chunks.length - 1" class="jc-btn">Next ↁE/button>
         <button @click="resetAll" class="jc-btn jc-btn-danger">Clear</button>
       </div>
 
@@ -354,12 +354,12 @@ function resetAll() {
     <!-- ===================== MODE 2: Plain JSONL ===================== -->
     <template v-if="mode === 'jsonl' && jsonlItems.length">
       <div class="jc-controls">
-        <button @click="jsonlPage--" :disabled="jsonlPage <= 0" class="jc-btn">← Previous</button>
+        <button @click="jsonlPage--" :disabled="jsonlPage <= 0" class="jc-btn">ↁEPrevious</button>
         <div class="jc-chunk-info">
           Page {{ jsonlPage + 1 }} / {{ jsonlTotalPages }}
           <span class="jc-chunk-chars">({{ jsonlItems.length }} items)</span>
         </div>
-        <button @click="jsonlPage++" :disabled="jsonlPage >= jsonlTotalPages - 1" class="jc-btn">Next →</button>
+        <button @click="jsonlPage++" :disabled="jsonlPage >= jsonlTotalPages - 1" class="jc-btn">Next ↁE/button>
         <button @click="resetAll" class="jc-btn jc-btn-danger">Clear</button>
       </div>
 
@@ -409,7 +409,7 @@ function resetAll() {
         <div class="jc-meta-grid">
           <div class="jc-meta-row" v-if="rawMeta.sourceLang || rawMeta.targetLang">
             <span class="jc-meta-key">Languages</span>
-            <span class="jc-meta-val">{{ rawMeta.sourceLang || '(auto)' }} → {{ rawMeta.targetLang || '(auto)' }}</span>
+            <span class="jc-meta-val">{{ rawMeta.sourceLang || '(auto)' }} ↁE{{ rawMeta.targetLang || '(auto)' }}</span>
           </div>
           <div class="jc-meta-row">
             <span class="jc-meta-key">Files ({{ rawMeta.files.length }})</span>
@@ -425,12 +425,12 @@ function resetAll() {
 
       <!-- Controls -->
       <div class="jc-controls">
-        <button @click="rawPage--" :disabled="rawPage <= 0" class="jc-btn">← Previous</button>
+        <button @click="rawPage--" :disabled="rawPage <= 0" class="jc-btn">ↁEPrevious</button>
         <div class="jc-chunk-info">
           Page {{ rawPage + 1 }} / {{ rawTotalPages }}
           <span class="jc-chunk-chars">({{ rawUnits.length }} units)</span>
         </div>
-        <button @click="rawPage++" :disabled="rawPage >= rawTotalPages - 1" class="jc-btn">Next →</button>
+        <button @click="rawPage++" :disabled="rawPage >= rawTotalPages - 1" class="jc-btn">Next ↁE/button>
         <button @click="resetAll" class="jc-btn jc-btn-danger">Clear</button>
       </div>
 
@@ -509,7 +509,7 @@ function resetAll() {
           </div>
           <div class="jc-meta-row" v-if="piniaMeta">
             <span class="jc-meta-key">Languages</span>
-            <span class="jc-meta-val">{{ piniaMeta.sourceLang || '(auto)' }} → {{ piniaMeta.targetLang || '(auto)' }}</span>
+            <span class="jc-meta-val">{{ piniaMeta.sourceLang || '(auto)' }} ↁE{{ piniaMeta.targetLang || '(auto)' }}</span>
           </div>
           <div class="jc-meta-row" v-if="piniaMeta">
             <span class="jc-meta-key">Files ({{ piniaMeta.files.length }})</span>
@@ -525,12 +525,12 @@ function resetAll() {
 
       <!-- Controls -->
       <div class="jc-controls">
-        <button @click="piniaPage--" :disabled="piniaPage <= 0" class="jc-btn">← Previous</button>
+        <button @click="piniaPage--" :disabled="piniaPage <= 0" class="jc-btn">ↁEPrevious</button>
         <div class="jc-chunk-info">
           Page {{ piniaPage + 1 }} / {{ piniaTotalPages }}
           <span class="jc-chunk-chars">({{ piniaUnits.length }} units)</span>
         </div>
-        <button @click="piniaPage++" :disabled="piniaPage >= piniaTotalPages - 1" class="jc-btn">Next →</button>
+        <button @click="piniaPage++" :disabled="piniaPage >= piniaTotalPages - 1" class="jc-btn">Next ↁE/button>
         <button @click="resetPinia" class="jc-btn jc-btn-danger">Clear</button>
       </div>
 

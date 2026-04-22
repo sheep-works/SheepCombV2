@@ -29,3 +29,12 @@ pkg/
 # Logs
 *.log
 npm-debug.log*
+yarn-error.log
+
+# Nuxt
+.nuxt/
+.output/
+.data/
+
+# Test output
+test/out/

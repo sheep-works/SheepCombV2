@@ -18,10 +18,10 @@ const isMatched = ref(false)
 // --- Lifecycle ---
 onMounted(async () => {
   try {
-    statusMsg.value = { text: 'WASM Runtime を初期化中...', type: 'info' }
+    statusMsg.value = { text: 'WASM Runtime を�E期化中...', type: 'info' }
     await initWasm()
     isWasmReady.value = true
-    statusMsg.value = { text: '準備完了', type: 'success' }
+    statusMsg.value = { text: '準備完亁E, type: 'success' }
   } catch (e) {
     statusMsg.value = { text: 'WASM の初期化に失敗しました', type: 'error' }
   }
@@ -76,7 +76,7 @@ const execParse = async () => {
       all = [...all, ...(await readFile(f))]
     }
     segments.value = all
-    statusMsg.value = { text: `抽出完了: ${all.length} 件`, type: 'success' }
+    statusMsg.value = { text: `抽出完亁E ${all.length} 件`, type: 'success' }
   } catch (e: any) {
     statusMsg.value = { text: `エラー: ${e.message}`, type: 'error' }
   } finally {
@@ -88,7 +88,7 @@ const execConsistency = async () => {
   if (segments.value.length === 0) return
   
   isLoading.value = true
-  statusMsg.value = { text: 'ゆれチェック計算中 (WASM)...', type: 'info' }
+  statusMsg.value = { text: 'めE��チェチE��計算中 (WASM)...', type: 'info' }
   
   try {
     const wasm = getWasm()
@@ -113,7 +113,7 @@ const execConsistency = async () => {
     })
     
     segments.value = flat
-    statusMsg.value = { text: `ゆれチェック完了: ${groups.length} グループ`, type: 'success' }
+    statusMsg.value = { text: `めE��チェチE��完亁E ${groups.length} グループ`, type: 'success' }
   } catch (e: any) {
     statusMsg.value = { text: `計算エラー: ${e.message}`, type: 'error' }
   } finally {
@@ -170,7 +170,7 @@ const exportResults = (format: 'csv' | 'json') => {
         <div class="card">
           <div class="card-header">
             <Database :size="16" />
-            <h2>1. データ読み込み</h2>
+            <h2>1. チE�Eタ読み込み</h2>
           </div>
 
           <div class="upload-section">
@@ -182,7 +182,7 @@ const exportResults = (format: 'csv' | 'json') => {
             >
               <input type="file" ref="srcInput" multiple hidden @change="handleFileSelect($event, 'src')">
               <FileUp :size="32" class="icon" />
-              <p v-if="srcFiles.length === 0">対象ファイルをドロップ</p>
+              <p v-if="srcFiles.length === 0">対象ファイルをドロチE�E</p>
               <p v-else class="file-count">{{ srcFiles.length }} 個選択中</p>
             </div>
             <div class="file-list" v-if="srcFiles.length > 0">
@@ -195,7 +195,7 @@ const exportResults = (format: 'csv' | 'json') => {
             <button class="btn primary" @click="execParse" :disabled="isLoading || srcFiles.length === 0">
               <Loader2 v-if="isLoading" class="spin" :size="18" />
               <Search v-else :size="18" />
-              <span>パース実行</span>
+              <span>パ�Eス実衁E/span>
             </button>
           </div>
         </div>
@@ -204,15 +204,15 @@ const exportResults = (format: 'csv' | 'json') => {
         <div class="card" :class="{ disabled: segments.length === 0 }">
           <div class="card-header">
             <Search :size="16" />
-            <h2>2. 解析・アクション</h2>
+            <h2>2. 解析�Eアクション</h2>
           </div>
           
           <div class="actions" style="padding-top: 20px;">
-            <p v-if="segments.length === 0" class="hint-text">先にデータを読み込んでください</p>
+            <p v-if="segments.length === 0" class="hint-text">先にチE�Eタを読み込んでください</p>
             
             <button class="btn warning" @click="execConsistency" :disabled="isLoading || segments.length === 0">
               <CheckCircle :size="18" />
-              <span>ゆれチェックを実行</span>
+              <span>めE��チェチE��を実衁E/span>
             </button>
             
             <!-- Future features will go here -->
@@ -265,7 +265,7 @@ const exportResults = (format: 'csv' | 'json') => {
 
           <div class="empty-state" v-else>
             <Search :size="48" class="icon" />
-            <p>ファイルをアップロードして解析を開始してください</p>
+            <p>ファイルをアチE�Eロードして解析を開始してください</p>
           </div>
         </div>
       </section>

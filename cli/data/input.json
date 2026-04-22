@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "bilingualPath": "dummy.xlf",
+    "files": [{ "name": "dummy.xlf", "start": 0, "end": 0 }],
+    "sourceLang": "ja",
+    "targetLang": "en"
+  },
+  "body": {
+    "units": [
+      {
+        "idx": 0,
+        "src": "こんにちは",
+        "pre": "Hello",
+        "tgt": "Hello World",
+        "ref": { "tms": [], "tb": [], "quoted": [] }
+      }
+    ],
+    "terms": []
+  }
+}

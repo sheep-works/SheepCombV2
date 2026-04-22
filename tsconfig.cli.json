@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./*"]
+    }
+  },
+  "include": [
+    "cli/**/*.ts",
+    "logic/**/*.ts",
+    "web/stores/**/*.ts",
+    "SheepShuttle/src/type.d.ts"
+  ]
+}
