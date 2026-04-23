@@ -5,7 +5,7 @@
   publish = ".output/public"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22"
 
 # SPA ルーティングのためのリダイレクト設定
 # 存在しないパスへのアクセスをすべて index.html に向けることで、
