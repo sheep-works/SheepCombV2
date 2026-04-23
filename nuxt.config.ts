@@ -7,6 +7,7 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   modules: ['@pinia/nuxt'],
   nitro: {
+    preset: 'netlify',
     devProxy: {
       '/api': {
         target: 'http://localhost:8000',
