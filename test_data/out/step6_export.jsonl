@@ -1,0 +1,9 @@
+{"src":"Hello, everyone.","tgt":"みなさん、こんにちは。","history":[]}
+{"src":"Phrase is a very convenient tool.","tgt":"Phrase はとても便利なツールです。","history":[]}
+{"src":"Phrase is a very easy tool.","tgt":"Phrase はとても簡単なツールです。","history":[{"src":"Phrase is a very convenient tool.","tgt":"Phrase はとても便利なツールです。"}]}
+{"src":"Phrase is a very simple tool.","tgt":"Phrase はとてもシンプルなトールです。","history":[{"src":"Phrase is a very easy tool.","tgt":"Phrase はとても簡単なツールです。"},{"src":"Phrase is a very convenient tool.","tgt":"Phrase はとても便利なツールです。"}]}
+{"src":"Phrase is a very convenient tool.","tgt":"Phrase はとても便利なツールです。","history":[{"src":"Phrase is a very convenient tool.","tgt":"Phrase はとても便利なツールです。"},{"src":"Phrase is a very simple tool.","tgt":"Phrase はとてもシンプルなトールです。"},{"src":"Phrase is a very easy tool.","tgt":"Phrase はとても簡単なツールです。"}]}
+{"src":"Hello, everyone.","tgt":"みなさん、こんにちは。","history":[{"src":"Hello, everyone.","tgt":"みなさん、こんにちは。"}]}
+{"src":"Today, I explained some key phrases.","tgt":"今日、いくつかのキーワードについて説明しました。","history":[]}
+{"src":"Isn’t Phrase a very convenient tool?","tgt":"Phraseは便利なツールだと思いませんか？","history":[{"src":"Phrase is a very convenient tool.","tgt":"Phrase はとても便利なツールです。"}]}
+{"src":"Let’s start Phrase from 2025!","tgt":"2026年から、Phraseを始めてみましょう！","history":[]}

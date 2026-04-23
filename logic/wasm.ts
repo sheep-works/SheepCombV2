@@ -1,4 +1,5 @@
-import init, * as wasm from './pkg-web/sheep_spindle.js'
+// @ts-ignore
+import init, * as wasm from '../web/public/pkg-web/sheep_spindle.js'
 
 let initialized = false
 

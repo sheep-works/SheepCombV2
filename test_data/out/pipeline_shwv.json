@@ -1,0 +1,325 @@
+{
+  "meta": {
+    "bilingualPath": "",
+    "files": [
+      {
+        "name": "sample.mxliff",
+        "start": 0,
+        "end": 8
+      }
+    ],
+    "sourceLang": "ja",
+    "targetLang": "en"
+  },
+  "body": {
+    "units": [
+      {
+        "idx": 0,
+        "src": "Hello, everyone.",
+        "pre": "",
+        "tgt": "みなさん、こんにちは。",
+        "ref": {
+          "tms": [],
+          "tb": [
+            {
+              "src": "Hello",
+              "tgts": [
+                "やっほー"
+              ],
+              "note": "Unknown"
+            }
+          ],
+          "quoted": [],
+          "quoted100": [
+            5
+          ]
+        },
+        "placeholders": {}
+      },
+      {
+        "idx": 1,
+        "src": "Phrase is a very convenient tool.",
+        "pre": "",
+        "tgt": "Phrase はとても便利なツールです。",
+        "ref": {
+          "tms": [],
+          "tb": [
+            {
+              "src": "tool",
+              "tgts": [
+                "ツール"
+              ],
+              "note": "sample.csv"
+            },
+            {
+              "src": "Phrase",
+              "tgts": [
+                "フレーズ"
+              ],
+              "note": "sample.csv"
+            }
+          ],
+          "quoted": [
+            [
+              7,
+              84
+            ],
+            [
+              3,
+              77
+            ],
+            [
+              2,
+              80
+            ]
+          ],
+          "quoted100": [
+            4
+          ]
+        },
+        "placeholders": {}
+      },
+      {
+        "idx": 2,
+        "src": "Phrase is a very easy tool.",
+        "pre": "",
+        "tgt": "Phrase はとても簡単なツールです。",
+        "ref": {
+          "tms": [
+            {
+              "idx": 1,
+              "src": "Phrase is a very convenient tool.",
+              "tgt": "Phrase はとても便利なツールです。",
+              "ratio": 80,
+              "diff": "Phrase is a very <del>conv</del>e<del>nient</del><ins>asy</ins> tool."
+            }
+          ],
+          "tb": [
+            {
+              "src": "tool",
+              "tgts": [
+                "ツール"
+              ],
+              "note": "sample.csv"
+            },
+            {
+              "src": "Phrase",
+              "tgts": [
+                "フレーズ"
+              ],
+              "note": "sample.csv"
+            }
+          ],
+          "quoted": [
+            [
+              4,
+              80
+            ],
+            [
+              3,
+              86
+            ]
+          ],
+          "quoted100": []
+        },
+        "placeholders": {}
+      },
+      {
+        "idx": 3,
+        "src": "Phrase is a very simple tool.",
+        "pre": "",
+        "tgt": "Phrase はとてもシンプルなトールです。",
+        "ref": {
+          "tms": [
+            {
+              "idx": 2,
+              "src": "Phrase is a very easy tool.",
+              "tgt": "Phrase はとても簡単なツールです。",
+              "ratio": 86,
+              "diff": "Phrase is a very <ins>simpl</ins>e<del>asy</del> tool."
+            },
+            {
+              "idx": 1,
+              "src": "Phrase is a very convenient tool.",
+              "tgt": "Phrase はとても便利なツールです。",
+              "ratio": 77,
+              "diff": "Phrase is a very <del>conv</del><ins>simpl</ins>e<del>nient</del> tool."
+            }
+          ],
+          "tb": [
+            {
+              "src": "tool",
+              "tgts": [
+                "ツール"
+              ],
+              "note": "sample.csv"
+            },
+            {
+              "src": "Phrase",
+              "tgts": [
+                "フレーズ"
+              ],
+              "note": "sample.csv"
+            }
+          ],
+          "quoted": [
+            [
+              4,
+              81
+            ]
+          ],
+          "quoted100": []
+        },
+        "placeholders": {}
+      },
+      {
+        "idx": 4,
+        "src": "Phrase is a very convenient tool.",
+        "pre": "",
+        "tgt": "Phrase はとても便利なツールです。",
+        "ref": {
+          "tms": [
+            {
+              "idx": 1,
+              "src": "Phrase is a very convenient tool.",
+              "tgt": "Phrase はとても便利なツールです。",
+              "ratio": 100
+            },
+            {
+              "idx": 3,
+              "src": "Phrase is a very simple tool.",
+              "tgt": "Phrase はとてもシンプルなトールです。",
+              "ratio": 81,
+              "diff": "Phrase is a very <del>s</del><ins>conven</ins>i<del>mpl</del>e<ins>nt</ins> tool."
+            },
+            {
+              "idx": 2,
+              "src": "Phrase is a very easy tool.",
+              "tgt": "Phrase はとても簡単なツールです。",
+              "ratio": 80,
+              "diff": "Phrase is a very <ins>conv</ins>e<del>asy</del><ins>nient</ins> tool."
+            }
+          ],
+          "tb": [
+            {
+              "src": "tool",
+              "tgts": [
+                "ツール"
+              ],
+              "note": "sample.csv"
+            },
+            {
+              "src": "Phrase",
+              "tgts": [
+                "フレーズ"
+              ],
+              "note": "sample.csv"
+            }
+          ],
+          "quoted": [],
+          "quoted100": []
+        },
+        "placeholders": {}
+      },
+      {
+        "idx": 5,
+        "src": "Hello, everyone.",
+        "pre": "",
+        "tgt": "みなさん、こんにちは。",
+        "ref": {
+          "tms": [
+            {
+              "idx": 0,
+              "src": "Hello, everyone.",
+              "tgt": "みなさん、こんにちは。",
+              "ratio": 100
+            }
+          ],
+          "tb": [
+            {
+              "src": "Hello",
+              "tgts": [
+                "やっほー"
+              ],
+              "note": "Unknown"
+            }
+          ],
+          "quoted": [],
+          "quoted100": []
+        },
+        "placeholders": {}
+      },
+      {
+        "idx": 6,
+        "src": "Today, I explained some key phrases.",
+        "pre": "",
+        "tgt": "今日、いくつかのキーワードについて説明しました。",
+        "ref": {
+          "tms": [],
+          "tb": [],
+          "quoted": [],
+          "quoted100": []
+        },
+        "placeholders": {}
+      },
+      {
+        "idx": 7,
+        "src": "Isn’t Phrase a very convenient tool?",
+        "pre": "",
+        "tgt": "Phraseは便利なツールだと思いませんか？",
+        "ref": {
+          "tms": [
+            {
+              "idx": 1,
+              "src": "Phrase is a very convenient tool.",
+              "tgt": "Phrase はとても便利なツールです。",
+              "ratio": 84,
+              "diff": "<ins>Isn’t </ins>Phrase<del> is</del> a very convenient tool<del>.</del><ins>?</ins>"
+            }
+          ],
+          "tb": [
+            {
+              "src": "tool",
+              "tgts": [
+                "ツール"
+              ],
+              "note": "sample.csv"
+            },
+            {
+              "src": "Phrase",
+              "tgts": [
+                "フレーズ"
+              ],
+              "note": "sample.csv"
+            }
+          ],
+          "quoted": [],
+          "quoted100": []
+        },
+        "placeholders": {}
+      },
+      {
+        "idx": 8,
+        "src": "Let’s start Phrase from 2025!",
+        "pre": "",
+        "tgt": "2026年から、Phraseを始めてみましょう！",
+        "ref": {
+          "tms": [],
+          "tb": [
+            {
+              "src": "Phrase",
+              "tgts": [
+                "フレーズ"
+              ],
+              "note": "sample.csv"
+            }
+          ],
+          "quoted": [],
+          "quoted100": []
+        },
+        "placeholders": {}
+      }
+    ],
+    "terms": []
+  }
+}

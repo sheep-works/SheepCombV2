@@ -25,19 +25,42 @@ const currentTitle = computed(() => {
 
     <nav class="header-nav">
       <NuxtLink to="/parser" class="nav-link" active-class="active">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3" />
+          <path d="M3 5V19A9 3 0 0 0 21 19V5" />
+          <path d="M3 12A9 3 0 0 0 21 12" />
+        </svg>
         <span>パーサー</span>
       </NuxtLink>
       <NuxtLink to="/shuttle-parse" class="nav-link" active-class="active">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <span>S-Parse</span>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+        </svg>
+        <span>構造化</span>
+      </NuxtLink>
+      <NuxtLink to="/shuttle-analyze" class="nav-link" active-class="active">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+        </svg>
+        <span>解析</span>
       </NuxtLink>
       <NuxtLink to="/shuttle-manage" class="nav-link" active-class="active">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 8 4 4-4 4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
-        <span>S-Manage</span>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="m18 8 4 4-4 4" />
+          <path d="m6 8-4 4 4 4" />
+          <path d="m14.5 4-5 16" />
+        </svg>
+        <span>管理</span>
       </NuxtLink>
       <NuxtLink to="/api" class="nav-link" active-class="active">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+        </svg>
         <span>API</span>
       </NuxtLink>
     </nav>
@@ -187,8 +210,15 @@ const currentTitle = computed(() => {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @media (max-width: 768px) {
@@ -198,14 +228,18 @@ const currentTitle = computed(() => {
     padding: 12px 16px;
     gap: 8px;
   }
-  .header-left, .header-right {
+
+  .header-left,
+  .header-right {
     min-width: auto;
   }
+
   .header-nav {
     order: 3;
     width: 100%;
     justify-content: center;
   }
+
   .logo-subtitle {
     display: none;
   }

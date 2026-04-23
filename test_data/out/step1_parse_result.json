@@ -1,0 +1,47 @@
+[
+  {
+    "idx": 0,
+    "src": "Hello, everyone.",
+    "tgt": "みなさん、こんにちは。"
+  },
+  {
+    "idx": 1,
+    "src": "Phrase is a very convenient tool.",
+    "tgt": "Phrase はとても便利なツールです。"
+  },
+  {
+    "idx": 2,
+    "src": "Phrase is a very easy tool.",
+    "tgt": "Phrase はとても簡単なツールです。"
+  },
+  {
+    "idx": 3,
+    "src": "Phrase is a very simple tool.",
+    "tgt": "Phrase はとてもシンプルなトールです。"
+  },
+  {
+    "idx": 4,
+    "src": "Phrase is a very convenient tool.",
+    "tgt": "Phrase はとても便利なツールです。"
+  },
+  {
+    "idx": 5,
+    "src": "Hello, everyone.",
+    "tgt": "みなさん、こんにちは。"
+  },
+  {
+    "idx": 6,
+    "src": "Today, I explained some key phrases.",
+    "tgt": "今日、いくつかのキーワードについて説明しました。"
+  },
+  {
+    "idx": 7,
+    "src": "Isn’t Phrase a very convenient tool?",
+    "tgt": "Phraseは便利なツールだと思いませんか？"
+  },
+  {
+    "idx": 8,
+    "src": "Let’s start Phrase from 2025!",
+    "tgt": "2026年から、Phraseを始めてみましょう！"
+  }
+]

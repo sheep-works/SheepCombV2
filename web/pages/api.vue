@@ -11,10 +11,10 @@ definePageMeta({
 import { ref, computed, watch, onMounted } from 'vue'
 import { Send, Cloud, Loader2, AlertCircle, RefreshCw, Trash2 } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
-import { useShwvStore } from '../stores/shwvStore'
+import { useShuttleStore } from '../stores/shuttleStore'
 import { SheepShuttle } from '../../logic/shuttle/sheepShuttle.js'
 
-const store = useShwvStore()
+const store = useShuttleStore()
 
 const modes = [
   { id: 'sync', name: 'Sync' },
@@ -41,8 +41,8 @@ const canSend = computed(() => {
 })
 
 const lineCount = computed(() => {
-  if (source.value === 'internal' && store.data) {
-    return store.data.body.units.length
+  if (source.value === 'internal' && store.units) {
+    return store.unitCount
   }
   return customJsonl.value.split('\n').filter(l => l.trim()).length
 })
@@ -56,14 +56,14 @@ function clearResults() {
 
 async function sendRequest() {
   if (!canSend.value) return
-  
+
   clearResults()
   isRequesting.value = true
 
   try {
     let payload = ''
-    if (source.value === 'internal' && store.data) {
-      payload = SheepShuttle.getJsonlContent(store.data.body.units)
+    if (source.value === 'internal' && store.units) {
+      // payload = SheepShuttle.tojsonl(store.units)
     } else {
       payload = customJsonl.value
     }
@@ -71,7 +71,7 @@ async function sendRequest() {
     // This is a stub for real API interaction.
     // In a real app, you would use $fetch or similar.
     await new Promise(resolve => setTimeout(resolve, 1500))
-    
+
     if (mode.value === 'sync') {
       response.value = {
         status: 'completed',
@@ -102,10 +102,10 @@ async function startPolling() {
     if (count === 1) pollingStatus.value = 'processing'
     if (count === 3) {
       pollingStatus.value = 'completed'
-      response.value = { 
-        status: 'completed', 
+      response.value = {
+        status: 'completed',
         task_id: taskId.value,
-        data: "Poll results would appear here" 
+        data: "Poll results would appear here"
       }
       isRequesting.value = false
       clearInterval(timer)
@@ -122,15 +122,15 @@ async function startPolling() {
         <div class="card">
           <div class="card-header">
             <h2>リクエスト設定</h2>
+            <span class="dev-badge">Development</span>
           </div>
-          
+
           <div class="config-section">
             <div class="config-group">
               <label class="config-label">通信モード</label>
               <div class="radio-group">
-                <div v-for="m in modes" :key="m.id" 
-                     class="radio-item" :class="{ active: mode === m.id }"
-                     @click="mode = m.id">
+                <div v-for="m in modes" :key="m.id" class="radio-item" :class="{ active: mode === m.id }"
+                  @click="mode = m.id">
                   <input type="radio" :value="m.id" v-model="mode" />
                   <span>{{ m.name }}</span>
                 </div>
@@ -140,9 +140,8 @@ async function startPolling() {
             <div class="config-group">
               <label class="config-label">データソース</label>
               <div class="source-tabs">
-                <button v-for="s in sources" :key="s.id"
-                        class="source-tab" :class="{ active: source === s.id }"
-                        @click="source = s.id">
+                <button v-for="s in sources" :key="s.id" class="source-tab" :class="{ active: source === s.id }"
+                  @click="source = s.id">
                   {{ s.name }}
                 </button>
               </div>
@@ -154,16 +153,16 @@ async function startPolling() {
                 Custom JSONL Input
                 <span class="line-count" v-if="lineCount > 0">{{ lineCount }} lines</span>
               </label>
-              <textarea v-model="customJsonl" class="jsonl-textarea" 
-                        placeholder='{"src": "Hello", "tgt": ""}'></textarea>
+              <textarea v-model="customJsonl" class="jsonl-textarea"
+                placeholder='{"src": "Hello", "tgt": ""}'></textarea>
             </div>
 
             <!-- Internal Status -->
             <div class="config-group" v-else>
               <label class="config-label">Internal Status</label>
               <div class="payload-preview">
-                <div v-if="store.hasData">
-                  <p class="status-ok">READY: {{ store.fileName }}</p>
+                <div v-if="store.hasUnits">
+                  <p class="status-ok">READY: {{ store.unitCount }} units</p>
                   <p class="status-count">{{ lineCount }} segments available</p>
                 </div>
                 <div v-else class="status-empty">
@@ -244,7 +243,9 @@ async function startPolling() {
 }
 
 @media (max-width: 900px) {
-  .api-layout { grid-template-columns: 1fr; }
+  .api-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .card {
@@ -256,8 +257,13 @@ async function startPolling() {
   transition: var(--transition);
 }
 
-.card:hover { border-color: var(--border-hover); }
-.full-height { min-height: calc(100vh - 140px); }
+.card:hover {
+  border-color: var(--border-hover);
+}
+
+.full-height {
+  min-height: calc(100vh - 140px);
+}
 
 .card-header {
   padding: 14px 20px;
@@ -267,7 +273,9 @@ async function startPolling() {
   gap: 10px;
 }
 
-.card-header.space-between { justify-content: space-between; }
+.card-header.space-between {
+  justify-content: space-between;
+}
 
 .card-header h2 {
   font-size: 0.78rem;
@@ -339,7 +347,9 @@ async function startPolling() {
   font-weight: 500;
 }
 
-.radio-item input { display: none; }
+.radio-item input {
+  display: none;
+}
 
 .radio-item:hover {
   border-color: var(--border-hover);
@@ -412,9 +422,24 @@ async function startPolling() {
   color: var(--text-muted);
 }
 
-.status-ok { color: var(--success); font-weight: 600; font-size: 0.8rem; margin: 0; }
-.status-count { color: var(--text-muted); font-size: 0.7rem; margin: 4px 0 0; }
-.status-empty { color: var(--text-muted); font-size: 0.78rem; font-style: italic; }
+.status-ok {
+  color: var(--success);
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.status-count {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  margin: 4px 0 0;
+}
+
+.status-empty {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-style: italic;
+}
 
 .payload-preview {
   background: var(--bg-input);
@@ -480,8 +505,17 @@ async function startPolling() {
   border-bottom: 1px solid var(--border);
 }
 
-.polling-label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); }
-.task-id { font-family: 'Inter', monospace; font-size: 0.72rem; color: var(--accent); }
+.polling-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.task-id {
+  font-family: 'Inter', monospace;
+  font-size: 0.72rem;
+  color: var(--accent);
+}
 
 .polling-status {
   padding: 2px 8px;
@@ -490,9 +524,21 @@ async function startPolling() {
   font-weight: 800;
   text-transform: uppercase;
 }
-.polling-status.pending { background: #555; color: #fff; }
-.polling-status.processing { background: var(--warning); color: #000; }
-.polling-status.completed { background: var(--success); color: #fff; }
+
+.polling-status.pending {
+  background: #555;
+  color: #fff;
+}
+
+.polling-status.processing {
+  background: var(--warning);
+  color: #000;
+}
+
+.polling-status.completed {
+  background: var(--success);
+  color: #fff;
+}
 
 /* Empty state */
 .empty-state {
@@ -506,16 +552,26 @@ async function startPolling() {
   padding: 80px 20px;
 }
 
-.empty-icon { opacity: 0.15; }
-.empty-state p { font-size: 0.88rem; }
+.empty-icon {
+  opacity: 0.15;
+}
+
+.empty-state p {
+  font-size: 0.88rem;
+}
 
 .spin {
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .result-pre {
@@ -528,5 +584,15 @@ async function startPolling() {
   white-space: pre-wrap;
   word-break: break-all;
   color: var(--text-primary);
+}
+
+.dev-badge {
+  font-size: 0.6rem;
+  background: var(--warning);
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 </style>

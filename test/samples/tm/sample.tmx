@@ -1,0 +1,340 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<tmx version="1.4">
+  <header creationtool="memsource_tool" creationtoolversion="2.0" segtype="sentence" o-tmf="memsourceTM" adminlang="en" srclang="ja-jp" datatype="unknown" creationdate="20260307T235308Z">
+    <prop type="name">セミナー用デモ案件（今年度）</prop>
+  </header>
+  <body>
+    <tu tuid="_15VjzwYFwmW5gu80sj2AtueY0">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">オヨヨヨ国の経済成長率は-5.9％で、昨年の-5.8％と横ばいです。</prop>
+        <prop type="context_next">オヨヨヨヨ国の経済成長率は、昨年と同様に不明です。</prop>
+        <seg>国内の雇用も変わらず、失業率は39.4％となっています。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082814Z" changedate="20250522T082814Z" lastusagedate="20250522T082814Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Domestic employment remains steady, and the unemployment rate remains at 33.4%.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_1rWpZB1C1cAngPA0Ko2wNikSc">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">オヨヨヨヨ国の経済成長率は、昨年と同様に不明です。</prop>
+        <prop type="context_next">国家間比較</prop>
+        <seg>国内の雇用情勢は不明です。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082906Z" changedate="20250522T082906Z" lastusagedate="20250522T082906Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Domestic employment conditions are also uncertain.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_7TkydhiWgCH2lB4krV0G0DiP2">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">エモリア国の経済成長率は4.9％で、昨年の4.8％と比べて横ばいです。</prop>
+        <prop type="context_next">オヨヨヨ国の経済成長率は-5.9％で、昨年の-5.8％と横ばいです。</prop>
+        <seg>国内の雇用も変わらず、失業率は3.4％となっています。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082708Z" changedate="20250522T082708Z" lastusagedate="20250522T082803Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Domestic employment remains steady, and the unemployment rate remains at 3.4%.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_H6Onvf6U0g35cC80i502tnbj5">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">イモリア国の経済成長率は5.8％に達し、昨年の4.2％を大きく上回りましたが、政治不安も広がっています。</prop>
+        <prop type="context_next">ウソランド国の経済成長率は5.9％で、昨年の5.8％と比べて横ばいです。</prop>
+        <seg>国内の雇用は減り、失業率は<bpt i="1" x="1"/>3.4％<ept i="1"/>まで上がりました。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082553Z" changedate="20250522T082553Z" lastusagedate="20250522T082553Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Domestic employment has decreased, pushing the unemployment rate up to <bpt i="1" x="1"/>3.4%.<ept i="1"/></seg>
+      </tuv>
+    </tu>
+    <tu tuid="_HiaEGtffMt72kY4AGOMJc0ZU0">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_next">世界統計から語る景気</prop>
+        <seg>世界統計から語る景気</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082243Z" changedate="20250522T082243Z" lastusagedate="20250522T082243Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Economic Trends from Global Statistics</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_KyWZz4XV0EQ4ch981n18rgUn7">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">世界統計から語る景気</prop>
+        <prop type="context_next">これにより、国内の雇用が増え、失業率は{b&gt;3.4％&lt;b}まで下がりました。</prop>
+        <seg>アストラ国の経済成長率は5.8％に達し、昨年の4.2％を大きく上回りました。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082326Z" changedate="20250522T082326Z" lastusagedate="20250522T082357Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>The economy of Astra has grown significantly, with a growth rate of 5.8%, surpassing last year’s 4.2%.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_PPfMGZz20s08syjwZU3jZzLv2">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">世界統計から語る景気</prop>
+        <prop type="context_next">アストラ国の経済成長率は5.8％に達し、昨年の4.2％を大きく上回りました。</prop>
+        <seg>世界統計から語る景気</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082243Z" changedate="20250522T082243Z" lastusagedate="20250522T082243Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Economic Trends from Global Statistics</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_QM0p5OaQw7m40fgMFr3veK1S2">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">国内の雇用も変わらず、失業率は3.4％となっています。</prop>
+        <prop type="context_next">国内の雇用も変わらず、失業率は33.4％となっています。</prop>
+        <seg>オヨヨヨ国の経済成長率は-5.9％で、昨年の-5.8％と横ばいです。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082803Z" changedate="20250522T082803Z" lastusagedate="20250522T082803Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>The economy of Oyyy has grown by -5.9%, compared to last year’s -5.8%, showing little change.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_SzSMVCeFMJn2Cz4UyV0OXPBU0">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">オヨヨヨ国はアストラ国、イモリア国、ウソランド国、エモリア国のどこと比べても驚くべき不況に陥っています。</prop>
+        <seg>一方でオヨヨヨヨ国は、オヨヨヨ国と異なり、厳しい情報統制が敷かれており、景気を読むことができません。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T083632Z" changedate="20250522T083744Z" lastusagedate="20250522T083632Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Meanwhile, Oyyyy differs from Oyyy as it maintains strict information control, making it impossible to assess its economic conditions accurately.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_UtQVfeqcwFt2in4Ui00k0uAe6">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">ウソランド国の経済成長率は5.9％で、昨年の5.8％と比べて横ばいです。</prop>
+        <prop type="context_next">エモリア国の経済成長率は4.9％で、昨年の4.8％と比べて横ばいです。</prop>
+        <seg>国内の雇用も変わらず、失業率は3.4％となっています。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082708Z" changedate="20250522T082708Z" lastusagedate="20250522T082708Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Domestic employment remains steady, and the unemployment rate remains at 3.4%.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_X0qeyJbrxx19AIhgWq1g80qIa">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">これにより、国内の雇用が増え、失業率は{b&gt;3.4％&lt;b}まで下がりました。</prop>
+        <prop type="context_next">国内の雇用は減り、失業率は{1&gt;3.4％&lt;1}まで上がりました。</prop>
+        <seg>イモリア国の経済成長率は5.8％に達し、昨年の4.2％を大きく上回りましたが、政治不安も広がっています。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082458Z" changedate="20250522T082519Z" lastusagedate="20250522T082458Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>The economy of Imoria has grown significantly, with a growth rate of 5.8%, surpassing last year’s 4.2%, but political instability is spreading.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_YHcYuo4zMqX2S18EI5xbMOnk1">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">エモリア国の経済成長率は4.9％で、昨年の4.8％と比べて横ばいです。</prop>
+        <prop type="context_next">エモリア国の経済成長率は4.9％で、昨年の4.8％と比べて横ばいです。</prop>
+        <seg>国内の雇用も変わらず、失業率は3.4％となっています。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082708Z" changedate="20250522T082708Z" lastusagedate="20250522T082708Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Domestic employment remains steady, and the unemployment rate remains at 3.4%.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_a10Q8UDL0onhoWD0wz68MvPo3">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_next">どうなるのかな。</prop>
+        <seg>この文とこの文を訳すとどうなるの？</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250604T051737Z" changedate="20250604T051737Z" lastusagedate="20250604T051737Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">この文とこの文を訳すとどうなるの.docx</prop>
+        <seg>what is it like?</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_bFiOWwP4w044iP90ma1gla414">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">アストラ国の経済成長率は5.8％に達し、昨年の4.2％を大きく上回りました。</prop>
+        <prop type="context_next">イモリア国の経済成長率は5.8％に達し、昨年の4.2％を大きく上回りましたが、政治不安も広がっています。</prop>
+        <seg>これにより、国内の雇用が増え、失業率は<bpt i="1000001" x="1000001" type="formatting">{b&gt;</bpt>3.4％<ept i="1000001">&lt;b}</ept>まで下がりました。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082357Z" changedate="20250522T082357Z" lastusagedate="20250522T082458Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>As a result, domestic employment has increased, lowering the unemployment rate to 3.4%.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_f588u2hV0Qv5So90gn2eEq1V1">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">国内の雇用情勢は不明です。</prop>
+        <prop type="context_next">アストラ国とイモリア国を比べると、経済は似ていますが、政治的安定性は大きく異なります。</prop>
+        <seg>国家間比較</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T083450Z" changedate="20250522T083450Z" lastusagedate="20250522T083450Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Comparison Between Nations</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_gUFsUQc01oF8Anigqt0o5y7O0">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">国内の雇用も変わらず、失業率は33.4％となっています。</prop>
+        <prop type="context_next">国内の雇用情勢は不明です。</prop>
+        <seg>オヨヨヨヨ国の経済成長率は、昨年と同様に不明です。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082849Z" changedate="20250522T082849Z" lastusagedate="20250522T082849Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Oyyyy’s economic growth rate remains unknown, as was the case last year.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_jzr7zG2CMvS24S4QWpMbpb3P">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">国内の雇用は減り、失業率は{1&gt;3.4％&lt;1}まで上がりました。</prop>
+        <prop type="context_next">国内の雇用も変わらず、失業率は3.4％となっています。</prop>
+        <seg>ウソランド国の経済成長率は5.9％で、昨年の5.8％と比べて横ばいです。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082643Z" changedate="20250522T082643Z" lastusagedate="20250522T082707Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>The economy of Lier Land has grown by 5.9%, compared to last year’s 5.8%, showing little change.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_kcWpBbEEMhE2984YAZwLq58o">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">国家間比較</prop>
+        <prop type="context_next">イモリア国とエモリア国を比べると、数字は似ていてもエモリア国の方がイモリア国と比べて人気が高くなっています。</prop>
+        <seg>アストラ国とイモリア国を比べると、経済は似ていますが、政治的安定性は大きく異なります。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T083552Z" changedate="20250522T083552Z" lastusagedate="20250522T083552Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>When comparing Astra and Imoria, their economic growth is similar, but their levels of political stability differ significantly.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_r5JhZGYzMo15cm8UxzxIVX6A1">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">アストラ国とイモリア国を比べると、経済は似ていますが、政治的安定性は大きく異なります。</prop>
+        <prop type="context_next">オヨヨヨ国はアストラ国、イモリア国、ウソランド国、エモリア国のどこと比べても驚くべき不況に陥っています。</prop>
+        <seg>イモリア国とエモリア国を比べると、数字は似ていてもエモリア国の方がイモリア国と比べて人気が高くなっています。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T083556Z" changedate="20250522T083655Z" lastusagedate="20250522T083556Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Comparing Imoria and Emorie, the figures appear similar, but Emorie enjoys higher popularity compared to Imoria.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_sGa2BMuSwWl2vi4AWg00z2O01">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">この文とこの文を訳すとどうなるの？</prop>
+        <prop type="context_next">どうなったかな。</prop>
+        <seg>どうなるのかな。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250604T051741Z" changedate="20250604T051741Z" lastusagedate="20250604T051741Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">この文とこの文を訳すとどうなるの.docx</prop>
+        <seg>this way.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_tYecnWdYMNP2Ci4IVZgwqTDS">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">どうなったかな。</prop>
+        <seg>こうなったよ。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250604T051751Z" changedate="20250604T051751Z" lastusagedate="20250604T051751Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">この文とこの文を訳すとどうなるの.docx</prop>
+        <seg>yeah!</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_uAOFywDIwh62CF4cSr005PBE0">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">イモリア国とエモリア国を比べると、数字は似ていてもエモリア国の方がイモリア国と比べて人気が高くなっています。</prop>
+        <prop type="context_next">一方でオヨヨヨヨ国は、オヨヨヨ国と異なり、厳しい情報統制が敷かれており、景気を読むことができません。</prop>
+        <seg>オヨヨヨ国はアストラ国、イモリア国、ウソランド国、エモリア国のどこと比べても驚くべき不況に陥っています。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T083609Z" changedate="20250522T083623Z" lastusagedate="20250522T083609Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>Oyyy is facing an economic downturn that stands out even when compared to Astra, Imoria, Lier Land, or Emorie.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_y1oQnqxlwLO5Cj80id0wdf710">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">どうなるのかな。</prop>
+        <prop type="context_next">こうなったよ。</prop>
+        <seg>どうなったかな。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250604T051746Z" changedate="20250604T051746Z" lastusagedate="20250604T051746Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">この文とこの文を訳すとどうなるの.docx</prop>
+        <seg>yes, this way.</seg>
+      </tuv>
+    </tu>
+    <tu tuid="_y31mpocywKc5q69oFXxMafWb1">
+      <tuv xml:lang="ja-jp">
+        <prop type="context_prev">国内の雇用も変わらず、失業率は3.4％となっています。</prop>
+        <prop type="context_next">国内の雇用も変わらず、失業率は3.4％となっています。</prop>
+        <seg>エモリア国の経済成長率は4.9％で、昨年の4.8％と比べて横ばいです。</seg>
+      </tuv>
+      <tuv xml:lang="en-us" creationdate="20250522T082728Z" changedate="20250522T082728Z" lastusagedate="20250522T082737Z">
+        <prop type="project">32454328</prop>
+        <prop type="created_by">ishida_1</prop>
+        <prop type="modified_by">ishida_1</prop>
+        <prop type="filename">世界統計から語る景気.docx</prop>
+        <seg>The economy of Emorie has grown by 4.9%, compared to last year’s 4.8%, showing little change.</seg>
+      </tuv>
+    </tu>
+  </body>
+</tmx>

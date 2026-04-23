@@ -1,18 +1,17 @@
 <script setup lang="ts">
 definePageMeta({
-  title: 'Shuttle Parse',
-  icon: 'upload',
+  title: '構造化',
+  icon: 'layers',
 })
 
 import { ref, computed } from 'vue'
-import { FileUp, Trash2, Play, FileText, CheckCircle, AlertCircle } from 'lucide-vue-next'
+import { FileUp, Trash2, Play, FileText, CheckCircle, AlertCircle, Layers } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
-import { useShwvStore } from '../stores/shwvStore'
+import { useShuttleStore } from '../stores/shuttleStore'
 import { SheepShuttle } from '../../logic/shuttle/sheepShuttle.js'
 import { FileIO } from '../utils/fileIO'
 
-
-const store = useShwvStore()
+const store = useShuttleStore()
 const router = useRouter()
 
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -20,22 +19,10 @@ const selectedFiles = ref<File[]>([])
 const isProcessing = ref(false)
 const statusMsg = ref({ text: '', type: 'info' as 'info' | 'success' | 'error' })
 
+const hasUnitsInStore = computed(() => store.unitCount > 0)
 const hasFiles = computed(() => selectedFiles.value.length > 0)
 
-const handleFileDrop = (e: DragEvent) => {
-  e.preventDefault()
-  if (e.dataTransfer?.files) {
-    addFiles(Array.from(e.dataTransfer.files))
-  }
-}
-
-const handleFileSelect = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  if (target.files) {
-    addFiles(Array.from(target.files))
-  }
-}
-
+// --- ファイル読み込み（直接構造化する場合用） ---
 function addFiles(files: File[]) {
   const validExtensions = ['.xlf', '.xliff', '.mxliff', '.sdlxliff', '.mqxliff', '.tmx', '.tbx', '.xlsx', '.csv', '.json', '.jsonl']
   const newFiles = files.filter(f => {
@@ -45,47 +32,45 @@ function addFiles(files: File[]) {
   selectedFiles.value = [...selectedFiles.value, ...newFiles]
 }
 
-function removeFile(index: number) {
-  selectedFiles.value.splice(index, 1)
-}
+const handleFileDrop = (e: DragEvent) => { e.preventDefault(); if (e.dataTransfer?.files) addFiles(Array.from(e.dataTransfer.files)) }
+const handleFileSelect = (e: Event) => { const target = e.target as HTMLInputElement; if (target.files) addFiles(Array.from(target.files)) }
+function removeFile(index: number) { selectedFiles.value.splice(index, 1) }
+function clearFiles() { selectedFiles.value = []; statusMsg.value = { text: '', type: 'info' } }
 
-function clearFiles() {
-  selectedFiles.value = []
-  statusMsg.value = { text: '', type: 'info' }
-}
-
-async function doParse() {
-  if (selectedFiles.value.length === 0) return
-
+/**
+ * 構造化を実行
+ */
+async function doConvert() {
   try {
     isProcessing.value = true
-    statusMsg.value = { text: '解析中...', type: 'info' }
+    statusMsg.value = { text: '構造化を実行中...', type: 'info' }
 
-    const filesWithContent = await Promise.all(selectedFiles.value.map(async file => {
-      const ext = file.name.split('.').pop()?.toLowerCase() || ''
-      const isBinary = ['xlsx', 'docx'].includes(ext)
-      const content = isBinary 
-        ? await FileIO.readAsArrayBuffer(file) 
-        : await FileIO.readAsText(file)
-      
-      return {
-        name: file.name,
-        content
-      }
-    }))
+    // ファイルが選択されている場合はまずパース
+    if (selectedFiles.value.length > 0) {
+      const filesWithContent = await Promise.all(selectedFiles.value.map(async file => {
+        const ext = file.name.split('.').pop()?.toLowerCase() || ''
+        const isBinary = ['xlsx', 'docx'].includes(ext)
+        const isText = ['xlf', 'xliff', 'mxliff', 'sdlxliff', 'mqxliff', 'tmx', 'tbx', 'csv', 'tsv', 'json', 'jsonl'].includes(ext)
+        const content = isText ? await file.text() : await file.arrayBuffer()
+        return { name: file.name, content: content as any }
+      }))
+      await store.parseFiles(filesWithContent)
+    }
 
-    const shwvData = await SheepShuttle.fromFiles(filesWithContent)
-    store.setData(shwvData, `Imported_${new Date().getTime()}.json`)
+    if (!store.hasUnits) {
+      throw new Error('構造化するユニットがありません。解析ページでファイルを読み込んでください。')
+    }
 
-    statusMsg.value = { text: '解析完了！管理ページに移動します。', type: 'success' }
-    
-    // Briefly show success then redirect
+    // 構造化（ShWvData への変換）実行
+    store.convert()
+
+    statusMsg.value = { text: '構造化完了！解析ページに移動します。', type: 'success' }
     setTimeout(() => {
-      router.push('/shuttle-manage')
-    }, 1000)
+      router.push('/shuttle-analyze')
+    }, 800)
 
   } catch (e: any) {
-    console.error('Parse error:', e)
+    console.error('Convert error:', e)
     statusMsg.value = { text: `エラー: ${e.message}`, type: 'error' }
   } finally {
     isProcessing.value = false
@@ -98,10 +83,10 @@ async function doParse() {
     <div class="content-card">
       <div class="card-header">
         <div class="header-main">
-          <FileUp :size="24" class="header-icon" />
+          <Layers :size="24" class="header-icon" />
           <div class="header-text">
-            <h1>Shuttle Parse</h1>
-            <p>翻訳ファイルを ShWvData (JSON) に変換します</p>
+            <h1>構造化 (Structuring)</h1>
+            <p>解析済みのユニットを統合し、構造化データを作成します</p>
           </div>
         </div>
         <div class="header-actions">
@@ -111,15 +96,25 @@ async function doParse() {
         </div>
       </div>
 
-      <div class="drop-zone" @drop="handleFileDrop" @dragover.prevent @click="fileInput?.click()">
+      <!-- ストアの状態表示 -->
+      <div class="store-status" v-if="hasUnitsInStore">
+        <div class="status-badge">
+          <CheckCircle :size="16" />
+          <span>解析済みユニット: {{ store.unitCount }} 件</span>
+        </div>
+        <p class="status-desc">これらのユニットを一つのプロジェクトデータに統合します。</p>
+      </div>
+
+      <div class="drop-zone" v-if="!hasUnitsInStore" @drop="handleFileDrop" @dragover.prevent
+        @click="fileInput?.click()">
         <FileUp :size="48" class="drop-icon" />
-        <p class="drop-text">ファイルをドロップ、またはクリックして選択</p>
-        <p class="drop-hint">XLIFF, TMX, TBX, XLSX, CSV, JSON, JSONL をサポート</p>
+        <p class="drop-text">追加でファイルを読み込む</p>
+        <p class="drop-hint">XLIFF, TMX, TBX, XLSX, CSV 等をサポート</p>
         <input type="file" ref="fileInput" hidden multiple @change="handleFileSelect" />
       </div>
 
       <div v-if="hasFiles" class="file-list-section">
-        <h2 class="section-title">選択されたファイル ({{ selectedFiles.length }})</h2>
+        <h2 class="section-title">追加ファイル ({{ selectedFiles.length }})</h2>
         <div class="file-list">
           <div v-for="(file, index) in selectedFiles" :key="index" class="file-item">
             <div class="file-info">
@@ -132,19 +127,24 @@ async function doParse() {
             </button>
           </div>
         </div>
+      </div>
 
-        <div class="action-footer">
-          <div v-if="statusMsg.text" :class="['status-box', statusMsg.type]">
-            <CheckCircle v-if="statusMsg.type === 'success'" :size="18" />
-            <AlertCircle v-else-if="statusMsg.type === 'error'" :size="18" />
-            <span>{{ statusMsg.text }}</span>
-          </div>
-          <button class="btn-run" @click="doParse" :disabled="isProcessing">
-            <Play v-if="!isProcessing" :size="18" />
-            <span v-else class="loader"></span>
-            {{ isProcessing ? '解析中...' : 'ShWvData を作成' }}
-          </button>
+      <div class="action-footer">
+        <div v-if="statusMsg.text" :class="['status-box', statusMsg.type]">
+          <CheckCircle v-if="statusMsg.type === 'success'" :size="18" />
+          <AlertCircle v-else-if="statusMsg.type === 'error'" :size="18" />
+          <span>{{ statusMsg.text }}</span>
         </div>
+        <div v-else-if="!hasUnitsInStore && !hasFiles" class="status-box info">
+          <AlertCircle :size="18" />
+          <span>解析ページでファイルを読み込んでください</span>
+        </div>
+
+        <button class="btn-run" @click="doConvert" :disabled="isProcessing || (!hasUnitsInStore && !hasFiles)">
+          <Play v-if="!isProcessing" :size="18" />
+          <span v-else class="loader"></span>
+          {{ isProcessing ? '実行中...' : '構造化を実行' }}
+        </button>
       </div>
     </div>
   </div>
@@ -179,7 +179,9 @@ async function doParse() {
   gap: 16px;
 }
 
-.header-icon { color: var(--accent); }
+.header-icon {
+  color: var(--accent);
+}
 
 .header-text h1 {
   font-size: 1.25rem;
@@ -262,7 +264,9 @@ async function doParse() {
   transition: var(--transition);
 }
 
-.file-item:hover { border-color: var(--border-hover); }
+.file-item:hover {
+  border-color: var(--border-hover);
+}
 
 .file-info {
   display: flex;
@@ -270,11 +274,23 @@ async function doParse() {
   gap: 12px;
 }
 
-.file-icon { color: var(--text-muted); }
-.file-name { font-size: 0.88rem; font-weight: 500; color: var(--text-primary); }
-.file-size { font-size: 0.75rem; color: var(--text-muted); }
+.file-icon {
+  color: var(--text-muted);
+}
 
-.btn-remove, .btn-clear {
+.file-name {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.file-size {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.btn-remove,
+.btn-clear {
   background: none;
   border: none;
   color: var(--error);
@@ -286,7 +302,10 @@ async function doParse() {
   gap: 6px;
 }
 
-.btn-remove:hover, .btn-clear:hover { opacity: 1; }
+.btn-remove:hover,
+.btn-clear:hover {
+  opacity: 1;
+}
 
 .btn-clear {
   font-size: 0.75rem;
@@ -296,7 +315,10 @@ async function doParse() {
   border-radius: 4px;
 }
 
-.btn-clear:hover { background: rgba(239, 68, 68, 0.1); border-color: var(--error); }
+.btn-clear:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--error);
+}
 
 .action-footer {
   display: flex;
@@ -305,6 +327,7 @@ async function doParse() {
   gap: 24px;
   border-top: 1px solid var(--border);
   padding-top: 24px;
+  margin: 0 24px 24px;
 }
 
 .status-box {
@@ -318,9 +341,20 @@ async function doParse() {
   border-radius: var(--radius-sm);
 }
 
-.status-box.info { background: var(--bg-hover); color: var(--text-primary); }
-.status-box.success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-.status-box.error { background: rgba(239, 68, 68, 0.1); color: var(--error); }
+.status-box.info {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.status-box.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+}
+
+.status-box.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+}
 
 .btn-run {
   display: flex;
@@ -359,5 +393,33 @@ async function doParse() {
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Structuring Specific Styles */
+.store-status {
+  margin: 24px;
+  padding: 20px;
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--accent);
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.status-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
 </style>

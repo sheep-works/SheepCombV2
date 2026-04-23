@@ -24,7 +24,7 @@ export class ShuttleParser {
    * Also generates ShWvFileInfo for each file.
    * isSub splitting is performed here for XLF-like files.
    */
-  async parse(files: { name: string, content: string | ArrayBuffer | Buffer }[]): Promise<ParsedResult> {
+  async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[]): Promise<ParsedResult> {
     const fileinfo: ShWvFileInfo[] = []
     const allUnits: TranslationPair[] = []
     let globalIdx = 0
@@ -48,7 +48,7 @@ export class ShuttleParser {
           pairs = await parseJsonl(file.content, globalIdx)
         } else if (ext === 'json' && typeof file.content === 'string') {
           pairs = await parseJson(file.content, globalIdx)
-        } else if (ext === 'docx' && (file.content instanceof ArrayBuffer || Buffer.isBuffer(file.content))) {
+        } else if (ext === 'docx' && (file.content instanceof ArrayBuffer || file.content instanceof Uint8Array)) {
           pairs = await parseDocx(file.content, globalIdx)
         }
       } catch (e) {

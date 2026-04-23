@@ -6,7 +6,7 @@ import { Interface } from 'node:readline/promises'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { PATHS, SUPPORTED_EXTS } from './config.js'
-import { parseFile, saveAsJson, saveAsCsv } from './api.js'
+import { parseFile, saveAsJson, saveAsCsv } from './pipeline.js'
 import { type Segment } from '../logic/simple/parsers.js'
 
 // ユーティリティ

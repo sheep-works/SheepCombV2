@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * web/pages/shuttle-manage.vue
+ * 解析済みデータ（ShWvData）の管理・分割・エクスポートを行う画面。
+ */
 definePageMeta({
   title: 'Shuttle Manage',
   icon: 'settings',
@@ -6,23 +10,25 @@ definePageMeta({
 import { ref, computed } from 'vue'
 import { FileUp, Download, Scissors, Merge, FileText, FileJson, Trash2, Settings2 } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
-import { useShwvStore } from '../stores/shwvStore'
-import { SheepShuttle } from '../../logic/shuttle/sheepShuttle.js'
+import { useShuttleStore } from '../stores/shuttleStore'
 import { FileIO } from '../utils/fileIO'
 import JsonViewer from '../components/JsonViewer.vue'
 
 
-const store = useShwvStore()
-const shuttle = new SheepShuttle()
+// ストアの初期化
+const store = useShuttleStore()
+
+// UI 状態
 const fileInput = ref<HTMLInputElement | null>(null)
-const isProcessing = ref(false)
-const statusMsg = ref({ text: '', type: 'info' as 'info' | 'success' | 'error' })
+const isProcessing = computed(() => store.isLoading)
+const statusMsg = computed(() => store.statusMsg)
 const splitLength = ref(2000)
 const chunkLength = ref(2000)
 
-// JSONL update
+// JSONL 更新用の入力
 const jsonlInput = ref<HTMLInputElement | null>(null)
 
+// データの有無を確認
 const hasData = computed(() => store.hasData)
 
 const handleFileDrop = async (e: DragEvent) => {
@@ -37,81 +43,96 @@ const handleFileSelect = async (e: Event) => {
   if (file) await loadFile(file)
 }
 
+/**
+ * ファイルの読み込み処理（ストアに保存）
+ */
+/**
+ * ファイルの読み込み処理（ストアに保存）
+ */
 async function loadFile(file: File) {
   try {
-    isProcessing.value = true
-    statusMsg.value = { text: '読み込み中...', type: 'info' }
-    await store.loadFromFile(file)
-    statusMsg.value = { text: `読み取り完了: ${store.unitCount} segments`, type: 'success' }
+    store.setStatus('読み込み中...', 'info')
+    const text = await file.text()
+    const data = JSON.parse(text)
+    await store.loadShwvData(data, file.name)
+    store.setStatus(`読み取り完了: ${store.shwvUnitCount} segments`, 'success')
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e)
-    statusMsg.value = { text: `エラー: ${msg}`, type: 'error' }
-  } finally {
-    isProcessing.value = false
+    store.setStatus(`エラー: ${msg}`, 'error')
   }
 }
 
-// --- Export Actions ---
+// --- エクスポート処理 ---
+
+/** JSON (src/tgt ペア) として保存 */
 function doExportJson() {
-  if (!store.data) return
-  const pairs = shuttle.manager.exportToJson(store.data)
-  FileIO.downloadJson(pairs, 'export.json')
-  statusMsg.value = { text: 'JSON をダウンロードしました', type: 'success' }
+  if (!store.hasData) return
+  const jsonStr = store.getManagedData('UNITS')
+  FileIO.downloadJson(JSON.parse(jsonStr), 'export.json')
+  store.setStatus('JSON をダウンロードしました', 'success')
 }
 
+/** CSV として保存 */
 function doExportCsv() {
-  if (!store.data) return
-  const csv = shuttle.manager.exportToCsv(store.data)
+  if (!store.hasData) return
+  const csv = store.getManagedData('CSV')
   FileIO.downloadCsv(csv, 'export.csv')
-  statusMsg.value = { text: 'CSV をダウンロードしました', type: 'success' }
+  store.setStatus('CSV をダウンロードしました', 'success')
 }
 
+/** 翻訳メモリー (TM) 形式として保存 */
 function doExportTm() {
-  if (!store.data) return
-  const tm = shuttle.manager.exportAsTm(store.data)
-  FileIO.downloadJson(tm, 'export_tm.json')
-  statusMsg.value = { text: 'TM をダウンロードしました', type: 'success' }
+  if (!store.hasData) return
+  const tmStr = store.getManagedData('TMS')
+  FileIO.downloadJson(JSON.parse(tmStr), 'export_tm.json')
+  store.setStatus('TM をダウンロードしました', 'success')
 }
 
+/** 用語集 (TB) 形式として保存 */
 function doExportTb() {
-  if (!store.data) return
-  const tb = shuttle.manager.exportAsTb(store.data)
-  FileIO.downloadJson(tb, 'export_tb.json')
-  statusMsg.value = { text: 'TB をダウンロードしました', type: 'success' }
+  if (!store.hasData) return
+  const tbStr = store.getManagedData('TBS')
+  FileIO.downloadJson(JSON.parse(tbStr), 'export_tb.json')
+  store.setStatus('TB をダウンロードしました', 'success')
 }
 
+/** 元のファイル単位に分割して保存 */
 function doSplitByFile() {
   if (!store.data) return
-  const result = shuttle.manager.splitByFile(store.data)
+  const result = store.shuttle.manager.splitByFile(store.data)
   result.forEach((pairs, name) => {
     FileIO.downloadJson(pairs, name)
   })
-  statusMsg.value = { text: `${result.size} ファイルに分割しました`, type: 'success' }
+  store.setStatus(`${result.size} ファイルに分割して処理しました`, 'success')
 }
 
+/** 文字数制限に基づいて分割して保存 */
 function doSplitByLength() {
   if (!store.data) return
-  const chunks = shuttle.manager.splitByLength(store.data, splitLength.value)
+  const chunks = store.shuttle.manager.splitByLength(store.data, splitLength.value)
   chunks.forEach((chunk, i) => {
     FileIO.downloadJson(chunk, `chunk_${String(i).padStart(3, '0')}.json`)
   })
-  statusMsg.value = { text: `${chunks.length} チャンクに分割しました`, type: 'success' }
+  store.setStatus(`${chunks.size} チャンクに分割しました`, 'success')
 }
 
+/** 全セグメントを JSONL 形式でエクスポート */
 function doExportJsonl() {
   if (!store.data) return
-  const jsonl = shuttle.manager.exportToJsonl(store.data)
+  const jsonl = store.getManagedData('JSONL')
   FileIO.download(jsonl, 'export.jsonl')
-  statusMsg.value = { text: 'JSONL を出力しました', type: 'success' }
+  store.setStatus('JSONL を出力しました', 'success')
 }
 
+/** 文字数制限に基づいて分割した JSONL をエクスポート */
 function doChunkJsonl() {
   if (!store.data) return
-  const chunkedJsonl = shuttle.manager.chunkJsonl(store.data, chunkLength.value)
+  const chunkedJsonl = store.getManagedData('JSONL_CHUNKED', chunkLength.value)
   FileIO.download(chunkedJsonl, 'chunked.jsonl')
-  statusMsg.value = { text: '分割 JSONL を出力しました', type: 'success' }
+  store.setStatus('分割 JSONL を出力しました', 'success')
 }
 
+/** 外部の JSONL ファイルを読み込んで、現在のデータの訳文を更新 */
 async function doUpdateFromJsonl(e: Event) {
   const target = e.target as HTMLInputElement
   const file = target.files?.[0]
@@ -119,17 +140,17 @@ async function doUpdateFromJsonl(e: Event) {
 
   try {
     const text = await file.text()
-    const updated = shuttle.manager.updateFromJsonl(store.data, text)
+    const updated = store.shuttle.manager.updateFromJsonl(store.data, text)
     store.data.body.units = updated
-    statusMsg.value = { text: 'JSONL から更新しました', type: 'success' }
+    store.setStatus('JSONL から更新しました', 'success')
   } catch (e: any) {
-    statusMsg.value = { text: `更新エラー: ${e.message}`, type: 'error' }
+    store.setStatus(`更新エラー: ${e.message}`, 'error')
   }
 }
 
 function doClear() {
   store.clear()
-  statusMsg.value = { text: 'データをクリアしました', type: 'info' }
+  store.setStatus('データをクリアしました', 'info')
 }
 </script>
 
@@ -150,7 +171,7 @@ function doClear() {
           </div>
           <div v-else class="loaded-info">
             <div class="loaded-label">ACTIVE DATA</div>
-            <div class="loaded-name">{{ store.fileName }}</div>
+            <!-- <div class="loaded-name">{{ store.fileName }}</div> -->
             <div class="loaded-count">{{ store.unitCount }} Segments</div>
             <button class="btn-clear-full" @click="doClear">
               <Trash2 :size="14" /> クリア
@@ -258,82 +279,6 @@ function doClear() {
   }
 }
 
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  display: flex;
-  flex-direction: column;
-  transition: var(--transition);
-}
-
-.card:hover {
-  border-color: var(--border-hover);
-}
-
-.card.disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.full-height {
-  min-height: calc(100vh - 140px);
-}
-
-.card-header {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.card-header h2 {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-}
-
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  position: sticky;
-  top: 84px;
-  align-self: start;
-}
-
-/* Upload */
-.upload-section {
-  padding: 16px 20px;
-}
-
-.drop-zone {
-  border: 2px dashed var(--border);
-  border-radius: var(--radius-sm);
-  padding: 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: var(--transition);
-  color: var(--text-secondary);
-}
-
-.drop-zone:hover {
-  border-color: var(--accent);
-  background: var(--accent-glow);
-}
-
-.drop-icon {
-  margin-bottom: 6px;
-  opacity: 0.5;
-}
-
-.drop-zone p {
-  font-size: 0.8rem;
-}
-
 .loaded-info {
   text-align: center;
 }
@@ -380,7 +325,6 @@ function doClear() {
   border-color: var(--error);
 }
 
-/* Action List */
 .action-list {
   padding: 12px 20px 16px;
   display: flex;
@@ -442,51 +386,10 @@ function doClear() {
   align-items: center;
 }
 
-.input-sm {
-  width: 80px;
-  padding: 7px 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  color: var(--text-primary);
-  font-size: 0.78rem;
-  font-family: 'Inter', monospace;
-}
-
-.input-sm:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
 .flex-1 {
   flex: 1;
 }
 
-/* Status */
-.status-msg {
-  margin: 0 20px 16px;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 0.78rem;
-  font-weight: 500;
-}
-
-.status-msg.info {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.status-msg.success {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success);
-}
-
-.status-msg.error {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--error);
-}
-
-/* Viewer */
 .viewer-area {
   min-width: 0;
 }
@@ -494,25 +397,5 @@ function doClear() {
 .viewer-content {
   padding: 20px;
   flex: 1;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  color: var(--text-muted);
-  gap: 16px;
-  text-align: center;
-}
-
-.empty-icon {
-  opacity: 0.15;
-}
-
-.empty-state p {
-  font-size: 0.88rem;
-  line-height: 1.5;
 }
 </style>

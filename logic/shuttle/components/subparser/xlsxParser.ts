@@ -4,9 +4,16 @@ import type { TranslationPair } from '../../../types/shwv.js'
 /**
  * XLSX/CSV to TranslationPair parser.
  */
-export async function parseXlsx(content: string | ArrayBuffer | Buffer, startIdx: number): Promise<TranslationPair[]> {
+export async function parseXlsx(content: string | ArrayBuffer | Uint8Array, startIdx: number): Promise<TranslationPair[]> {
   const units: TranslationPair[] = []
-  const type = typeof content === 'string' ? 'string' : (content instanceof Buffer ? 'buffer' : 'array')
+  let type: 'string' | 'array' | 'buffer' = 'array'
+  
+  if (typeof content === 'string') {
+    type = 'string'
+  } else if (typeof Buffer !== 'undefined' && content instanceof Buffer) {
+    type = 'buffer'
+  }
+  
   const workbook = xlsx.read(content, { type })
   const sheetName = workbook.SheetNames[0]
   if (!sheetName) {
@@ -40,6 +47,6 @@ export async function parseXlsx(content: string | ArrayBuffer | Buffer, startIdx
   return units
 }
 
-export async function parseCsv(content: string | ArrayBuffer | Buffer, startIdx: number): Promise<TranslationPair[]> {
+export async function parseCsv(content: string | ArrayBuffer | Uint8Array, startIdx: number): Promise<TranslationPair[]> {
   return parseXlsx(content, startIdx)
 }

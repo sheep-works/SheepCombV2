@@ -1,0 +1,571 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+	<file id="" original="" source-language="zh-CN" target-language="ja" datatype="plaintext" project-id="" tool-id="weloc">
+		<header>
+			<tool tool-id="weloc" tool-name="weloc" tool-version="1.1"/>
+		</header>
+		<body>
+			<trans-unit id="4193637084871668226" resname="" size-unit="char" maxwidth="0">
+				<source>放弃梦想，然后去死吧</source>
+				<target state="final">夢を諦めて死んでくれ</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1000000|文本内容
+放弃梦想，然后去死吧</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193637084900297377" resname="" size-unit="char" maxwidth="0">
+				<source>要是不战斗就赢不了</source>
+				<target state="final">戦わなければ勝てない</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1000001|文本内容
+要是不战斗就赢不了</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193637084928926528" resname="" size-unit="char" maxwidth="0">
+				<source>有气势是好事，不过别忘了想想如何才能不送死</source>
+				<target state="final">威勢がいいのはいいが、死なねぇ工夫は忘れんなよ</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1000002|文本内容
+有气势是好事，不过别忘了想想如何才能不送死</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193637084957555679" resname="" size-unit="char" maxwidth="0">
+				<source>战斗啊！就算为此付出生命也在所不惜！</source>
+				<target state="final">戦え！そのためなら、命なんか惜しくない！</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1000003|文本内容
+战斗啊！就算为此付出生命也在所不惜！</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193637084986184830" resname="" size-unit="char" maxwidth="0">
+				<source>挡我路者只有死，自己选吧</source>
+				<target state="final">私は邪魔するものを殺すだけ。選んで！</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1000004|文本内容
+挡我路者只有死，自己选吧</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="13613053838018220085" resname="" size-unit="char" maxwidth="0">
+				<source>献出心脏吧！</source>
+				<target state="final">心臓を捧げよ！</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; Form_Battle_Part_SignalTips_2_0_2_2_
+献出心脏吧！</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="11974601598338657725" resname="" size-unit="char" maxwidth="0">
+				<source>5.22-5.27使用变身:进击的巨人天赋1次{C}/{T}</source>
+				<target state="final">5月22日～27日に天賦「変身：進撃の巨人」を1回使用する {C}/{T}</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Tencent
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 日常活动表.xlsx|条件活动表|26050101|条件10简介
+5.22-5.27使用变身:进击的巨人天赋1次{C}/{T}</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="11974601598338658686" resname="" size-unit="char" maxwidth="0">
+				<source>5.22-5.27使用亚妮出击天赋1次{C}/{T}</source>
+				<target state="final">5月22日～28日に天賦「アニ出陣」を1回使用する {C}/{T}</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Tencent
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 日常活动表.xlsx|条件活动表|26050101|条件11简介
+5.22-5.27使用亚妮出击天赋1次{C}/{T}</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="2968546507090331833" resname="" size-unit="char" maxwidth="0">
+				<source>每周登录4天领福利，连续3周累计可得9抽！5月4日到5月24日，每周一5点刷新（UTC±0 ）。</source>
+				<target state="final">5月4日～24日の期間中、毎週4日のログインで特典をプレゼント！3週連続達成で9回分のガチャチャンスをゲット！毎週月曜日5時（UTC±0）にリセットされます。</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 运营活动的简介
+&lt;Usage Scenario&gt; 在活动中心上线活动
+&lt;Source Sheet&gt; 日常活动表.xlsx|条件活动表|26050153|活动简介
+每周登录4天领福利，连续3周累计可得9抽！5月4日到5月24日，每周一5点刷新（UTC±0 ）。</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="1540652508121667365" resname="" size-unit="char" maxwidth="0">
+				<source>幸福的时光</source>
+				<target state="final">幸せな時間</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Brazil
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 13
+&lt;Max Lines&gt; 1
+&lt;Max Length&gt; 13
+===== Context =====
+&lt;Description&gt; 个性表情名字
+&lt;Usage Scenario&gt; 定制-个性表情
+&lt;Source Sheet&gt; 通用资源上下架表.xlsx|表情上下架表 天幕上下架表 喷漆上下架表 局内UI皮肤上下架表 皮肤海报上下架表 皮肤待机动作上下架表 拍拍上下架表 个性签名上下架表 定制音乐上下架表 红包封面上下架表 个性邀请上下架表 个性名片上下架表 出生特效上下架表 信物上下架表 个性播报员上下架表 头像上下架表 皮肤铭刻上下架表 小兵皮肤上下架表 次元上下架表 灵宝上下架表|700104|15|资源名称
+幸福的时光</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="455098955317540772" resname="" size-unit="char" maxwidth="0">
+				<source>身为一个战士，就是要直到最后都得履行自己的责任！</source>
+				<target state="final">戦士として、最後まで責任を果たすことだ！</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 40
+&lt;Max Lines&gt; 2
+&lt;Max Length&gt; 80
+===== Context =====
+&lt;Description&gt; 个性表情的描述
+&lt;Usage Scenario&gt; 定制-个性表情
+&lt;Source Sheet&gt; 通用资源上下架表.xlsx|表情上下架表 天幕上下架表 喷漆上下架表 局内UI皮肤上下架表 皮肤海报上下架表 皮肤待机动作上下架表 拍拍上下架表 个性签名上下架表 定制音乐上下架表 红包封面上下架表 个性邀请上下架表 个性名片上下架表 出生特效上下架表 信物上下架表 个性播报员上下架表 头像上下架表 皮肤铭刻上下架表 小兵皮肤上下架表 次元上下架表 灵宝上下架表|161002007|42|资源描述
+身为一个战士，就是要直到最后都得履行自己的责任！</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="3991755933285490043" resname="" size-unit="char" maxwidth="0">
+				<source>身为一个战士，就是要直到最后都得履行自己的责任！</source>
+				<target state="final">戦士として、最後まで責任を果たすことだ！</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 次元时装描述
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 次元部件表.dtxml|次元部件表|161002007|描述
+身为一个战士，就是要直到最后都得履行自己的责任！</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="14547455297188957277" resname="" size-unit="char" maxwidth="0">
+				<source>{Hero_171}—艾伦皮肤体验卡</source>
+				<target state="final">{Hero_171}のスキン「エレン」体験チケット</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; UserBackflow_NormalUBFBattleGuide_FirstRewardDesc_AOTF
+{Hero_171}—艾伦皮肤体验卡</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="5013922336892119359" resname="" size-unit="char" maxwidth="0">
+				<source>{Hero_171}—艾伦</source>
+				<target state="final">{Hero_171}のスキン「エレン」</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; UserBackflow_NormalUBFBattleGuide_SpineName_AOTF
+{Hero_171}—艾伦</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="46317144721106676" resname="" size-unit="char" maxwidth="0">
+				<source>参与对局获得{Hero_171}—艾伦皮肤体验卡</source>
+				<target state="final">バトルに参加して、{Hero_171}のスキン「エレン」体験チケットをゲット！</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; UserBackflow_NormalUBFBattleGuide_BottonDesc_AOTF
+参与对局获得{Hero_171}—艾伦皮肤体验卡</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="2036931851886653420" resname="" size-unit="char" maxwidth="0">
+				<source>免费领元流铠巨套装</source>
+				<target state="final">元流の子アバターアイテムセット「鎧の巨人」プレゼント</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 日常活动表.xlsx|潘多拉优先展示|3028|活动名称
+免费领元流铠巨套装</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="2036931853518515027" resname="" size-unit="char" maxwidth="0">
+				<source>艾伦&amp;三笠联动皮肤</source>
+				<target state="final">コラボスキン：エレン＆ミカサ</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 日常活动表.xlsx|潘多拉优先展示|3043|活动名称
+艾伦&amp;三笠联动皮肤</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="2036931853633031631" resname="" size-unit="char" maxwidth="0">
+				<source>送姬小满联动史诗皮肤</source>
+				<target state="final">姫小満のコラボエピックスキンをプレゼント</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 日常活动表.xlsx|潘多拉优先展示|3047|活动名称
+送姬小满联动史诗皮肤</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4635485413071975694" resname="" size-unit="char" maxwidth="0">
+				<source>{0}段解锁条件：累计大招控制人数{1}/{2}</source>
+				<target state="final">ランク{0}アンロック条件：奥義で{1}/{2}回CCする</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 铭刻配置表.xlsx|铭刻信息表|21|多段解锁条件描述
+{0}段解锁条件：累计大招控制人数{1}/{2}</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="11443999425925751703" resname="" size-unit="char" maxwidth="0">
+				<source>大招控制{0}人完成</source>
+				<target state="final">奥義で敵を{0}体CC</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 铭刻配置表.xlsx|铭刻信息表|21|结算里程碑tips文字
+大招控制{0}人完成</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4635838465901035269" resname="" size-unit="char" maxwidth="0">
+				<source>通过大招控制{0}人解锁铭刻</source>
+				<target state="final">奥義で{0}体CCし記憶の石をアンロックしました</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 铭刻配置表.xlsx|铭刻信息表|21|解锁铭刻提示文字
+通过大招控制{0}人解锁铭刻</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="11455613717758731268" resname="" size-unit="char" maxwidth="0">
+				<source>累积三技能控制数</source>
+				<target state="final">スキル3・累計CC回数</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 铭刻配置表.xlsx|铭刻信息表|21|里程碑文字描述
+累积三技能控制数</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="11455614132729384802" resname="" size-unit="char" maxwidth="0">
+				<source>里程碑计数：解锁后记录大招累计控制数据</source>
+				<target state="final">マイルストーンカウント：アンロック後に奥義による累計CC回数を記録</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 铭刻配置表.xlsx|铭刻信息表|21|铭刻未拥有描述
+里程碑计数：解锁后记录大招累计控制数据</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="11455614133038067612" resname="" size-unit="char" maxwidth="0">
+				<source>里程碑计数：解锁后记录大招累计控制数据</source>
+				<target state="final">マイルストーンカウント：アンロック後に奥義による累計CC回数を記録</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 铭刻配置表.xlsx|铭刻信息表|21|铭刻未解锁描述
+里程碑计数：解锁后记录大招累计控制数据</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="10485492367562314333" resname="" size-unit="char" maxwidth="0">
+				<source>里程碑计数：达成累计大招控制人数{0}</source>
+				<target state="final">マイルストーンカウント：奥義でのCC累計{0}回</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 铭刻配置表.xlsx|铭刻信息表|21|铭刻计数描述
+里程碑计数：达成累计大招控制人数{0}</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4635915399267541119" resname="" size-unit="char" maxwidth="0">
+				<source>大招控制{0}人</source>
+				<target state="final">奥義で敵を{0}体CC</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 铭刻配置表.xlsx|铭刻信息表|21|阶段切换描述文本
+大招控制{0}人</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="13895685278638147793" resname="" size-unit="char" maxwidth="0">
+				<source>凯旋表演/累计大招控制</source>
+				<target state="final">凱旋パフォーマンス/奥義CC回数</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 铭刻配置表.xlsx|皮肤铭刻表|2117107|简要描述
+凯旋表演/累计大招控制</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="8822379204265808935" resname="" size-unit="char" maxwidth="0">
+				<source>累积3技能控制数</source>
+				<target state="final">スキル3・累計CC回数</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 158.局内铭刻表.dtxml|局内铭刻|21|里程碑文字描述
+累积3技能控制数</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="3383667181908682737" resname="" size-unit="char" maxwidth="0">
+				<source>联动氛围资源</source>
+				<target state="final">コラボ関連リソース</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; PACK_Titan_Battle
+联动氛围资源</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="1934190070494197653" resname="" size-unit="char" maxwidth="0">
+				<source>获得超多属性提升，开局7秒和16秒时，分别刷新技能1和技能2的冷却时间</source>
+				<target state="final">各ステータス増加、バトル開始から7秒/16秒経過するとそれぞれスキル1、2のクールダウンをリセット</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; medium
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 99
+&lt;Max Lines&gt; 99
+&lt;Max Length&gt; 9801
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 局内、局外的装备界面
+&lt;Source Sheet&gt; 94.装备库表_elu.dtxml|装备库表|28033|简述2
+获得超多属性提升，开局7秒和16秒时，分别刷新技能1和技能2的冷却时间</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="14189237268696535835" resname="" size-unit="char" maxwidth="0">
+				<source>依然大大大：生命增长，强力践踏</source>
+				<target state="final">もっと大きくなぁれ：HP増加、強力な踏みつけ</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 图文分离CDN图使用
+&lt;Usage Scenario&gt; 图文分离CDN图使用
+&lt;Source Sheet&gt; 7.新手引导表.xlsx|图片介绍框配置|432|内容3图片对应文本
+依然大大大：生命增长，强力践踏</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="14189237269584039516" resname="" size-unit="char" maxwidth="0">
+				<source>依然酷酷酷：所有技能更快速冷却</source>
+				<target state="final">もっと短くなぁれ：全てのスキルのクールダウンを更に短縮</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; high
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 图文分离CDN图使用
+&lt;Usage Scenario&gt; 图文分离CDN图使用
+&lt;Source Sheet&gt; 7.新手引导表.xlsx|图片介绍框配置|432|内容4图片对应文本
+依然酷酷酷：所有技能更快速冷却</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="7870070136202262897" resname="" size-unit="char" maxwidth="0">
+				<source>再来一局送传说万物宝箱×1</source>
+				<target state="final">もう1バトルするとレジェンドトレジャーチェスト×1ゲット</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; low
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 回流拍脸中的奖励内容描述
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 112.回流系统_Pawnwang.xlsx|回流任务奖励引导|1|文字描述
+再来一局送传说万物宝箱×1</context>
+				</context-group>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

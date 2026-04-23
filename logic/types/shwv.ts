@@ -68,3 +68,26 @@ export interface ShWvData {
   meta: ShWvMeta
   body: ShWvBody
 }
+
+// Manager用
+export interface ExportPair {
+  src: string
+  tgt: string
+}
+
+export interface ChunkedJsonlItem {
+  index: number
+  src: string
+  tgt: string
+  history: ExportPair[]
+}
+
+export type ManagedDataType = 'UNITS' | 'TMS' | 'TBS' | 'JSONL' | 'JSONL_CHUNKED' | 'CSV' | 'SPLIT_BY_FILE' | 'SPLIT_BY_LENGTH'
+
+export type DntFilterType = 'digit' | 'eng' | 'digit eng' | null
+
+export interface ProcessorOptions {
+  toFilterDuplicate?: boolean
+  toFilterDnt?: DntFilterType
+  toFilterLock?: boolean
+}

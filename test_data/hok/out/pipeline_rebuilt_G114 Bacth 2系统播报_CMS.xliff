@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+	<file id="" original="" source-language="zh-CN" target-language="ja" datatype="plaintext" project-id="" tool-id="weloc">
+		<header>
+			<tool tool-id="weloc" tool-name="weloc" tool-version="1.1"/>
+		</header>
+		<body>
+			<trans-unit id="4193877632180246557" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）风太大，我听不清~</source>
+				<target state="translated">[全員]あーあー聞こえなーい</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1093153|文本内容
+（全部）风太大，我听不清~</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193877632208875708" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）我真是服啦~</source>
+				<target state="translated">[全員]一本取られたな</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1093154|文本内容
+（全部）我真是服啦~</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193877632237504859" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）呦~你还挺会说的嘛。</source>
+				<target state="translated">[全員]一人前なのは口だけだな</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1093155|文本内容
+（全部）呦~你还挺会说的嘛。</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193877632266134010" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）我就问你服不服？</source>
+				<target state="translated">[全員]降参したほうがいいんじゃない？</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1093156|文本内容
+（全部）我就问你服不服？</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193877632294763161" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）你这波操作真的吓哭我了。</source>
+				<target state="translated">[全員]このプレイ…泣けてきた</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1093157|文本内容
+（全部）你这波操作真的吓哭我了。</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193877632323392312" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）我是团队核心，你是来合影的么？</source>
+				<target state="translated">[全員]一緒に写真でも撮るかい？</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1093158|文本内容
+（全部）我是团队核心，你是来合影的么？</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193877632352021463" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）想成为赛场传奇么？我教你。</source>
+				<target state="translated">[全員]本当の強さを教えてあげるよ</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1093159|文本内容
+（全部）想成为赛场传奇么？我教你。</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193877632981862785" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）和时代巨星同台，深呼吸，别有压力。</source>
+				<target state="translated">[全員]圧倒的な格差を目の当たりにした気分は？</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1093160|文本内容
+（全部）和时代巨星同台，深呼吸，别有压力。</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193877633010491936" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）想成为我？努力和天赋一样重要。</source>
+				<target state="translated">[全員]才能は努力じゃ得られないのさ</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1093161|文本内容
+（全部）想成为我？努力和天赋一样重要。</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="4193877633039121087" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）能成为历史最佳，感谢队友还有我的对手。</source>
+				<target state="translated">[全員]みんな、忘れられないバトルをありがとう</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|1093162|文本内容
+（全部）能成为历史最佳，感谢队友还有我的对手。</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="18111895734261734042" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）Oi！</source>
+				<target state="translated">[全員]Oi !</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|2351|文本内容
+（全部）Oi！</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="18111895734290363193" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）Vamos！</source>
+				<target state="translated">[全員]Vamos!</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|2352|文本内容
+（全部）Vamos！</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="18111895734318992344" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）MUAH!</source>
+				<target state="translated">[全員]MUAH!</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|2353|文本内容
+（全部）MUAH!</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="18111895734347621495" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）TA-DA!</source>
+				<target state="translated">[全員]TA-DA!</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|2354|文本内容
+（全部）TA-DA!</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="18111895734376250646" resname="" size-unit="char" maxwidth="0">
+				<source>老大，撑不住啦！</source>
+				<target state="translated">助けてくれ！</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|2355|文本内容
+老大，撑不住啦！</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="18111895734404879797" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）GG WP</source>
+				<target state="translated">[全員]グッドゲーム！</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|2356|文本内容
+（全部）GG WP</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="18111895734433508948" resname="" size-unit="char" maxwidth="0">
+				<source>乖乖坐好！</source>
+				<target state="translated">まあ見てなって！</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|2357|文本内容
+乖乖坐好！</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="18111895734462138099" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）你掂都唔到呀！</source>
+				<target state="translated">[全員]楽勝楽勝！</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|2358|文本内容
+（全部）你掂都唔到呀！</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="18111895734490767250" resname="" size-unit="char" maxwidth="0">
+				<source>（全部）诶~ 抓不到我咩？</source>
+				<target state="translated">[全員]ここまでおいで～</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|2359|文本内容
+（全部）诶~ 抓不到我咩？</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="18111895735120608572" resname="" size-unit="char" maxwidth="0">
+				<source>放轻松，快上车！</source>
+				<target state="translated">焦らずに、この波に乗れ！</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|2360|文本内容
+放轻松，快上车！</context>
+				</context-group>
+			</trans-unit>
+			<trans-unit id="18111895735149237723" resname="" size-unit="char" maxwidth="0">
+				<source>这就是艺术！</source>
+				<target state="translated">この操作、まさに芸術！</target>
+				<context-group purpose="information">
+					<context context-type="source">&lt;Belongs&gt; Common
+&lt;Priority&gt; 
+==== Length Info ====
+&lt;Max Characters Per Line&gt; 
+&lt;Max Lines&gt; 
+&lt;Max Length&gt; 
+===== Context =====
+&lt;Description&gt; 
+&lt;Usage Scenario&gt; 
+&lt;Source Sheet&gt; 局内交流配置表.xlsx|预定义文本|2361|文本内容
+这就是艺术！</context>
+				</context-group>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

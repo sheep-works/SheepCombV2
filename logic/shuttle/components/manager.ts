@@ -1,19 +1,5 @@
-import type { ShWvData, ShWvUnit, ShWvRefTm } from '../../types/shwv.js'
+import type { ShWvData, ShWvUnit, ShWvRefTm, ExportPair, ChunkedJsonlItem, ManagedDataType } from '../../types/shwv.js'
 import type { SheepShuttle } from '../sheepShuttle.js'
-
-export interface ExportPair {
-  src: string
-  tgt: string
-}
-
-export interface ChunkedJsonlItem {
-  index: number
-  src: string
-  tgt: string
-  history: ExportPair[]
-}
-
-export type ManagedDataType = 'UNITS' | 'TMS' | 'TBS' | 'JSONL' | 'JSONL_CHUNKED' | 'CSV' | 'SPLIT_BY_FILE' | 'SPLIT_BY_LENGTH'
 
 export class ShuttleManager {
   private parent: SheepShuttle

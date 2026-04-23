@@ -1,4 +1,4 @@
-import type { ShWvData, TranslationPair, TranslationPairWithFile, ShWvFileInfo } from '../types/shwv.js'
+import type { ShWvData, TranslationPair, TranslationPairWithFile, ShWvFileInfo, ManagedDataType, ProcessorOptions } from '../types/shwv.js'
 
 import { ShuttleParser } from './components/parser.js'
 import { ShuttleProcessor } from './components/processor.js'
@@ -6,7 +6,6 @@ import { ShuttleConverter } from './components/converter.js'
 import { ShuttleAnalyzer } from './components/analyzer.js'
 import { ShuttleManager } from './components/manager.js'
 import { ShuttleBuilder } from './components/builder.js'
-import type { ManagedDataType } from './components/manager.js'
 
 /**
  * Orchestrator class for SheepShuttle data transformations and conversions.
@@ -36,10 +35,14 @@ export class SheepShuttle {
     this.builder = new ShuttleBuilder(this)
   }
 
+  public setNewData(data: ShWvData): void {
+    this.data = structuredClone(data)
+  }
+
   /**
    * Add a translation memory to the shuttle.
    */
-  public async addTms(files: { name: string, content: string | ArrayBuffer | Buffer }[]): Promise<void> {
+  public async addTms(files: { name: string, content: string | ArrayBuffer | Uint8Array }[]): Promise<void> {
     const result = await this.parser.parse(files)
     const unitsWithFile = result.units.map(u => {
       const file = result.files.find(f => u.idx >= f.start && u.idx < f.end)
@@ -51,7 +54,7 @@ export class SheepShuttle {
   /**
    * Add termbase files to the shuttle.
    */
-  public async addTbs(files: { name: string, content: string | ArrayBuffer | Buffer }[]): Promise<void> {
+  public async addTbs(files: { name: string, content: string | ArrayBuffer | Uint8Array }[]): Promise<void> {
     const result = await this.parser.parse(files)
     const unitsWithFile = result.units.map(u => {
       const file = result.files.find(f => u.idx >= f.start && u.idx < f.end)
@@ -63,7 +66,7 @@ export class SheepShuttle {
   /**
    * Parse main source files and store result in units/files.
    */
-  public async parse(files: { name: string, content: string | ArrayBuffer | Buffer }[]): Promise<void> {
+  public async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[]): Promise<void> {
     const result = await this.parser.parse(files)
     this.units = result.units
     this.files = result.files
@@ -72,8 +75,8 @@ export class SheepShuttle {
   /**
    * Process (filter) the current units.
    */
-  public process(): void {
-    this.units = this.processor.filter(this.units)
+  public process(options?: ProcessorOptions): void {
+    this.units = this.processor.filter(this.units, options)
   }
 
   /**

@@ -7,7 +7,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { ShuttleAdapter as SheepShuttle } from './shuttle.js'
 import { PATHS } from './config.js'
-import { analyzeProject } from './api.js'
+import { analyzeProject } from './pipeline.js'
 
 function ensureOutDir() {
   if (!fs.existsSync(PATHS.outDir)) {

@@ -8,11 +8,11 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
 
-const USE_DIR = 'samples'
+const USE_DIR = 'test_data'
 
 export const PATHS = {
   /** Root test directory */
-  testDir: resolve(ROOT, 'test'),
+  testDir: resolve(ROOT, USE_DIR),
 
   /** Source data for tests (references cli/data/src) */
   sampleSrcDir: resolve(ROOT, 'cli/data/src'),
@@ -21,16 +21,16 @@ export const PATHS = {
   sampleInputJson: resolve(ROOT, 'cli/data/input.json'),
 
   /** Output directory for test results */
-  testOutDir: resolve(ROOT, 'test/out'),
+  testOutDir: resolve(ROOT, `${USE_DIR}/out`),
 
   /** Actual sample files for parsing tests */
-  testSamplesDir: resolve(ROOT, `test/${USE_DIR}`),
+  testSamplesDir: resolve(ROOT, `${USE_DIR}/samples`),
 
   /** Actual TM files for parsing tests */
-  testTMsDir: resolve(ROOT, `test/${USE_DIR}/tm`),
+  testTMsDir: resolve(ROOT, `${USE_DIR}/tm`),
 
   /** Actual TB files for parsing tests */
-  testTBsDir: resolve(ROOT, `test/${USE_DIR}/tb`),
+  testTBsDir: resolve(ROOT, `${USE_DIR}/tb`),
 }
 
 /** Supported extensions for bulk parsing tests */

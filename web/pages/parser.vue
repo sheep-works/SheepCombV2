@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
  * web/pages/parser.vue
- * Port of Parser tools to the Web UI.
+ * 各種ファイル（XLIFF, TMX, Excel, DOCX等）をパースしてセグメント化するツール。
+ * SheepShuttle コンポーネントを直接使用して解析を行います。
  */
 definePageMeta({
   title: 'Parser',
@@ -11,19 +12,24 @@ definePageMeta({
 import { ref, computed } from 'vue'
 import { FileUp, Search, Download, Database, Trash2, Loader2 } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
-import { useParserStore } from '../stores/parserStore'
+import { useShuttleStore } from '../stores/shuttleStore'
 import { SheepShuttle } from '../../logic/shuttle/sheepShuttle.js'
 import type { TranslationPair } from '../../logic/types/shwv.js'
 import { FileIO } from '../utils/fileIO'
 
 
-const store = useParserStore()
+// ストアおよびコンポーネントの状態管理
+const store = useShuttleStore()
 const fileInput = ref<HTMLInputElement | null>(null)
-const isProcessing = ref(false)
-const statusMsg = ref({ text: '', type: 'info' as 'info' | 'success' | 'error' })
+const isProcessing = computed(() => store.isLoading)
+const statusMsg = computed(() => store.statusMsg)
 
+// 選択された File オブジェクトのリスト
 const selectedFiles = ref<File[]>([])
 
+/**
+ * ドラッグ&ドロップによるファイル選択のハンドリング
+ */
 const handleFileDrop = (e: DragEvent) => {
   e.preventDefault()
   if (e.dataTransfer?.files) {
@@ -31,6 +37,9 @@ const handleFileDrop = (e: DragEvent) => {
   }
 }
 
+/**
+ * ファイル選択ボタンによる選択のハンドリング
+ */
 const handleFileSelect = (e: Event) => {
   const target = e.target as HTMLInputElement
   if (target.files) {
@@ -38,48 +47,77 @@ const handleFileSelect = (e: Event) => {
   }
 }
 
+/**
+ * 選択ファイルと結果ストアのクリア
+ */
 const clearFiles = () => {
   selectedFiles.value = []
   store.clear()
-  statusMsg.value = { text: '', type: 'info' }
 }
 
+/**
+ * 選択されたファイルをパースしてストアに保存
+ * 内部で SheepShuttle インスタンスを生成して処理します
+ */
 const parseFiles = async () => {
   if (selectedFiles.value.length === 0) return
 
   try {
-    isProcessing.value = true
-    statusMsg.value = { text: '解析中...', type: 'info' }
+    store.setStatus('解析中...', 'info')
 
-    const shuttle = new SheepShuttle()
-    const files = await Promise.all(selectedFiles.value.map(async file => ({
-      name: file.name,
-      content: await file.arrayBuffer()
-    })))
-    
-    const result = await shuttle.parser.parse(files)
-    // Filter the units through processor if needed, but for raw parsing, we can just use the units
-    const filtered = shuttle.processor.filter(result.units)
+    // File オブジェクトを Shuttle が受け取れる形式に変換
+    const files = await Promise.all(selectedFiles.value.map(async file => {
+      const ext = file.name.split('.').pop()?.toLowerCase() || ''
+      const isText = ['xlf', 'xliff', 'mxliff', 'sdlxliff', 'mqxliff', 'tmx', 'tbx', 'csv', 'tsv', 'json', 'jsonl'].includes(ext)
 
-    store.setSegments(filtered)
-    statusMsg.value = { text: '解析が完了しました', type: 'success' }
+      return {
+        name: file.name,
+        content: isText ? await file.text() : await file.arrayBuffer()
+      }
+    }))
+
+    // ストア経由でパース実行
+    await store.parseFiles(files)
+
+    // プロセッサ（フィルタ等）を実行してステートを更新
+    store.process()
+
+    store.setStatus('解析が完了しました', 'success')
   } catch (e: any) {
     console.error('Parse error:', e)
-    statusMsg.value = { text: `エラー: ${e.message}`, type: 'error' }
-  } finally {
-    isProcessing.value = false
+    store.setStatus(`エラー: ${e.message}`, 'error')
   }
 }
 
+/**
+ * パース結果をファイルとしてエクスポート（ダウンロード）
+ */
 const exportResults = (format: 'json' | 'csv') => {
-  if (!store.hasSegments) return
+  if (!store.hasUnits) return
   if (format === 'json') {
-    FileIO.downloadJson(store.segments, 'parsed_results.json')
+    FileIO.downloadJson(store.units, 'parsed_results.json')
   } else {
-    const csv = FileIO.toCsv(store.segments)
+    const csv = store.getManagedData('CSV')
     FileIO.downloadCsv(csv, 'parsed_results.csv')
   }
 }
+
+// --- フィルタ設定 ---
+const filterOptions = ref({
+  toFilterDuplicate: false,
+  toFilterDnt: null as 'digit' | 'eng' | 'digit eng' | null,
+  toFilterLock: false
+})
+
+/**
+ * フィルタを適用してデータを再構成
+ */
+const applyFilters = () => {
+  if (!store.hasUnits) return
+  store.process(filterOptions.value)
+  store.setStatus('フィルタを適用しました', 'success')
+}
+
 
 
 </script>
@@ -118,6 +156,36 @@ const exportResults = (format: 'json' | 'csv') => {
             <Loader2 v-if="isProcessing" class="spin" :size="18" />
             <span v-else>解析を実行</span>
           </button>
+
+          <!-- フィルタ設定エリア -->
+          <div class="filter-settings" v-if="store.hasUnits">
+            <div class="filter-divider"></div>
+            <h3 class="filter-title">フィルタ適用</h3>
+
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="filterOptions.toFilterDuplicate" />
+              <span>重複行を削除</span>
+            </label>
+
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="filterOptions.toFilterLock" />
+              <span>LOCKED行を削除</span>
+            </label>
+
+            <div class="select-group">
+              <span class="select-label">DNTフィルタ:</span>
+              <select v-model="filterOptions.toFilterDnt" class="select-sm">
+                <option :value="null">なし</option>
+                <option value="digit">数字・記号のみ</option>
+                <option value="eng">英字・記号のみ</option>
+                <option value="digit eng">英数字・記号のみ</option>
+              </select>
+            </div>
+
+            <button class="btn-outline-action" @click="applyFilters">
+              フィルタを適用
+            </button>
+          </div>
         </div>
 
         <div class="status-msg" v-if="statusMsg.text" :class="statusMsg.type">
@@ -131,11 +199,11 @@ const exportResults = (format: 'json' | 'csv') => {
           <div class="card-header space-between">
             <div class="title-group">
               <h2>解析結果</h2>
-              <span class="badge" v-if="store.hasSegments">
-                {{ store.segmentCount }} segments
+              <span class="badge" v-if="store.hasUnits">
+                {{ store.unitCount }} segments
               </span>
             </div>
-            <div class="export-actions" v-if="store.hasSegments">
+            <div class="export-actions" v-if="store.hasUnits">
               <button class="btn-outline" @click="exportResults('csv')">
                 <Download :size="14" /> CSV
               </button>
@@ -145,22 +213,22 @@ const exportResults = (format: 'json' | 'csv') => {
             </div>
           </div>
 
-          <div class="table-container" v-if="store.hasSegments">
+          <div class="table-container" v-if="store.hasUnits">
             <table>
               <thead>
                 <tr>
                   <th class="w-10">#</th>
                   <th>Source</th>
                   <th>Target</th>
-                  <th v-if="store.segments.some((s: TranslationPair) => s.note)">Note</th>
+                  <th v-if="store.units.some((s: TranslationPair) => s.note)">Note</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(seg, idx) in store.segments" :key="idx">
-                  <td class="idx">{{ idx + 1 }}</td>
+                <tr v-for="(seg, idx) in store.units" :key="idx">
+                  <td class="idx">{{ seg.idx + 1 }}</td>
                   <td class="text">{{ seg.src }}</td>
                   <td class="text">{{ seg.tgt }}</td>
-                  <td class="note" v-if="store.segments.some((s: TranslationPair) => s.note)">
+                  <td class="note" v-if="store.units.some((s: TranslationPair) => s.note)">
                     {{ seg.note }}
                   </td>
                 </tr>
@@ -195,80 +263,8 @@ const exportResults = (format: 'json' | 'csv') => {
   }
 }
 
-/* Cards */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  display: flex;
-  flex-direction: column;
-  transition: var(--transition);
-}
-
-.card:hover {
-  border-color: var(--border-hover);
-}
-
-.full-height {
-  min-height: calc(100vh - 140px);
-}
-
-.card-header {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.card-header.space-between {
-  justify-content: space-between;
-}
-
-.card-header h2 {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-}
-
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  position: sticky;
-  top: 84px;
-  align-self: start;
-}
-
-/* Upload */
 .upload-section {
   padding: 16px 20px;
-}
-
-.drop-zone {
-  border: 2px dashed var(--border);
-  border-radius: var(--radius-sm);
-  padding: 28px;
-  text-align: center;
-  cursor: pointer;
-  transition: var(--transition);
-  color: var(--text-secondary);
-}
-
-.drop-zone:hover {
-  border-color: var(--accent);
-  background: var(--accent-glow);
-}
-
-.drop-icon {
-  margin-bottom: 8px;
-  opacity: 0.5;
-}
-
-.drop-zone p {
-  font-size: 0.8rem;
 }
 
 .file-count {
@@ -316,51 +312,11 @@ const exportResults = (format: 'json' | 'csv') => {
   opacity: 1;
 }
 
-/* Actions */
 .actions {
   padding: 0 20px 18px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: var(--radius-sm);
-  border: none;
-  font-weight: 600;
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: var(--transition);
-  font-family: 'Inter', sans-serif;
-}
-
-.btn.primary {
-  background: var(--accent);
-  color: #fff;
-}
-
-.btn.primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  box-shadow: var(--shadow-glow);
-}
-
-.btn.warning {
-  background: var(--warning);
-  color: #000;
-}
-
-.btn.warning:hover:not(:disabled) {
-  background: #fbbf24;
-}
-
-.btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
 }
 
 .btn-outline-dashed {
@@ -379,35 +335,6 @@ const exportResults = (format: 'json' | 'csv') => {
   font-family: 'Inter', sans-serif;
 }
 
-/* Status */
-.status-msg {
-  margin: 0 20px 16px;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 0.78rem;
-  font-weight: 500;
-}
-
-.status-msg.info {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.status-msg.success {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success);
-}
-
-.status-msg.error {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--error);
-}
-
-.card.disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
 .hint-text {
   font-size: 0.75rem;
   color: var(--text-muted);
@@ -415,20 +342,10 @@ const exportResults = (format: 'json' | 'csv') => {
   margin-bottom: 10px;
 }
 
-/* Results */
 .title-group {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.badge {
-  font-size: 0.68rem;
-  padding: 2px 10px;
-  background: var(--bg-primary);
-  border-radius: var(--radius-full);
-  color: var(--text-muted);
-  font-weight: 600;
 }
 
 .export-actions {
@@ -436,28 +353,127 @@ const exportResults = (format: 'json' | 'csv') => {
   gap: 6px;
 }
 
-.btn-outline {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  padding: 4px 12px;
-  border-radius: var(--radius-xs);
-  font-size: 0.72rem;
-  cursor: pointer;
-  transition: var(--transition);
-  font-family: 'Inter', sans-serif;
-}
-
-.btn-outline:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 .table-container {
   flex: 1;
   overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+th,
+td {
+  padding: 12px 20px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+td.idx {
+  color: var(--text-muted);
+  font-family: 'Inter', monospace;
+  font-size: 0.75rem;
+}
+
+td.text {
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+td.note {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+.w-10 {
+  width: 10%;
+}
+
+/* Filters UI */
+.filter-settings {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.filter-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.checkbox-label input {
+  accent-color: var(--accent);
+}
+
+.select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.select-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.select-sm {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  padding: 6px;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.select-sm:focus {
+  border-color: var(--accent);
+}
+
+.btn-outline-action {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-outline-action:hover {
+  background: var(--accent-glow);
 }
 </style>
