@@ -1,10 +1,9 @@
-import type { TranslationPair } from '../../types/shwv.js'
+import type { TranslationPair } from '../../../types/shwv.js'
 
 /**
- * JSON and JSONL to TranslationPair converter.
- * Optimized for ShWvData.
+ * JSON and JSONL to TranslationPair parser.
  */
-export async function json2Pairs(content: string, startIdx: number): Promise<TranslationPair[]> {
+export async function parseJson(content: string, startIdx: number): Promise<TranslationPair[]> {
   const units: TranslationPair[] = []
   let currentIdx = startIdx
 
@@ -27,7 +26,7 @@ export async function json2Pairs(content: string, startIdx: number): Promise<Tra
   return units
 }
 
-export async function jsonl2Pairs(content: string, startIdx: number): Promise<TranslationPair[]> {
+export async function parseJsonl(content: string, startIdx: number): Promise<TranslationPair[]> {
   const units: TranslationPair[] = []
   let currentIdx = startIdx
   const lines = content.split('\n')

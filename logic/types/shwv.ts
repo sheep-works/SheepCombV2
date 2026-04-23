@@ -9,6 +9,10 @@ export interface TranslationPair {
   isSub?: boolean
 }
 
+export interface TranslationPairWithFile extends TranslationPair {
+  file: string
+}
+
 export interface ShWvFileInfo {
   name: string
   start: number

@@ -12,7 +12,8 @@ import { ref, computed } from 'vue'
 import { FileUp, Search, Download, Database, Trash2, Loader2 } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
 import { useParserStore } from '../stores/parserStore'
-import { SimpleParser } from '../../logic/simple/parsers.js'
+import { SheepShuttle } from '../../logic/shuttle/sheepShuttle.js'
+import type { TranslationPair } from '../../logic/types/shwv.js'
 import { FileIO } from '../utils/fileIO'
 
 
@@ -50,14 +51,17 @@ const parseFiles = async () => {
     isProcessing.value = true
     statusMsg.value = { text: '解析中...', type: 'info' }
 
-    const results = []
-    for (const file of selectedFiles.value) {
-      const buffer = await file.arrayBuffer()
-      const segments = await SimpleParser.parse(buffer, file.name)
-      results.push(...segments)
-    }
+    const shuttle = new SheepShuttle()
+    const files = await Promise.all(selectedFiles.value.map(async file => ({
+      name: file.name,
+      content: await file.arrayBuffer()
+    })))
+    
+    const result = await shuttle.parser.parse(files)
+    // Filter the units through processor if needed, but for raw parsing, we can just use the units
+    const filtered = shuttle.processor.filter(result.units)
 
-    store.setSegments(results)
+    store.setSegments(filtered)
     statusMsg.value = { text: '解析が完了しました', type: 'success' }
   } catch (e: any) {
     console.error('Parse error:', e)
@@ -77,11 +81,7 @@ const exportResults = (format: 'json' | 'csv') => {
   }
 }
 
-interface Segment {
-  src: string
-  tgt: string
-  note?: string
-}
+
 </script>
 
 <template>
@@ -152,7 +152,7 @@ interface Segment {
                   <th class="w-10">#</th>
                   <th>Source</th>
                   <th>Target</th>
-                  <th v-if="store.segments.some((s: Segment) => s.note)">Note</th>
+                  <th v-if="store.segments.some((s: TranslationPair) => s.note)">Note</th>
                 </tr>
               </thead>
               <tbody>
@@ -160,7 +160,7 @@ interface Segment {
                   <td class="idx">{{ idx + 1 }}</td>
                   <td class="text">{{ seg.src }}</td>
                   <td class="text">{{ seg.tgt }}</td>
-                  <td class="note" v-if="store.segments.some((s: Segment) => s.note)">
+                  <td class="note" v-if="store.segments.some((s: TranslationPair) => s.note)">
                     {{ seg.note }}
                   </td>
                 </tr>

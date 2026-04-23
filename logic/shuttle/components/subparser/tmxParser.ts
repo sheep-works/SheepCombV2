@@ -1,11 +1,9 @@
-import type { TranslationPair } from '../../types/shwv.js'
+import type { TranslationPair } from '../../../types/shwv.js'
 
 /**
- * TMX to TranslationPair converter.
- * Optimized for ShWvData.
- * Uses DOMParser.
+ * TMX to TranslationPair parser.
  */
-export async function tmx2Pairs(content: string, startIdx: number): Promise<TranslationPair[]> {
+export async function parseTmx(content: string, startIdx: number): Promise<TranslationPair[]> {
   const parser = new DOMParser()
   const doc = parser.parseFromString(content, 'application/xml')
   const units: TranslationPair[] = []

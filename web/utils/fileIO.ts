@@ -1,3 +1,5 @@
+import type { TranslationPair } from '../../logic/types/shwv.js'
+
 /**
  * FileIO utility class
  * Provides a unified interface for file operations that works both in
@@ -64,9 +66,9 @@ export class FileIO {
   }
  
   /**
-   * Convert Segment array to CSV string
+   * Convert TranslationPair array to CSV string
    */
-  static toCsv(segments: any[]): string {
+  static toCsv(segments: TranslationPair[]): string {
     const header = 'Source,Target,Note'
     const rows = segments.map(s => {
       // Escape double quotes by doubling them

@@ -1,12 +1,12 @@
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Segment } from '../../logic/simple/parsers.js'
+import type { TranslationPair } from '../../logic/types/shwv.js'
 
 
 export const useParserStore = defineStore('parser', () => {
   // --- State ---
-  const segments = ref<Segment[]>([])
+  const segments = ref<TranslationPair[]>([])
   const srcFiles = ref<File[]>([])
   const tmFiles = ref<File[]>([])
   const isMatched = ref(false)
@@ -22,7 +22,7 @@ export const useParserStore = defineStore('parser', () => {
   const hasSrcFiles = computed(() => srcFiles.value.length > 0)
 
   // --- Actions ---
-  function setSegments(newSegments: Segment[]) {
+  function setSegments(newSegments: TranslationPair[]) {
     segments.value = newSegments
   }
 

@@ -10,8 +10,9 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "cli": "tsx --tsconfig tsconfig.cli.json cli/index.ts",
+    "verify": "tsx --tsconfig tsconfig.cli.json verify_pipeline.ts",
     "test": "vitest",
-    "test:simple": "vitest test/logic_parser.test.ts",
+    "test:parse": "vitest test/shuttle_parser.test.ts",
     "test:api": "vitest test/cli_api.test.ts"
   },
   "dependencies": {

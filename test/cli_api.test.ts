@@ -1,18 +1,27 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeAll } from 'vitest'
 import * as fs from 'node:fs'
 import { parseFile } from '../cli/api.js'
+import { DOMParser } from '@xmldom/xmldom'
 
 vi.mock('node:fs')
 
 describe('CLI: API (api.ts)', () => {
-  it('should route to XLIFF parser for .xlf extensions', async () => {
+  beforeAll(() => {
+    // Ensure DOMParser is available globally for the parser logic called within api.ts
+    if (!(globalThis as any).DOMParser) {
+      (globalThis as any).DOMParser = DOMParser
+    }
+  })
+
+  it('should parse XLIFF file through cli/api', async () => {
     // Mock fs.existsSync and fs.readFileSync
     vi.mocked(fs.existsSync).mockReturnValue(true)
-    vi.mocked(fs.readFileSync).mockReturnValue('<xliff><trans-unit id="1"><source>Src</source></trans-unit></xliff>')
+    vi.mocked(fs.readFileSync).mockReturnValue('<xliff version="1.2"><body><trans-unit id="1"><source>Src</source><target>Tgt</target></trans-unit></body></xliff>')
 
-    const segments = await parseFile('dummy.xlf')
-    expect(segments).toHaveLength(1)
-    expect(segments[0].src).toBe('Src')
+    const units = await parseFile('dummy.xlf')
+    expect(units).toHaveLength(1)
+    expect(units[0].src).toBe('Src')
+    expect(units[0].tgt).toBe('Tgt')
   })
 
   it('should throw error if file not found', async () => {

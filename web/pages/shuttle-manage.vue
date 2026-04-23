@@ -13,6 +13,7 @@ import JsonViewer from '../components/JsonViewer.vue'
 
 
 const store = useShwvStore()
+const shuttle = new SheepShuttle()
 const fileInput = ref<HTMLInputElement | null>(null)
 const isProcessing = ref(false)
 const statusMsg = ref({ text: '', type: 'info' as 'info' | 'success' | 'error' })
@@ -53,35 +54,35 @@ async function loadFile(file: File) {
 // --- Export Actions ---
 function doExportJson() {
   if (!store.data) return
-  const pairs = SheepShuttle.exportToJson(store.data)
+  const pairs = shuttle.manager.exportToJson(store.data)
   FileIO.downloadJson(pairs, 'export.json')
   statusMsg.value = { text: 'JSON をダウンロードしました', type: 'success' }
 }
 
 function doExportCsv() {
   if (!store.data) return
-  const csv = SheepShuttle.exportToCsv(store.data)
+  const csv = shuttle.manager.exportToCsv(store.data)
   FileIO.downloadCsv(csv, 'export.csv')
   statusMsg.value = { text: 'CSV をダウンロードしました', type: 'success' }
 }
 
 function doExportTm() {
   if (!store.data) return
-  const tm = SheepShuttle.exportAsTm(store.data)
+  const tm = shuttle.manager.exportAsTm(store.data)
   FileIO.downloadJson(tm, 'export_tm.json')
   statusMsg.value = { text: 'TM をダウンロードしました', type: 'success' }
 }
 
 function doExportTb() {
   if (!store.data) return
-  const tb = SheepShuttle.exportAsTb(store.data)
+  const tb = shuttle.manager.exportAsTb(store.data)
   FileIO.downloadJson(tb, 'export_tb.json')
   statusMsg.value = { text: 'TB をダウンロードしました', type: 'success' }
 }
 
 function doSplitByFile() {
   if (!store.data) return
-  const result = SheepShuttle.splitByFile(store.data)
+  const result = shuttle.manager.splitByFile(store.data)
   result.forEach((pairs, name) => {
     FileIO.downloadJson(pairs, name)
   })
@@ -90,7 +91,7 @@ function doSplitByFile() {
 
 function doSplitByLength() {
   if (!store.data) return
-  const chunks = SheepShuttle.splitByLength(store.data, splitLength.value)
+  const chunks = shuttle.manager.splitByLength(store.data, splitLength.value)
   chunks.forEach((chunk, i) => {
     FileIO.downloadJson(chunk, `chunk_${String(i).padStart(3, '0')}.json`)
   })
@@ -99,14 +100,14 @@ function doSplitByLength() {
 
 function doExportJsonl() {
   if (!store.data) return
-  const jsonl = SheepShuttle.exportToJsonl(store.data)
+  const jsonl = shuttle.manager.exportToJsonl(store.data)
   FileIO.download(jsonl, 'export.jsonl')
   statusMsg.value = { text: 'JSONL を出力しました', type: 'success' }
 }
 
 function doChunkJsonl() {
   if (!store.data) return
-  const chunkedJsonl = SheepShuttle.chunkJsonl(store.data, chunkLength.value)
+  const chunkedJsonl = shuttle.manager.chunkJsonl(store.data, chunkLength.value)
   FileIO.download(chunkedJsonl, 'chunked.jsonl')
   statusMsg.value = { text: '分割 JSONL を出力しました', type: 'success' }
 }
@@ -118,7 +119,7 @@ async function doUpdateFromJsonl(e: Event) {
 
   try {
     const text = await file.text()
-    const updated = SheepShuttle.updateFromJsonl(store.data, text)
+    const updated = shuttle.manager.updateFromJsonl(store.data, text)
     store.data.body.units = updated
     statusMsg.value = { text: 'JSONL から更新しました', type: 'success' }
   } catch (e: any) {

@@ -4,17 +4,9 @@
  */
 import * as fs from 'node:fs'
 import { DOMParser } from '@xmldom/xmldom'
-import { 
-  parseXliff, 
-  parseTmx, 
-  parseXlsx, 
-  parseDocx, 
-  type Segment 
-} from '../logic/simple/parsers.js'
-
 import * as path from 'node:path'
 import { SheepShuttle } from '../logic/shuttle/sheepShuttle.js'
-import type { ShWvData } from '../logic/types/shwv.js'
+import type { ShWvData, TranslationPair } from '../logic/types/shwv.js'
 
 import { fileURLToPath } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
@@ -37,7 +29,7 @@ function ensureShim() {
  * @param filePath 対象のファイルパス
  * @returns 解析されたセグメントの配列
  */
-export async function parseFile(filePath: string): Promise<Segment[]> {
+export async function parseFile(filePath: string): Promise<TranslationPair[]> {
   ensureShim()
   
   if (!fs.existsSync(filePath)) {
@@ -45,24 +37,14 @@ export async function parseFile(filePath: string): Promise<Segment[]> {
   }
 
   const ext = filePath.split('.').pop()?.toLowerCase() ?? ''
+  
+  const content = (['xlsx', 'docx'].includes(ext))
+    ? fs.readFileSync(filePath)
+    : fs.readFileSync(filePath, 'utf-8')
 
-  if (['xlf', 'xliff', 'mxliff', 'mqxliff', 'sdlxliff'].includes(ext)) {
-    return parseXliff(fs.readFileSync(filePath, 'utf-8'))
-  }
-  
-  if (ext === 'tmx') {
-    return parseTmx(fs.readFileSync(filePath, 'utf-8'))
-  }
-  
-  if (ext === 'xlsx') {
-    return parseXlsx(fs.readFileSync(filePath))
-  }
-  
-  if (ext === 'docx') {
-    return parseDocx(fs.readFileSync(filePath))
-  }
-
-  return []
+  const shuttle = new SheepShuttle()
+  const result = await shuttle.parser.parse([{ name: path.basename(filePath), content }])
+  return result.units
 }
 
 /**
@@ -75,7 +57,10 @@ export async function parseFiles(filePaths: string[]) {
       ? fs.readFileSync(p)
       : fs.readFileSync(p, 'utf-8')
   }))
-  return await SheepShuttle.fromFiles(files)
+  const shuttle = new SheepShuttle()
+  const result = await shuttle.parser.parse(files)
+  const filtered = shuttle.processor.filter(result.units)
+  return shuttle.converter.fromUnits(filtered, result.files)
 }
 
 /**
@@ -133,20 +118,21 @@ export async function analyzeProject(
   const require = createRequire(import.meta.url)
   const { analyze_all } = require(wasmPath)
   
-  await SheepShuttle.analyze(data, memories, termbase, analyze_all, legacy)
+  const shuttle = new SheepShuttle()
+  await shuttle.analyzer.analyze(data, memories, termbase, analyze_all, legacy)
 }
 
 /**
  * 解析結果を JSON ファイルとして保存します。
  */
-export function saveAsJson(segments: Segment[], outputPath: string): void {
+export function saveAsJson(segments: TranslationPair[], outputPath: string): void {
   fs.writeFileSync(outputPath, JSON.stringify(segments, null, 2), 'utf-8')
 }
 
 /**
  * 解析結果を CSV ファイルとして保存します（Excel 用 BOM 付き）。
  */
-export function saveAsCsv(segments: Segment[], outputPath: string): void {
+export function saveAsCsv(segments: TranslationPair[], outputPath: string): void {
   const header = 'src,tgt,note'
   const rows = segments.map(s => {
     const src = `"${(s.src ?? '').replace(/"/g, '""')}"`

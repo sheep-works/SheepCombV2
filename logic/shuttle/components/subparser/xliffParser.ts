@@ -1,11 +1,9 @@
-import type { TranslationPair } from '../../types/shwv.js'
+import type { TranslationPair } from '../../../types/shwv.js'
 
 /**
- * XLIFF (and siblings) to TranslationPair converter.
- * Optimized for ShWvData with multi-line splitting and placeholder support.
- * Uses DOMParser (shared via global shim in Node).
+ * XLIFF (and siblings) to TranslationPair parser.
  */
-export async function xlf2Pairs(content: string, startIdx: number): Promise<TranslationPair[]> {
+export async function parseXliff(content: string, startIdx: number): Promise<TranslationPair[]> {
   const parser = new DOMParser()
   const doc = parser.parseFromString(content, 'application/xml')
   const units: TranslationPair[] = []
@@ -13,18 +11,18 @@ export async function xlf2Pairs(content: string, startIdx: number): Promise<Tran
 
   const transUnits = doc.getElementsByTagName('trans-unit')
   for (let i = 0; i < transUnits.length; i++) {
-    const tu = transUnits[i]
-    const sourceNode = tu.getElementsByTagName('source')[0]
-    const targetNode = tu.getElementsByTagName('target')[0]
-    const noteNode = tu.getElementsByTagName('context')[0] // Common for memoQ/others or fallback
+    const tu = transUnits[i]! as Element
+    const sourceNode = tu.getElementsByTagName('source')[0]! as Element
+    const targetNode = tu.getElementsByTagName('target')[0]! as Element
+    const noteNode = tu.getElementsByTagName('context')[0]! as Element 
 
     if (!sourceNode) continue
 
-    const src = sourceNode.textContent || ''
-    const tgt = targetNode ? (targetNode.textContent || '') : ''
+    const src = sourceNode.innerHTML || sourceNode.textContent || ''
+    const tgt = targetNode ? (targetNode.innerHTML || targetNode.textContent || '') : ''
     let note = noteNode ? (noteNode.textContent || '') : ''
 
-    // Advanced: split by newline if present (SheepShuttle specific logic)
+    // Advanced: split by newline if present
     const srcParts = src.split('\n')
     let tgtParts = tgt.split('\n')
 
@@ -41,8 +39,8 @@ export async function xlf2Pairs(content: string, startIdx: number): Promise<Tran
         const isLastNode = (k === srcParts.length - 1)
         const unit: TranslationPair = {
           idx: currentIdx,
-          src: srcParts[k],
-          tgt: tgtParts[k]
+          src: srcParts[k] || "",
+          tgt: tgtParts[k] || ""
         }
         if (!isLastNode) unit.isSub = true
         if (note && k === 0) unit.note = note

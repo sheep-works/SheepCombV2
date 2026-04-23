@@ -35,6 +35,7 @@ export default defineNuxtConfig({
         'lucide-vue-next',
         'jszip',
         'xlsx',
+        'difflib-ts',
       ]
     }
   },

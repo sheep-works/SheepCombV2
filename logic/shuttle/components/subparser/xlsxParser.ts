@@ -1,14 +1,13 @@
 import * as xlsx from 'xlsx'
-import type { TranslationPair } from '../../types/shwv.js'
+import type { TranslationPair } from '../../../types/shwv.js'
 
 /**
- * XLSX/CSV to TranslationPair converter.
- * Optimized for ShWvData.
- * Uses SheetJS.
+ * XLSX/CSV to TranslationPair parser.
  */
-export async function xlsx2Pairs(content: ArrayBuffer | Buffer, startIdx: number): Promise<TranslationPair[]> {
+export async function parseXlsx(content: string | ArrayBuffer | Buffer, startIdx: number): Promise<TranslationPair[]> {
   const units: TranslationPair[] = []
-  const workbook = xlsx.read(content, { type: (content instanceof Buffer ? 'buffer' : 'array') })
+  const type = typeof content === 'string' ? 'string' : (content instanceof Buffer ? 'buffer' : 'array')
+  const workbook = xlsx.read(content, { type })
   const sheetName = workbook.SheetNames[0]
   if (!sheetName) {
     throw new Error('No sheets found in the workbook.')
@@ -41,6 +40,6 @@ export async function xlsx2Pairs(content: ArrayBuffer | Buffer, startIdx: number
   return units
 }
 
-export async function csv2Pairs(content: ArrayBuffer | Buffer, startIdx: number): Promise<TranslationPair[]> {
-  return xlsx2Pairs(content, startIdx)
+export async function parseCsv(content: string | ArrayBuffer | Buffer, startIdx: number): Promise<TranslationPair[]> {
+  return parseXlsx(content, startIdx)
 }

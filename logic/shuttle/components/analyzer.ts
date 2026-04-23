@@ -1,8 +1,6 @@
 import { SequenceMatcher } from 'difflib-ts';
-import type {
-  ShWvUnit,
-  ShWvRefTm
-} from '../types/shwv.js'
+import type { ShWvData, ShWvUnit, ShWvRefTm, TranslationPair, TranslationPairWithFile } from '../../types/shwv.js'
+import type { SheepShuttle } from '../sheepShuttle.js'
 
 /**
  * Results from WASM analyze_all
@@ -13,53 +11,26 @@ export interface WasmAnalyzeResult {
   g: number[] // Glossary (TB) indices
 }
 
-export class SheepShuttleDiffer {
+export class ShuttleAnalyzer {
+  private parent: SheepShuttle
   private static matcher = new SequenceMatcher(null, '', '')
 
-  /**
-   * Generates diff HTML using opcodes from SequenceMatcher
-   */
-  static applyOpcodes(src1: string, src2: string, opcodes: [string, number, number, number, number][]): string {
-    let result = ''
-    for (const [tag, i1, i2, j1, j2] of opcodes) {
-      if (tag === 'equal') {
-        result += src2.substring(j1, j2)
-      } else if (tag === 'replace') {
-        result += `[del]${src1.substring(i1, i2)}[/del][ins]${src2.substring(j1, j2)}[/ins]`
-      } else if (tag === 'delete') {
-        result += `[del]${src1.substring(i1, i2)}[/del]`
-      } else if (tag === 'insert') {
-        result += `[ins]${src2.substring(j1, j2)}[/ins]`
-      }
-    }
-
-    // Escape HTML first, then restore tags for del/ins
-    result = result.replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-
-    return result.replace(/\[ins\]/g, '<ins>')
-      .replace(/\[\/ins\]/g, '</ins>')
-      .replace(/\[del\]/g, '<del>')
-      .replace(/\[\/del\]/g, '</del>')
+  constructor(parent: SheepShuttle) {
+    this.parent = parent
   }
 
   /**
-   * Orchestrates the analysis of units using WASM candidate search and precise diffing.
-   * 
-   * @param units Active units to analyze
-   * @param memories External TM memories
-   * @param termbase External/Internal termbase
-   * @param wasmAnalyzeAll Function provided by sheep-spindle WASM
-   * @param legacy If true, uses legacy substring-based matching for TB
+   * Orchestrates TM and TB analysis for a data object.
+   * Utilizes WASM logic under the hood via SheepShuttleDiffer.
    */
-  static async analyze(
-    units: ShWvUnit[],
-    memories: any[],
-    termbase: any[],
+  async analyze(
+    data: ShWvData,
+    memories: TranslationPairWithFile[],
+    termbase: TranslationPairWithFile[],
     wasmAnalyzeAll: (tmList: string[], textList: string[], tbList: string[], minRatio: number, counts: number) => WasmAnalyzeResult[],
     legacy: boolean = false
-  ) {
+  ): Promise<void> {
+    const units = data.body.units
     const tmList = memories.map(m => m.src)
     const textList = units.map(u => u.src)
     const tbList = termbase.map(t => t.src)
@@ -104,9 +75,10 @@ export class SheepShuttleDiffer {
       const allSources = [...tmSources, ...internalSources]
 
       // Deduplicate by src + tgt
-      const uniqueSources: typeof allSources = []
+      const uniqueSources: TranslationPair[] = []
       const seenTm = new Set<string>()
       for (const s of allSources) {
+        if (!s) { continue }
         const key = s.src + '|||' + s.tgt
         if (!seenTm.has(key)) {
           seenTm.add(key)
@@ -126,7 +98,7 @@ export class SheepShuttleDiffer {
           const tb = termbase[tbIdx]
           if (!tb) continue
 
-          const tbTarget = tb.tgt || tb.pre || ''
+          const tbTarget = tb.tgt || ''
           let existingEntry = currentUnit.ref.tb.find(t => t.src === tb.src)
 
           if (existingEntry) {
@@ -145,8 +117,9 @@ export class SheepShuttleDiffer {
         // Legacy substring-based matching
         for (let j = 0; j < termbase.length; j++) {
           const tb = termbase[j]
+          if (!tb) continue
           if (tb.src && currentUnit.src.includes(tb.src)) {
-            const tbTarget = tb.tgt || tb.pre || ''
+            const tbTarget = tb.tgt || ''
             let existingEntry = currentUnit.ref.tb.find(t => t.src === tb.src)
 
             if (existingEntry) {
@@ -188,28 +161,27 @@ export class SheepShuttleDiffer {
   /**
    * Refined diff calculation for WASM candidates
    */
-  static computeDiffsForWasm(srcs: { idx: number, src: string, tgt: string, file?: string }[], crtSrc: string): ShWvRefTm[] {
+  private computeDiffsForWasm(srcs: TranslationPair[], crtSrc: string): ShWvRefTm[] {
     let results: { tm: ShWvRefTm; opcodes: [string, number, number, number, number][] }[] = []
 
-    this.matcher.setSeq2(crtSrc)
+    ShuttleAnalyzer.matcher.setSeq2(crtSrc)
 
     for (const s of srcs) {
-      this.matcher.setSeq1(s.src)
-      const ratio = this.matcher.ratio()
-      const opcodes = this.matcher.getOpcodes() as [string, number, number, number, number][]
+      ShuttleAnalyzer.matcher.setSeq1(s.src)
+      const ratio = ShuttleAnalyzer.matcher.ratio()
+      const opcodes = ShuttleAnalyzer.matcher.getOpcodes() as [string, number, number, number, number][]
 
       const tm: ShWvRefTm = {
         idx: s.idx,
         src: s.src,
         tgt: s.tgt,
         ratio: ratio
-        // diff will be added below
       }
 
       results.push({ tm, opcodes })
     }
 
-    this.matcher.setSeqs('', '')
+    ShuttleAnalyzer.matcher.setSeqs('', '')
 
     // Sort by ratio to ensure best matches are first
     results.sort((a, b) => b.tm.ratio - a.tm.ratio)
@@ -221,5 +193,33 @@ export class SheepShuttleDiffer {
       match.tm.ratio = Math.round(match.tm.ratio * 100)
       return match.tm
     })
+  }
+
+  /**
+   * Generates diff HTML using opcodes from SequenceMatcher
+   */
+  private applyOpcodes(src1: string, src2: string, opcodes: [string, number, number, number, number][]): string {
+    let result = ''
+    for (const [tag, i1, i2, j1, j2] of opcodes) {
+      if (tag === 'equal') {
+        result += src2.substring(j1, j2)
+      } else if (tag === 'replace') {
+        result += `[del]${src1.substring(i1, i2)}[/del][ins]${src2.substring(j1, j2)}[/ins]`
+      } else if (tag === 'delete') {
+        result += `[del]${src1.substring(i1, i2)}[/del]`
+      } else if (tag === 'insert') {
+        result += `[ins]${src2.substring(j1, j2)}[/ins]`
+      }
+    }
+
+    // Escape HTML first, then restore tags for del/ins
+    result = result.replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+
+    return result.replace(/\[ins\]/g, '<ins>')
+      .replace(/\[\/ins\]/g, '</ins>')
+      .replace(/\[del\]/g, '<del>')
+      .replace(/\[\/del\]/g, '</del>')
   }
 }
