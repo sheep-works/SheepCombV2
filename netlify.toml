@@ -1,0 +1,23 @@
+[build]
+  # ビルドコマンド
+  command = "npm run generate"
+  # 公開ディレクトリ (Nuxt 3 の generate 出力先)
+  publish = ".output/public"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA ルーティングのためのリダイレクト設定
+# 存在しないパスへのアクセスをすべて index.html に向けることで、
+# ブラウザ側でのルーティングを可能にします。
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# WASM ファイルの配信設定（念のため）
+[[headers]]
+  for = "*.wasm"
+  [headers.values]
+    Content-Type = "application/wasm"
+    Cache-Control = "public, max-age=31536000, immutable"

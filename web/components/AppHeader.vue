@@ -24,45 +24,64 @@ const currentTitle = computed(() => {
     </div>
 
     <nav class="header-nav">
-      <NuxtLink to="/parser" class="nav-link" active-class="active">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <ellipse cx="12" cy="5" rx="9" ry="3" />
-          <path d="M3 5V19A9 3 0 0 0 21 19V5" />
-          <path d="M3 12A9 3 0 0 0 21 12" />
-        </svg>
-        <span>パーサー</span>
-      </NuxtLink>
-      <NuxtLink to="/shuttle-parse" class="nav-link" active-class="active">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-        </svg>
-        <span>構造化</span>
-      </NuxtLink>
-      <NuxtLink to="/shuttle-analyze" class="nav-link" active-class="active">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-        </svg>
-        <span>解析</span>
-      </NuxtLink>
-      <NuxtLink to="/shuttle-manage" class="nav-link" active-class="active">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <path d="m18 8 4 4-4 4" />
-          <path d="m6 8-4 4 4 4" />
-          <path d="m14.5 4-5 16" />
-        </svg>
-        <span>管理</span>
-      </NuxtLink>
-      <NuxtLink to="/api" class="nav-link" active-class="active">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
-        </svg>
-        <span>API</span>
-      </NuxtLink>
+      <div class="nav-group">
+        <NuxtLink to="/parser" class="nav-link" active-class="active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="12" cy="5" rx="9" ry="3" />
+            <path d="M3 5V19A9 3 0 0 0 21 19V5" />
+            <path d="M3 12A9 3 0 0 0 21 12" />
+          </svg>
+          <span>パーサー</span>
+        </NuxtLink>
+        <NuxtLink to="/shuttle-parse" class="nav-link" active-class="active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+          <span>構造化</span>
+        </NuxtLink>
+        <NuxtLink to="/shuttle-analyze" class="nav-link" active-class="active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+          <span>解析</span>
+        </NuxtLink>
+        <NuxtLink to="/shuttle-manage" class="nav-link" active-class="active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="m18 8 4 4-4 4" />
+            <path d="m6 8-4 4 4 4" />
+            <path d="m14.5 4-5 16" />
+          </svg>
+          <span>管理</span>
+        </NuxtLink>
+        <NuxtLink to="/api" class="nav-link" active-class="active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+          </svg>
+          <span>API</span>
+        </NuxtLink>
+      </div>
+
+      <div class="nav-spacer"></div>
+
+      <div class="nav-group">
+        <NuxtLink to="/batch" class="nav-link" active-class="active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+            <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+            <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+            <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+            <line x1="12" y1="8" x2="12" y2="16" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+          </svg>
+          <span>一括差分</span>
+        </NuxtLink>
+      </div>
     </nav>
 
     <div class="header-right">
@@ -134,10 +153,22 @@ const currentTitle = computed(() => {
 /* Navigation */
 .header-nav {
   display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  padding: 0 40px;
+}
+
+.nav-group {
+  display: flex;
   gap: 2px;
   background: var(--bg-primary);
   border-radius: var(--radius-sm);
   padding: 3px;
+}
+
+.nav-spacer {
+  flex: 1;
 }
 
 .nav-link {
