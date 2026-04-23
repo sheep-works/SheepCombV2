@@ -24,7 +24,6 @@ Thumbs.db
 
 # WASM build artifacts (keep pkg-web in public/)
 target/
-pkg/
 
 # Logs
 *.log
