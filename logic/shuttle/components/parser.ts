@@ -49,7 +49,7 @@ export class ShuttleParser {
         } else if (ext === 'json' && typeof file.content === 'string') {
           pairs = await parseJson(file.content, globalIdx)
         } else if (ext === 'docx' && (file.content instanceof ArrayBuffer || file.content instanceof Uint8Array)) {
-          pairs = await parseDocx(file.content, globalIdx)
+          pairs = await parseDocx(file.content as ArrayBuffer, globalIdx)
         }
       } catch (e) {
         console.error(`Failed to parse ${file.name}:`, e)

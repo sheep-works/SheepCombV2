@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
 
-const USE_DIR = 'test_data'
+const USE_DIR = 'test'
 
 export const PATHS = {
   /** Root test directory */

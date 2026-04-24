@@ -20,15 +20,7 @@
         "tgt": "みなさん、こんにちは。",
         "ref": {
           "tms": [],
-          "tb": [
-            {
-              "src": "Hello",
-              "tgts": [
-                "やっほー"
-              ],
-              "note": "Unknown"
-            }
-          ],
+          "tb": [],
           "quoted": [],
           "quoted100": [
             5
@@ -43,22 +35,7 @@
         "tgt": "Phrase はとても便利なツールです。",
         "ref": {
           "tms": [],
-          "tb": [
-            {
-              "src": "tool",
-              "tgts": [
-                "ツール"
-              ],
-              "note": "sample.csv"
-            },
-            {
-              "src": "Phrase",
-              "tgts": [
-                "フレーズ"
-              ],
-              "note": "sample.csv"
-            }
-          ],
+          "tb": [],
           "quoted": [
             [
               7,
@@ -94,22 +71,7 @@
               "diff": "Phrase is a very <del>conv</del>e<del>nient</del><ins>asy</ins> tool."
             }
           ],
-          "tb": [
-            {
-              "src": "tool",
-              "tgts": [
-                "ツール"
-              ],
-              "note": "sample.csv"
-            },
-            {
-              "src": "Phrase",
-              "tgts": [
-                "フレーズ"
-              ],
-              "note": "sample.csv"
-            }
-          ],
+          "tb": [],
           "quoted": [
             [
               4,
@@ -146,22 +108,7 @@
               "diff": "Phrase is a very <del>conv</del><ins>simpl</ins>e<del>nient</del> tool."
             }
           ],
-          "tb": [
-            {
-              "src": "tool",
-              "tgts": [
-                "ツール"
-              ],
-              "note": "sample.csv"
-            },
-            {
-              "src": "Phrase",
-              "tgts": [
-                "フレーズ"
-              ],
-              "note": "sample.csv"
-            }
-          ],
+          "tb": [],
           "quoted": [
             [
               4,
@@ -200,22 +147,7 @@
               "diff": "Phrase is a very <ins>conv</ins>e<del>asy</del><ins>nient</ins> tool."
             }
           ],
-          "tb": [
-            {
-              "src": "tool",
-              "tgts": [
-                "ツール"
-              ],
-              "note": "sample.csv"
-            },
-            {
-              "src": "Phrase",
-              "tgts": [
-                "フレーズ"
-              ],
-              "note": "sample.csv"
-            }
-          ],
+          "tb": [],
           "quoted": [],
           "quoted100": []
         },
@@ -235,15 +167,7 @@
               "ratio": 100
             }
           ],
-          "tb": [
-            {
-              "src": "Hello",
-              "tgts": [
-                "やっほー"
-              ],
-              "note": "Unknown"
-            }
-          ],
+          "tb": [],
           "quoted": [],
           "quoted100": []
         },
@@ -277,22 +201,7 @@
               "diff": "<ins>Isn’t </ins>Phrase<del> is</del> a very convenient tool<del>.</del><ins>?</ins>"
             }
           ],
-          "tb": [
-            {
-              "src": "tool",
-              "tgts": [
-                "ツール"
-              ],
-              "note": "sample.csv"
-            },
-            {
-              "src": "Phrase",
-              "tgts": [
-                "フレーズ"
-              ],
-              "note": "sample.csv"
-            }
-          ],
+          "tb": [],
           "quoted": [],
           "quoted100": []
         },
@@ -305,15 +214,7 @@
         "tgt": "2026年から、Phraseを始めてみましょう！",
         "ref": {
           "tms": [],
-          "tb": [
-            {
-              "src": "Phrase",
-              "tgts": [
-                "フレーズ"
-              ],
-              "note": "sample.csv"
-            }
-          ],
+          "tb": [],
           "quoted": [],
           "quoted100": []
         },

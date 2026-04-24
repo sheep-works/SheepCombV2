@@ -14,6 +14,7 @@
     "postinstall": "nuxt prepare",
     "cli": "tsx --tsconfig tsconfig.cli.json cli/index.ts",
     "verify": "tsx --tsconfig tsconfig.cli.json verify_pipeline.ts",
+    "verify:requests": "tsx --tsconfig tsconfig.cli.json verify_requests.ts",
     "test": "vitest",
     "test:parse": "vitest test/shuttle_parser.test.ts",
     "test:api": "vitest test/cli_api.test.ts"

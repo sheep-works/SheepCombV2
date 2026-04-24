@@ -16,6 +16,12 @@ export default defineNuxtConfig({
       },
     },
   },
+  runtimeConfig: {
+    public: {
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || '/api',
+      apiPort: process.env.NUXT_PUBLIC_API_PORT || '',
+    }
+  },
   devServer: {
     host: '127.0.0.1',
     port: 3000

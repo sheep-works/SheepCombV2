@@ -78,4 +78,39 @@ export class ShuttleProcessor {
     }
     return null
   }
+
+  /**
+   * Split translation pairs into JSONL chunks.
+   */
+  public chunkUnits(units: TranslationPair[], maxChars: number): string[] {
+    const chunks: string[] = []
+    let currentChunk: string[] = []
+    let currentLen = 0
+
+    for (const unit of units) {
+      const obj = {
+        idx: unit.idx,
+        src: unit.src,
+        tgt: unit.tgt,
+        notes: unit.note || ''
+      }
+      const str = JSON.stringify(obj)
+      const len = str.length + 1 // +1 for newline
+
+      if (currentLen + len > maxChars && currentChunk.length > 0) {
+        chunks.push(currentChunk.join('\n'))
+        currentChunk = []
+        currentLen = 0
+      }
+
+      currentChunk.push(str)
+      currentLen += len
+    }
+
+    if (currentChunk.length > 0) {
+      chunks.push(currentChunk.join('\n'))
+    }
+
+    return chunks
+  }
 }

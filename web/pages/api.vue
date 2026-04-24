@@ -16,101 +16,89 @@ import { SheepShuttle } from '../../logic/shuttle/sheepShuttle.js'
 
 const store = useShuttleStore()
 
-const modes = [
-  { id: 'sync', name: 'Sync' },
-  { id: 'async', name: 'Async' }
-]
-const mode = ref('sync')
+onMounted(async () => {
+  await store.checkConnection()
+})
 
-const sources = [
-  { id: 'internal', name: 'Internal ShWvData' },
-  { id: 'custom', name: 'Custom JSONL' }
+const modes = [
+  { id: 'units', name: 'Raw Units' },
+  { id: 'data', name: 'ShWvData' }
 ]
-const source = ref('internal')
-const customJsonl = ref('')
+const mode = ref('units')
+
+const requestTargets = [
+  { id: 'CHECK', name: 'Check' },
+  { id: 'TRANSLATE', name: 'Translate' }
+]
+const requestTarget = ref<'CHECK' | 'TRANSLATE'>('CHECK')
+const userPrompt = ref('')
 
 const isRequesting = ref(false)
-const pollingStatus = ref<string>('')
-const response = ref<any>(null)
 const errorMsg = ref<string>('')
-const taskId = ref<string>('')
 
-const canSend = computed(() => {
-  if (source.value === 'internal') return store.hasData
-  return customJsonl.value.trim().length > 0
-})
-
-const lineCount = computed(() => {
-  if (source.value === 'internal' && store.units) {
-    return store.unitCount
+async function createChunks() {
+  try {
+    store.createChunks(mode.value as 'units' | 'data', 4000)
+  } catch (e: any) {
+    errorMsg.value = e.message
   }
-  return customJsonl.value.split('\n').filter(l => l.trim()).length
-})
+}
+
+async function processChunk(index: number) {
+  // 再チェック
+  const ok = await store.checkConnection()
+  if (!ok) {
+    errorMsg.value = 'API サーバー (SheepHub) がオフラインです。起動しているか確認してください。'
+    return
+  }
+
+  isRequesting.value = true
+  errorMsg.value = ''
+  try {
+    await store.processRequests(index, requestTarget.value, userPrompt.value)
+  } catch (e: any) {
+    errorMsg.value = e.message
+  } finally {
+    isRequesting.value = false
+  }
+}
+
+async function processAll() {
+  // 再チェック
+  const ok = await store.checkConnection()
+  if (!ok) {
+    errorMsg.value = 'API サーバー (SheepHub) がオフラインです。起動しているか確認してください。'
+    return
+  }
+
+  isRequesting.value = true
+  errorMsg.value = ''
+  try {
+    // 成功していないチャンクを順番に処理
+    for (let i = 0; i < store.chunks.length; i++) {
+      if (store.chunks[i]!.status !== 'success') {
+        await processChunk(i)
+      }
+    }
+  } catch (e: any) {
+    errorMsg.value = e.message
+  } finally {
+    isRequesting.value = false
+  }
+}
 
 function clearResults() {
-  response.value = null
   errorMsg.value = ''
-  taskId.value = ''
-  pollingStatus.value = ''
+  store.clearChunks()
 }
 
-async function sendRequest() {
-  if (!canSend.value) return
-
-  clearResults()
-  isRequesting.value = true
-
-  try {
-    let payload = ''
-    if (source.value === 'internal' && store.units) {
-      // payload = SheepShuttle.tojsonl(store.units)
-    } else {
-      payload = customJsonl.value
-    }
-
-    // This is a stub for real API interaction.
-    // In a real app, you would use $fetch or similar.
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    if (mode.value === 'sync') {
-      response.value = {
-        status: 'completed',
-        results: payload.split('\n').map(line => {
-          try {
-            const parsed = JSON.parse(line)
-            return { ...parsed, translated: true }
-          } catch { return line }
-        })
-      }
-    } else {
-      taskId.value = 'task_' + Math.random().toString(36).substring(7)
-      startPolling()
-    }
-
-  } catch (e: any) {
-    errorMsg.value = e.message || 'リクエストに失敗しました'
-  } finally {
-    if (mode.value === 'sync') isRequesting.value = false
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'success': return 'var(--success-glow)'
+    case 'error': return 'var(--error-glow)'
+    case 'pending': return 'var(--warning-glow)'
+    default: return 'transparent'
   }
-}
-
-async function startPolling() {
-  pollingStatus.value = 'pending'
-  let count = 0
-  const timer = setInterval(() => {
-    count++
-    if (count === 1) pollingStatus.value = 'processing'
-    if (count === 3) {
-      pollingStatus.value = 'completed'
-      response.value = {
-        status: 'completed',
-        task_id: taskId.value,
-        data: "Poll results would appear here"
-      }
-      isRequesting.value = false
-      clearInterval(timer)
-    }
-  }, 2000)
 }
 </script>
 
@@ -122,12 +110,12 @@ async function startPolling() {
         <div class="card">
           <div class="card-header">
             <h2>リクエスト設定</h2>
-            <span class="dev-badge">Development</span>
+            <span class="dev-badge">SheepHub v2</span>
           </div>
 
           <div class="config-section">
             <div class="config-group">
-              <label class="config-label">通信モード</label>
+              <label class="config-label">チャンク作成モード</label>
               <div class="radio-group">
                 <div v-for="m in modes" :key="m.id" class="radio-item" :class="{ active: mode === m.id }"
                   @click="mode = m.id">
@@ -138,63 +126,71 @@ async function startPolling() {
             </div>
 
             <div class="config-group">
-              <label class="config-label">データソース</label>
+              <label class="config-label">リクエスト種別</label>
               <div class="source-tabs">
-                <button v-for="s in sources" :key="s.id" class="source-tab" :class="{ active: source === s.id }"
-                  @click="source = s.id">
-                  {{ s.name }}
+                <button v-for="t in requestTargets" :key="t.id" class="source-tab"
+                  :class="{ active: requestTarget === t.id }" @click="requestTarget = t.id as any">
+                  {{ t.name }}
                 </button>
               </div>
             </div>
 
-            <!-- Custom Input -->
-            <div class="config-group" v-if="source === 'custom'">
-              <label class="config-label">
-                Custom JSONL Input
-                <span class="line-count" v-if="lineCount > 0">{{ lineCount }} lines</span>
-              </label>
-              <textarea v-model="customJsonl" class="jsonl-textarea"
-                placeholder='{"src": "Hello", "tgt": ""}'></textarea>
+            <div class="config-group">
+              <label class="config-label">カスタムプロンプト (オプション)</label>
+              <textarea v-model="userPrompt" class="prompt-textarea" placeholder="例: 文末をですます調に統一してください。"></textarea>
             </div>
 
-            <!-- Internal Status -->
-            <div class="config-group" v-else>
-              <label class="config-label">Internal Status</label>
-              <div class="payload-preview">
-                <div v-if="store.hasUnits">
-                  <p class="status-ok">READY: {{ store.unitCount }} units</p>
-                  <p class="status-count">{{ lineCount }} segments available</p>
-                </div>
-                <div v-else class="status-empty">
-                  ShWvData が読み込まれていません
-                </div>
-              </div>
+            <div class="button-row">
+              <button class="btn-action secondary" @click="createChunks" :disabled="!store.hasUnits && !store.hasData">
+                <RefreshCw :size="16" /> チャンク作成
+              </button>
+              <button class="btn-action primary" @click="processAll" :disabled="!store.hasChunks || isRequesting">
+                <Send :size="16" /> 全チャンク処理
+              </button>
             </div>
+          </div>
+        </div>
 
-            <button class="btn-send" @click="sendRequest" :disabled="!canSend || isRequesting">
-              <Send :size="18" v-if="!isRequesting" />
-              <Loader2 :size="18" v-else class="spin" />
-              {{ isRequesting ? '通信中...' : 'リクエスト送信' }}
+        <div class="card connection-card">
+          <div class="card-header">
+            <h2>接続ステータス</h2>
+            <div class="status-dot" :class="{ online: store.isApiAvailable }"></div>
+          </div>
+          <div class="status-content-inline">
+            <span class="status-text" :class="{ online: store.isApiAvailable }">
+              {{ store.isApiAvailable ? 'ONLINE (Accessible)' : 'OFFLINE (Unavailable)' }}
+            </span>
+            <button class="btn-refresh-small" @click="store.checkConnection">
+              <RefreshCw :size="12" />
             </button>
+          </div>
+        </div>
+
+        <div class="card status-card" v-if="store.hasChunks">
+          <div class="card-header">
+            <h2>ステータス概要</h2>
+          </div>
+          <div class="status-content">
+            <div class="status-stat">
+              <span class="label">Total Chunks</span>
+              <span class="value">{{ store.chunks.length }}</span>
+            </div>
+            <div class="status-stat">
+              <span class="label">Completed</span>
+              <span class="value success">{{store.chunks.filter(c => c.status === 'success').length}}</span>
+            </div>
           </div>
         </div>
       </aside>
 
-      <!-- Main: Response View -->
+      <!-- Main: Chunk List View -->
       <section class="response-area">
         <div class="card full-height">
           <div class="card-header space-between">
-            <h2>API レスポンス</h2>
-            <button class="btn-refresh" @click="clearResults" v-if="response || errorMsg">
+            <h2>チャンク一覧</h2>
+            <button class="btn-refresh" @click="clearResults" v-if="store.hasChunks">
               <Trash2 :size="14" /> クリア
             </button>
-          </div>
-
-          <!-- Polling Header -->
-          <div class="polling-bar" v-if="taskId && isRequesting">
-            <span class="polling-label">Task ID:</span>
-            <span class="task-id">{{ taskId }}</span>
-            <span class="polling-status" :class="pollingStatus">{{ pollingStatus }}</span>
           </div>
 
           <!-- Error Panel -->
@@ -203,27 +199,39 @@ async function startPolling() {
             <div class="error-text">{{ errorMsg }}</div>
           </div>
 
-          <!-- Response Body -->
-          <div class="response-content" v-if="response">
-            <div class="response-header">
-              <span class="response-status completed">STATUS: {{ response.status }}</span>
-            </div>
-            <div class="response-body">
-              <h3>Content</h3>
-              <pre class="result-pre">{{ JSON.stringify(response, null, 2) }}</pre>
+          <!-- Chunks List -->
+          <div class="chunks-container" v-if="store.hasChunks">
+            <div v-for="(chunk, idx) in store.chunks" :key="idx" class="chunk-item"
+              :style="{ backgroundColor: getStatusColor(chunk.status) }">
+              <div class="chunk-header">
+                <div class="chunk-info">
+                  <span class="chunk-id">Chunk #{{ chunk.chunkId }}</span>
+                  <span class="chunk-size">{{ chunk.data.length }} chars</span>
+                  <span class="chunk-status-badge" :class="chunk.status">{{ chunk.status }}</span>
+                </div>
+                <button class="btn-process-small" @click="processChunk(idx)" :disabled="isRequesting">
+                  <Loader2 v-if="isRequesting && chunk.status === 'pending'" :size="14" class="spin" />
+                  <RefreshCw v-else :size="14" />
+                </button>
+              </div>
+              <div class="chunk-body">
+                <div class="data-preview">
+                  <label>Data:</label>
+                  <pre>{{ chunk.data.substring(0, 150) }}...</pre>
+                </div>
+                <div class="response-preview" v-if="chunk.response">
+                  <label>Response:</label>
+                  <pre>{{ chunk.response }}</pre>
+                </div>
+              </div>
             </div>
           </div>
 
           <!-- Empty State -->
-          <div class="empty-state" v-if="!response && !errorMsg && !isRequesting">
+          <div class="empty-state" v-else>
             <Cloud :size="48" class="empty-icon" />
-            <p>リクエストを送信するとレスポンスが表示されます</p>
-          </div>
-
-          <!-- Loading -->
-          <div class="empty-state" v-if="isRequesting && !response">
-            <Loader2 :size="40" class="spin empty-icon" />
-            <p>{{ mode === 'async' ? `ポーリング中... (${pollingStatus})` : 'リクエスト送信中...' }}</p>
+            <p v-if="!store.hasUnits">まずは Parser タブでファイルを読み込んでください</p>
+            <p v-else>「チャンク作成」ボタンを押してデータを分割してください</p>
           </div>
         </div>
       </section>
@@ -242,7 +250,7 @@ async function startPolling() {
   gap: 24px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
   .api-layout {
     grid-template-columns: 1fr;
   }
@@ -255,6 +263,7 @@ async function startPolling() {
   display: flex;
   flex-direction: column;
   transition: var(--transition);
+  overflow: hidden;
 }
 
 .card:hover {
@@ -271,6 +280,7 @@ async function startPolling() {
   display: flex;
   align-items: center;
   gap: 10px;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .card-header.space-between {
@@ -296,16 +306,16 @@ async function startPolling() {
 
 /* Config */
 .config-section {
-  padding: 16px 20px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .config-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .config-label {
@@ -314,16 +324,6 @@ async function startPolling() {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.line-count {
-  font-size: 0.65rem;
-  color: var(--accent);
-  font-weight: 600;
-  text-transform: none;
 }
 
 .radio-group {
@@ -335,8 +335,8 @@ async function startPolling() {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  justify-content: center;
+  padding: 8px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
@@ -344,16 +344,10 @@ async function startPolling() {
   transition: var(--transition);
   font-size: 0.78rem;
   color: var(--text-secondary);
-  font-weight: 500;
 }
 
 .radio-item input {
   display: none;
-}
-
-.radio-item:hover {
-  border-color: var(--border-hover);
-  color: var(--text-primary);
 }
 
 .radio-item.active {
@@ -372,7 +366,7 @@ async function startPolling() {
 
 .source-tab {
   flex: 1;
-  padding: 6px 10px;
+  padding: 6px;
   background: none;
   border: none;
   border-radius: 4px;
@@ -381,12 +375,6 @@ async function startPolling() {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
-  font-family: 'Inter', sans-serif;
-}
-
-.source-tab:hover:not(:disabled) {
-  color: var(--text-secondary);
-  background: var(--bg-hover);
 }
 
 .source-tab.active {
@@ -394,172 +382,254 @@ async function startPolling() {
   background: var(--accent-glow);
 }
 
-.source-tab:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.jsonl-textarea {
+.prompt-textarea {
   width: 100%;
-  padding: 12px 14px;
+  padding: 12px;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-family: 'Inter', monospace;
-  font-size: 0.78rem;
-  line-height: 1.6;
+  font-size: 0.85rem;
+  min-height: 80px;
   resize: vertical;
-  min-height: 120px;
 }
 
-.jsonl-textarea:focus {
-  outline: none;
-  border-color: var(--accent);
+.button-row {
+  display: flex;
+  gap: 10px;
 }
 
-.jsonl-textarea::placeholder {
-  color: var(--text-muted);
-}
-
-.status-ok {
-  color: var(--success);
-  font-weight: 600;
-  font-size: 0.8rem;
-  margin: 0;
-}
-
-.status-count {
-  color: var(--text-muted);
-  font-size: 0.7rem;
-  margin: 4px 0 0;
-}
-
-.status-empty {
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  font-style: italic;
-}
-
-.payload-preview {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-}
-
-.btn-send {
+.btn-action {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   padding: 12px;
-  background: var(--accent);
-  color: #fff;
-  border: none;
   border-radius: var(--radius-sm);
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
   transition: var(--transition);
-  font-family: 'Inter', sans-serif;
 }
 
-.btn-send:hover:not(:disabled) {
-  background: var(--accent-hover);
-  box-shadow: var(--shadow-glow);
+.btn-action.primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
 }
 
-.btn-send:disabled {
-  opacity: 0.35;
+.btn-action.secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-action:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-action:disabled {
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
-.btn-refresh {
+/* Status Card */
+.status-content {
+  padding: 20px;
   display: flex;
-  align-items: center;
-  gap: 5px;
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  padding: 4px 12px;
-  border-radius: var(--radius-xs);
-  font-size: 0.72rem;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  transition: var(--transition);
-}
-
-.btn-refresh:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* Polling Bar */
-.polling-bar {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
-  padding: 12px 20px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
 }
 
-.polling-label {
-  font-size: 0.72rem;
-  font-weight: 700;
+.status-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-stat .label {
+  font-size: 0.78rem;
   color: var(--text-muted);
 }
 
-.task-id {
+.status-stat .value {
+  font-weight: 700;
   font-family: 'Inter', monospace;
-  font-size: 0.72rem;
-  color: var(--accent);
 }
 
-.polling-status {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.65rem;
+.status-stat .value.success {
+  color: var(--success);
+}
+
+/* Connection Status */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff4d4f; /* Default offline */
+  transition: var(--transition);
+}
+
+.status-dot.online {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+.status-content-inline {
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.status-text {
+  font-size: 0.72rem;
   font-weight: 800;
+  color: var(--text-muted);
   text-transform: uppercase;
 }
 
-.polling-status.pending {
-  background: #555;
-  color: #fff;
+.status-text.online {
+  color: var(--success);
 }
 
-.polling-status.processing {
-  background: var(--warning);
-  color: #000;
+.btn-refresh-small {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
 }
 
-.polling-status.completed {
+.btn-refresh-small:hover {
+  color: var(--accent);
+  transform: rotate(90deg);
+}
+
+/* Chunks Container */
+.chunks-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chunk-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  padding: 16px;
+}
+
+.chunk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.chunk-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chunk-id {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.chunk-size {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.chunk-status-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: var(--bg-secondary);
+}
+
+.chunk-status-badge.success {
   background: var(--success);
   color: #fff;
 }
 
-/* Empty state */
-.empty-state {
-  flex: 1;
+.chunk-status-badge.error {
+  background: var(--error);
+  color: #fff;
+}
+
+.chunk-status-badge.pending {
+  background: var(--warning);
+  color: #000;
+}
+
+.btn-process-small {
+  width: 32px;
+  height: 32px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  border-radius: 6px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-process-small:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.chunk-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.data-preview,
+.response-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.data-preview label,
+.response-preview label {
+  font-size: 0.65rem;
+  font-weight: 700;
   color: var(--text-muted);
-  gap: 16px;
-  padding: 80px 20px;
+  text-transform: uppercase;
 }
 
-.empty-icon {
-  opacity: 0.15;
+pre {
+  margin: 0;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: 'Inter', monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
-.empty-state p {
-  font-size: 0.88rem;
+.response-preview pre {
+  border-left: 2px solid var(--success);
+  background: rgba(var(--success-rgb), 0.05);
 }
 
+/* Globals */
 .spin {
   animation: spin 1s linear infinite;
 }
@@ -574,16 +644,30 @@ async function startPolling() {
   }
 }
 
-.result-pre {
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
+.error-panel {
+  margin: 20px;
   padding: 16px;
+  background: rgba(var(--error-rgb), 0.1);
+  border: 1px solid var(--error);
   border-radius: var(--radius-sm);
-  font-family: 'Inter', monospace;
-  font-size: 0.75rem;
-  white-space: pre-wrap;
-  word-break: break-all;
-  color: var(--text-primary);
+  display: flex;
+  gap: 12px;
+  color: var(--error);
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--text-muted);
+  padding: 80px 20px;
+}
+
+.empty-icon {
+  opacity: 0.2;
 }
 
 .dev-badge {
@@ -593,6 +677,5 @@ async function startPolling() {
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: 800;
-  text-transform: uppercase;
 }
 </style>

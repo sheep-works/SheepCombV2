@@ -15,10 +15,16 @@ import type {
   ManagedDataType,
   ProcessorOptions
 } from '../../logic/types/shwv.js'
+import { type ChunkInfo } from '../../logic/shuttle/sheepShuttle.js'
 
 export const useShuttleStore = defineStore('shuttle', () => {
+  const config = useRuntimeConfig()
+  
   // --- 内部インスタンス ---
-  const shuttle = new SheepShuttle()
+  const shuttle = new SheepShuttle({
+    baseUrl: config.public.apiBaseUrl as string,
+    port: config.public.apiPort as string | number
+  })
 
   // --- State ---
   // SheepShuttle の内部ステートと同期させるための ref
@@ -27,6 +33,9 @@ export const useShuttleStore = defineStore('shuttle', () => {
   const data = ref<ShWvData | null>(null)
   const tms = ref<TranslationPairWithFile[]>([])
   const tbs = ref<TranslationPairWithFile[]>([])
+  const chunks = ref<ChunkInfo[]>([])
+
+  const isApiAvailable = ref(false)
 
   const currentFileName = ref('')
   const isLoading = ref(false)
@@ -40,8 +49,17 @@ export const useShuttleStore = defineStore('shuttle', () => {
   const fileList = computed(() => files.value)
   const tmCount = computed(() => tms.value.length)
   const tbCount = computed(() => tbs.value.length)
+  const hasChunks = computed(() => chunks.value.length > 0)
 
   // --- Actions ---
+
+  /**
+   * API サーバーの接続確認
+   */
+  async function checkConnection() {
+    isApiAvailable.value = await shuttle.requests.verifyConnection()
+    return isApiAvailable.value
+  }
 
   /**
    * インスタンスの状態をストアの ref に反映させる
@@ -52,6 +70,7 @@ export const useShuttleStore = defineStore('shuttle', () => {
     data.value = shuttle.data ? shuttle.data : null // data は structuredClone 済み
     tms.value = [...shuttle.tms]
     tbs.value = [...shuttle.tbs]
+    chunks.value = [...shuttle.chunks]
   }
 
   /**
@@ -104,10 +123,39 @@ export const useShuttleStore = defineStore('shuttle', () => {
   }
 
   /**
+   * チャンクの作成
+   */
+  function createChunks(type: 'units' | 'data', maxChars?: number) {
+    shuttle.createChunks(type, maxChars)
+    syncState()
+  }
+
+  /**
+   * API リクエストの実行
+   */
+  async function processRequests(chunkIndex: number = -1, target: 'CHECK' | 'TRANSLATE' = 'CHECK', prompt?: string) {
+    isLoading.value = true
+    try {
+      await shuttle.processRequests(chunkIndex, target, prompt)
+      syncState()
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
    * 各種形式でのデータ取得
    */
   function getManagedData(type: ManagedDataType, maxChars?: number) {
     return shuttle.getManagedData(type, maxChars)
+  }
+
+  /**
+   * チャンク（リクエスト結果）のみをクリア
+   */
+  function clearChunks() {
+    shuttle.chunks = []
+    syncState()
   }
 
   /**
@@ -131,6 +179,8 @@ export const useShuttleStore = defineStore('shuttle', () => {
     data,
     tms,
     tbs,
+    chunks,
+    isApiAvailable,
     currentFileName,
     isLoading,
     statusMsg,
@@ -142,7 +192,9 @@ export const useShuttleStore = defineStore('shuttle', () => {
     fileList,
     tmCount,
     tbCount,
+    hasChunks,
     // Actions
+    checkConnection,
     parseFiles,
     loadShwvData,
     addTms,
@@ -150,6 +202,9 @@ export const useShuttleStore = defineStore('shuttle', () => {
     process,
     convert,
     analyze,
+    createChunks,
+    processRequests,
+    clearChunks,
     getManagedData,
     clear,
     setStatus,

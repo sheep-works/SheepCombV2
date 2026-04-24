@@ -138,6 +138,36 @@ async function run() {
     fs.writeFileSync(chunkPath, chunk, 'utf-8')
     console.log(`Saved JSONL Chunk ${index + 1} to: ${chunkPath}`)
   })
+
+  // 11. ステップ: API 連携テスト (processRequests)
+  console.log('\nStep 8: API Integration Test (processRequests)...')
+  console.log('  Creating chunks from units...')
+  shuttle.createChunks('units', 4000)
+  console.log(`  Created ${shuttle.chunks.length} chunks.`)
+
+  if (shuttle.chunks.length > 0) {
+    console.log('  Processing first chunk (async/polling)...')
+    try {
+      await shuttle.processRequests(0, 'CHECK')
+      const firstChunk = shuttle.chunks[0]!
+      console.log(`  Chunk 0 Status: ${firstChunk.status}`)
+      if (firstChunk.status === 'success') {
+        console.log('  Chunk 0 Response (first 300 chars):')
+        console.log(firstChunk.response.substring(0, 300) + (firstChunk.response.length > 300 ? '...' : ''))
+      } else {
+        console.error('  Chunk 0 Failed:', firstChunk.response)
+      }
+
+      // 保存
+      const chunksOutPath = path.join(outDir, 'step8_chunks_result.json')
+      fs.writeFileSync(chunksOutPath, JSON.stringify(shuttle.chunks, null, 2), 'utf-8')
+      console.log(`\nSaved Step 8 chunks result to: ${chunksOutPath}`)
+    } catch (e) {
+      console.error('  Error during processRequests:', (e as Error).message)
+    }
+  }
+
+  console.log('\n--- Final Verification Complete ---')
 }
 
 run().catch(err => {

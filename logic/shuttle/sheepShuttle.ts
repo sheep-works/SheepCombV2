@@ -6,6 +6,14 @@ import { ShuttleConverter } from './components/converter.js'
 import { ShuttleAnalyzer } from './components/analyzer.js'
 import { ShuttleManager } from './components/manager.js'
 import { ShuttleBuilder } from './components/builder.js'
+import { ShuttleRequests, type ShuttleOptions, type TaskResponse, type UserRequest } from './components/requests.js'
+
+export interface ChunkInfo {
+  chunkId: number
+  data: string
+  status: 'pending' | 'success' | 'error'
+  response: string
+}
 
 /**
  * Orchestrator class for SheepShuttle data transformations and conversions.
@@ -17,6 +25,7 @@ export class SheepShuttle {
   public data: ShWvData | null = null
   public tms: TranslationPairWithFile[] = []
   public tbs: TranslationPairWithFile[] = []
+  public chunks: ChunkInfo[] = []
 
   // Sub-components
   public parser: ShuttleParser
@@ -25,14 +34,16 @@ export class SheepShuttle {
   public analyzer: ShuttleAnalyzer
   public manager: ShuttleManager
   public builder: ShuttleBuilder
+  public requests: ShuttleRequests
 
-  constructor() {
+  constructor(options?: ShuttleOptions) {
     this.parser = new ShuttleParser(this)
     this.processor = new ShuttleProcessor(this)
     this.converter = new ShuttleConverter(this)
     this.analyzer = new ShuttleAnalyzer(this)
     this.manager = new ShuttleManager(this)
     this.builder = new ShuttleBuilder(this)
+    this.requests = new ShuttleRequests(this, options)
   }
 
   public setNewData(data: ShWvData): void {
@@ -137,6 +148,109 @@ export class SheepShuttle {
   }
 
   /**
+   * Create chunks for API processing and store them in this.chunks.
+   */
+  public createChunks(type: 'units' | 'data', maxCharsPerChunk: number = 4000): void {
+    this.chunks = []
+
+    if (type === 'units') {
+      const chunkStrings = this.processor.chunkUnits(this.units, maxCharsPerChunk)
+      this.chunks = chunkStrings.map((s, i) => ({
+        chunkId: i,
+        data: s,
+        status: 'pending',
+        response: ''
+      }))
+    } else if (type === 'data') {
+      if (!this.data) {
+        throw new Error('No data available')
+      }
+      // manager.getManagedData('JSONL_CHUNKED', ...) returns newline-separated chunk strings
+      const rawData = this.manager.getManagedData('JSONL_CHUNKED', this.data, maxCharsPerChunk)
+      const chunkStrings = rawData.split('\n').filter(s => s.trim().length > 0)
+      this.chunks = chunkStrings.map((s, i) => ({
+        chunkId: i,
+        data: s,
+        status: 'pending',
+        response: ''
+      }))
+    }
+  }
+
+  public async processRequests(
+    chunkIndex: number = -1,
+    requestTarget: 'CHECK' | 'TRANSLATE' = 'CHECK',
+    prompt?: string): Promise<void> {
+
+    // 1. Target chunk selection
+    // chunkIndex が -1 (デフォルト) なら、'success' でない最初のチャンクを探す
+    let targetIdx = chunkIndex;
+    if (targetIdx < 0 || targetIdx >= this.chunks.length) {
+      targetIdx = this.chunks.findIndex(c => c.status !== 'success');
+    }
+
+    if (targetIdx === -1 || targetIdx >= this.chunks.length) {
+      console.warn('No chunk available for processing.');
+      return;
+    }
+
+    const chunk = this.chunks[targetIdx]!;
+
+    try {
+      let taskResponse: TaskResponse;
+
+      // 2. Execute Request
+      // prompt がある、もしくは requests.cacheName が存在する場合は UserRequest を使用
+      if ((prompt && prompt.trim() !== '') || this.requests.cacheName) {
+        const params: UserRequest = {
+          chunk: chunk.data,
+          prompt: prompt && prompt.trim() !== '' ? prompt : undefined,
+          cache_id: (!prompt || prompt.trim() === '') ? this.requests.cacheName : undefined
+        };
+
+        if (requestTarget === 'CHECK') {
+          taskResponse = await this.requests.checkUserAsync(params);
+        } else {
+          taskResponse = await this.requests.transUserAsync(params);
+        }
+      } else {
+        // デフォルトのプロンプトを使用
+        if (requestTarget === 'CHECK') {
+          taskResponse = await this.requests.checkAsync(chunk.data);
+        } else {
+          taskResponse = await this.requests.transAsync(chunk.data);
+        }
+      }
+
+      const taskId = taskResponse.task_id;
+      chunk.status = 'pending';
+
+      // 3. Polling
+      while (true) {
+        // 5秒待機
+        await new Promise(resolve => setTimeout(resolve, 5000));
+
+        const result = await this.requests.getTaskResult(taskId);
+        if (result.status === 'success') {
+          chunk.status = 'success';
+          chunk.response = result.result || '';
+          break;
+        } else if (result.status === 'error') {
+          chunk.status = 'error';
+          chunk.response = result.error || 'Unknown error';
+          break;
+        }
+        // 成功・エラー以外（pending等）の場合はループ継続
+      }
+
+    } catch (error) {
+      chunk.status = 'error';
+      chunk.response = (error as Error).message;
+      throw error;
+    }
+  }
+
+  /**
    * Helper to reset state if needed.
    */
   public reset(): void {
@@ -145,5 +259,6 @@ export class SheepShuttle {
     this.data = null
     this.tms = []
     this.tbs = []
+    this.chunks = []
   }
 }

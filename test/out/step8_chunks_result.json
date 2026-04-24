@@ -1,0 +1,8 @@
+[
+  {
+    "chunkId": 0,
+    "data": "{\"idx\":0,\"src\":\"Hello, everyone.\",\"tgt\":\"みなさん、こんにちは。\",\"notes\":\"\"}\n{\"idx\":1,\"src\":\"Phrase is a very convenient tool.\",\"tgt\":\"Phrase はとても便利なツールです。\",\"notes\":\"\"}\n{\"idx\":2,\"src\":\"Phrase is a very easy tool.\",\"tgt\":\"Phrase はとても簡単なツールです。\",\"notes\":\"\"}\n{\"idx\":3,\"src\":\"Phrase is a very simple tool.\",\"tgt\":\"Phrase はとてもシンプルなトールです。\",\"notes\":\"\"}\n{\"idx\":4,\"src\":\"Phrase is a very convenient tool.\",\"tgt\":\"Phrase はとても便利なツールです。\",\"notes\":\"\"}\n{\"idx\":5,\"src\":\"Hello, everyone.\",\"tgt\":\"みなさん、こんにちは。\",\"notes\":\"\"}\n{\"idx\":6,\"src\":\"Today, I explained some key phrases.\",\"tgt\":\"今日、いくつかのキーワードについて説明しました。\",\"notes\":\"\"}\n{\"idx\":7,\"src\":\"Isn’t Phrase a very convenient tool?\",\"tgt\":\"Phraseは便利なツールだと思いませんか？\",\"notes\":\"\"}\n{\"idx\":8,\"src\":\"Let’s start Phrase from 2025!\",\"tgt\":\"2026年から、Phraseを始めてみましょう！\",\"notes\":\"\"}",
+    "status": "success",
+    "response": "Line 3: [誤字]\n指摘：「トール」は誤字です。「ツール」に修正してください。\n\nLine 6: [誤訳]\n指摘：「key phrases」が「キーワード」と訳されています。「主要なフレーズ」または「重要なフレーズ」が適切です。\n\nLine 8: [誤訳]\n指摘：原文の「2025」が「2026」と誤って訳されています。「2025年」に修正してください。"
+  }
+]
