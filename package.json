@@ -15,11 +15,13 @@
     "cli": "tsx --tsconfig tsconfig.cli.json cli/index.ts",
     "verify": "tsx --tsconfig tsconfig.cli.json verify_pipeline.ts",
     "verify:requests": "tsx --tsconfig tsconfig.cli.json verify_requests.ts",
+    "verify:docker": "tsx --tsconfig tsconfig.cli.json verify_docker.ts",
     "test": "vitest",
     "test:parse": "vitest test/shuttle_parser.test.ts",
     "test:api": "vitest test/cli_api.test.ts"
   },
   "dependencies": {
+    "@pinia-plugin-persistedstate/nuxt": "^1.2.1",
     "@pinia/nuxt": "^0.11.3",
     "difflib-ts": "1.0.3",
     "jszip": "^3.10.1",

@@ -5,7 +5,10 @@ export default defineNuxtConfig({
 
   srcDir: 'web/',
   devtools: { enabled: false },
-  modules: ['@pinia/nuxt'],
+  modules: [
+    '@pinia/nuxt',
+    '@pinia-plugin-persistedstate/nuxt'
+  ],
   nitro: {
     preset: 'static',
     devProxy: {

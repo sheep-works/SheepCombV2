@@ -4,7 +4,7 @@
  * パース済みの生ユニット、構造化データ、TM/TB などを保持します。
  */
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { SheepShuttle } from '../../logic/shuttle/sheepShuttle.js'
 import type {
   TranslationPair,
@@ -19,7 +19,7 @@ import { type ChunkInfo } from '../../logic/shuttle/sheepShuttle.js'
 
 export const useShuttleStore = defineStore('shuttle', () => {
   const config = useRuntimeConfig()
-  
+
   // --- 内部インスタンス ---
   const shuttle = new SheepShuttle({
     baseUrl: config.public.apiBaseUrl as string,
@@ -172,6 +172,26 @@ export const useShuttleStore = defineStore('shuttle', () => {
     statusMsg.value = { text, type }
   }
 
+  // --- Rehydration (永続化データからの復元) ---
+  // localStorage からデータが復元された直後に、内部の shuttle インスタンスにも同期させる
+  const rehydrate = () => {
+    if (units.value.length > 0) shuttle.units = [...units.value]
+    if (files.value.length > 0) shuttle.files = [...files.value]
+    if (data.value) shuttle.data = data.value
+    if (tms.value.length > 0) shuttle.tms = [...tms.value]
+    if (tbs.value.length > 0) shuttle.tbs = [...tbs.value]
+    if (chunks.value.length > 0) shuttle.chunks = [...chunks.value]
+  }
+
+  // 永続化データが復元された際にインスタンスに同期する
+  const unwatch = watch(units, (newVal) => {
+    if (newVal && newVal.length > 0) {
+      rehydrate()
+      // 一度同期したら監視を解除（以後はアクション経由で同期されるため）
+      unwatch()
+    }
+  }, { immediate: true })
+
   return {
     // State
     units,
@@ -208,7 +228,22 @@ export const useShuttleStore = defineStore('shuttle', () => {
     getManagedData,
     clear,
     setStatus,
+    rehydrate,
     // インスタンスへの直接アクセスが必要な場合用
     shuttle
+  }
+}, {
+  persist: {
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    // 保存対象を指定 (shuttle インスタンス自体は除外)
+    pick: [
+      'units',
+      'files',
+      'data',
+      'tms',
+      'tbs',
+      'chunks',
+      'currentFileName'
+    ]
   }
 })

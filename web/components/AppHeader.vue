@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Trash2 } from 'lucide-vue-next'
+import { useShuttleStore } from '../stores/shuttleStore'
+
+const store = useShuttleStore()
 
 const route = useRoute()
 
@@ -8,6 +12,12 @@ const isWasmReady = defineModel<boolean>('wasmReady', { default: false })
 const currentTitle = computed(() => {
   return (route.meta.title as string) || 'SheepCombWeb'
 })
+
+const handleReset = () => {
+  if (confirm('プロジェクトのすべてのデータをリセットしますか？この操作は取り消せません。')) {
+    store.clear()
+  }
+}
 </script>
 
 <template>
@@ -85,6 +95,9 @@ const currentTitle = computed(() => {
     </nav>
 
     <div class="header-right">
+      <button class="btn-reset" @click="handleReset" title="プロジェクトをリセット">
+        <Trash2 :size="16" />
+      </button>
       <div class="wasm-badge" :class="isWasmReady ? 'ready' : 'loading'">
         <span class="wasm-dot"></span>
         {{ isWasmReady ? 'WASM' : 'LOADING' }}
@@ -205,8 +218,29 @@ const currentTitle = computed(() => {
 .header-right {
   display: flex;
   align-items: center;
+  gap: 12px;
   min-width: 200px;
   justify-content: flex-end;
+}
+
+.btn-reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-reset:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border-color: var(--error);
 }
 
 .wasm-badge {
