@@ -13,6 +13,11 @@ export interface TranslationPairWithFile extends TranslationPair {
   file: string
 }
 
+export interface ShWvDefine {
+  name: 'SHWV_DATA'
+  version: '1.0'
+}
+
 export interface ShWvFileInfo {
   name: string
   start: number
@@ -65,6 +70,7 @@ export interface ShWvRefTb {
 }
 
 export interface ShWvData {
+  define: ShWvDefine
   meta: ShWvMeta
   body: ShWvBody
 }

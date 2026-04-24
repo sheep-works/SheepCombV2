@@ -45,6 +45,10 @@ export class ShuttleConverter {
     }
 
     return {
+      define: {
+        name: 'SHWV_DATA',
+        version: '1.0'
+      },
       meta: {
         bilingualPath: '',
         files: files,
@@ -64,7 +68,9 @@ export class ShuttleConverter {
   fromShwvJsonFile(content: string): ShWvData {
     try {
       const data: ShWvData = JSON.parse(content)
-      // Validate or migrate if needed
+      if (data.define?.name !== 'SHWV_DATA') {
+        throw new Error('Not a valid ShWvData: missing or incorrect define property')
+      }
       return data
     } catch (e) {
       console.error('Failed to parse ShWvData JSON:', e)
