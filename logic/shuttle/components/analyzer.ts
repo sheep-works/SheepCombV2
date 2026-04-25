@@ -109,7 +109,7 @@ export class ShuttleAnalyzer {
             currentUnit.ref.tb.push({
               src: tb.src,
               tgts: [tbTarget],
-              note: (tb.file as string) || ''
+              file: (tb.file as string) || ''
             })
           }
         }
@@ -130,7 +130,7 @@ export class ShuttleAnalyzer {
               currentUnit.ref.tb.push({
                 src: tb.src,
                 tgts: [tbTarget],
-                note: (tb.file as string) || ''
+                file: (tb.file as string) || ''
               })
             }
           }

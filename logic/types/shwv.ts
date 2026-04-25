@@ -7,6 +7,7 @@ export interface TranslationPair {
   tgt: string
   note?: string
   isSub?: boolean
+  placeholders?: Record<number, string>
 }
 
 export interface TranslationPairWithFile extends TranslationPair {
@@ -29,6 +30,8 @@ export interface ShWvMeta {
   files: ShWvFileInfo[]
   sourceLang: string
   targetLang: string
+  tmFiles?: string[]
+  tbFiles?: string[]
 }
 
 export interface ShWvBody {
@@ -43,6 +46,7 @@ export interface ShWvUnit {
   tgt: string
   note?: string
   isSub?: boolean
+  status?: number
   ref: ShWvRef
   placeholders?: Record<number, string>
 }
@@ -61,12 +65,14 @@ export interface ShWvRefTm {
   tgt: string
   ratio: number
   freeze?: boolean
+  file?: string
 }
 
 export interface ShWvRefTb {
   src: string
   tgts: string[]
   note?: string
+  file?: string
 }
 
 export interface ShWvData {

@@ -25,6 +25,8 @@ export class SheepShuttle {
   public data: ShWvData | null = null
   public tms: TranslationPairWithFile[] = []
   public tbs: TranslationPairWithFile[] = []
+  public tmFiles: string[] = []
+  public tbFiles: string[] = []
   public chunks: ChunkInfo[] = []
 
   // Sub-components
@@ -48,6 +50,12 @@ export class SheepShuttle {
 
   public setNewData(data: ShWvData): void {
     this.data = structuredClone(data)
+    if (this.data.meta.tmFiles) {
+      this.tmFiles = [...this.data.meta.tmFiles]
+    }
+    if (this.data.meta.tbFiles) {
+      this.tbFiles = [...this.data.meta.tbFiles]
+    }
   }
 
   /**
@@ -60,6 +68,23 @@ export class SheepShuttle {
       return { ...u, file: file ? file.name : 'Unknown' } as TranslationPairWithFile
     })
     this.tms.push(...unitsWithFile)
+    
+    // Update file name list
+    for (const f of files) {
+      if (!this.tmFiles.includes(f.name)) {
+        this.tmFiles.push(f.name)
+      }
+    }
+
+    // Sync with data.meta if exists
+    if (this.data) {
+      if (!this.data.meta.tmFiles) this.data.meta.tmFiles = []
+      for (const name of this.tmFiles) {
+        if (!this.data.meta.tmFiles.includes(name)) {
+          this.data.meta.tmFiles.push(name)
+        }
+      }
+    }
   }
 
   /**
@@ -72,6 +97,23 @@ export class SheepShuttle {
       return { ...u, file: file ? file.name : 'Unknown' } as TranslationPairWithFile
     })
     this.tbs.push(...unitsWithFile)
+
+    // Update file name list
+    for (const f of files) {
+      if (!this.tbFiles.includes(f.name)) {
+        this.tbFiles.push(f.name)
+      }
+    }
+
+    // Sync with data.meta if exists
+    if (this.data) {
+      if (!this.data.meta.tbFiles) this.data.meta.tbFiles = []
+      for (const name of this.tbFiles) {
+        if (!this.data.meta.tbFiles.includes(name)) {
+          this.data.meta.tbFiles.push(name)
+        }
+      }
+    }
   }
 
   /**
@@ -259,6 +301,8 @@ export class SheepShuttle {
     this.data = null
     this.tms = []
     this.tbs = []
+    this.tmFiles = []
+    this.tbFiles = []
     this.chunks = []
   }
 }

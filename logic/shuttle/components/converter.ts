@@ -53,7 +53,9 @@ export class ShuttleConverter {
         bilingualPath: '',
         files: files,
         sourceLang: 'ja',
-        targetLang: 'en'
+        targetLang: 'en',
+        tmFiles: [...this.parent.tmFiles],
+        tbFiles: [...this.parent.tbFiles]
       },
       body: {
         units: allUnits,
