@@ -11,8 +11,8 @@ definePageMeta({
 import { ref, computed, watch, onMounted } from 'vue'
 import { Send, Cloud, Loader2, AlertCircle, RefreshCw, Trash2 } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
-import { useShuttleStore } from '../stores/shuttleStore'
-import { SheepShuttle } from '../../logic/shuttle/sheepShuttle.js'
+import { useShuttleStore } from '../../stores/shuttleStore'
+import { SheepShuttle } from '../../../logic/shuttle/sheepShuttle.js'
 
 const store = useShuttleStore()
 
@@ -156,6 +156,16 @@ function getStatusColor(status: string) {
             <h2>接続ステータス</h2>
             <div class="status-dot" :class="{ online: store.isApiAvailable }"></div>
           </div>
+          
+          <!-- Developer Toggle -->
+          <div class="dev-toggle-row">
+            <label class="toggle-container">
+              <input type="checkbox" v-model="store.isDevOverride" />
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">開発者モード (Local)</span>
+            </label>
+          </div>
+
           <div class="status-content-inline">
             <span class="status-text" :class="{ online: store.isApiAvailable }">
               {{ store.isApiAvailable ? 'ONLINE (Accessible)' : 'OFFLINE (Unavailable)' }}
@@ -674,8 +684,62 @@ pre {
   font-size: 0.6rem;
   background: var(--warning);
   color: #000;
-  padding: 2px 6px;
-  border-radius: 4px;
   font-weight: 800;
+}
+
+/* Developer Toggle */
+.dev-toggle-row {
+  padding: 10px 20px;
+  background: rgba(var(--warning-rgb), 0.03);
+  border-bottom: 1px solid var(--border);
+}
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.toggle-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.toggle-container input {
+  display: none;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  transition: var(--transition);
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+input:checked + .toggle-slider {
+  background: var(--warning);
+  border-color: var(--warning);
+}
+
+input:checked + .toggle-slider::before {
+  transform: translateX(14px);
+  background: #000;
 }
 </style>

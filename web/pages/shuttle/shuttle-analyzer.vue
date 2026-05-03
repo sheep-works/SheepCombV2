@@ -6,8 +6,8 @@ definePageMeta({
 
 import { ref, computed } from 'vue'
 import { FileUp, Trash2, Play, FileSearch, CheckCircle, AlertCircle, Database, Book } from 'lucide-vue-next'
-import { useShuttleStore } from '../stores/shuttleStore'
-import { initWasm, getWasm } from '../../logic/wasm.js'
+import { useShuttleStore } from '../../stores/shuttleStore'
+import { initWasm, getWasm } from '../../../logic/wasm.js'
 
 const store = useShuttleStore()
 const router = useRouter()
@@ -77,7 +77,7 @@ async function doAnalyze() {
 
     statusMsg.value = { text: '解析完了！', type: 'success' }
     setTimeout(() => {
-      router.push('/shuttle-manage')
+      router.push('/shuttle/shuttle-manage')
     }, 800)
 
   } catch (e: any) {

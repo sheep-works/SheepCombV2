@@ -10,9 +10,10 @@ definePageMeta({
 import { ref, computed } from 'vue'
 import { FileUp, Download, Scissors, Merge, FileText, FileJson, Trash2, Settings2 } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
-import { useShuttleStore } from '../stores/shuttleStore'
-import { FileIO } from '../utils/fileIO'
-import JsonViewer from '../components/JsonViewer.vue'
+import { useShuttleStore } from '../../stores/shuttleStore'
+import { SheepShuttle } from '../../../logic/shuttle/sheepShuttle.js'
+import { FileIO } from '../../utils/fileIO'
+import JsonViewer from '../../components/JsonViewer.vue'
 
 
 // ストアの初期化

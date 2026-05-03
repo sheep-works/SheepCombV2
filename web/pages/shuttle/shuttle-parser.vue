@@ -7,9 +7,9 @@ definePageMeta({
 import { ref, computed } from 'vue'
 import { FileUp, Trash2, Play, FileText, CheckCircle, AlertCircle, Layers } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
-import { useShuttleStore } from '../stores/shuttleStore'
-import { SheepShuttle } from '../../logic/shuttle/sheepShuttle.js'
-import { FileIO } from '../utils/fileIO'
+import { useShuttleStore } from '../../stores/shuttleStore'
+import { SheepShuttle } from '../../../logic/shuttle/sheepShuttle.js'
+import { FileIO } from '../../utils/fileIO'
 
 const store = useShuttleStore()
 const router = useRouter()
@@ -66,7 +66,7 @@ async function doConvert() {
 
     statusMsg.value = { text: '構造化完了！解析ページに移動します。', type: 'success' }
     setTimeout(() => {
-      router.push('/shuttle-analyze')
+      router.push('/shuttle/shuttle-analyze')
     }, 800)
 
   } catch (e: any) {

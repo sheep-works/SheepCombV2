@@ -10,12 +10,12 @@ definePageMeta({
 })
 
 import { ref, computed } from 'vue'
-import { FileUp, Search, Download, Database, Trash2, Loader2 } from 'lucide-vue-next'
+import { FileUp, Search, Download, Database, Trash2, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
-import { useShuttleStore } from '../stores/shuttleStore'
-import { SheepShuttle } from '../../logic/shuttle/sheepShuttle.js'
-import type { TranslationPair } from '../../logic/types/shwv.js'
-import { FileIO } from '../utils/fileIO'
+import { useShuttleStore } from '../../stores/shuttleStore'
+import { SheepShuttle } from '../../../logic/shuttle/sheepShuttle.js'
+import type { TranslationPair } from '../../../logic/types/shwv.js'
+import { FileIO } from '../../utils/fileIO'
 
 
 // ストアおよびコンポーネントの状態管理
@@ -23,6 +23,37 @@ const store = useShuttleStore()
 const fileInput = ref<HTMLInputElement | null>(null)
 const isProcessing = computed(() => store.isLoading)
 const statusMsg = computed(() => store.statusMsg)
+
+// Pagination logic
+const currentPage = ref(1)
+const itemsPerPage = 100
+const paginatedUnits = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return store.units.slice(start, end)
+})
+const totalPages = computed(() => Math.ceil(store.unitCount / itemsPerPage))
+
+/**
+ * Handle page changes
+ */
+const setPage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+    jumpPageInput.value = page
+    // Scroll table to top on page change
+    const container = document.querySelector('.table-container')
+    if (container) container.scrollTop = 0
+  }
+}
+
+const jumpPageInput = ref(1)
+const handleJumpPage = () => {
+  let page = Math.floor(jumpPageInput.value)
+  if (page < 1) page = 1
+  if (page > totalPages.value) page = totalPages.value
+  setPage(page)
+}
 
 // 選択された File オブジェクトのリスト
 const selectedFiles = ref<File[]>([])
@@ -81,6 +112,7 @@ const parseFiles = async () => {
 
     // プロセッサ（フィルタ等）を実行してステートを更新
     store.process()
+    currentPage.value = 1
 
     store.setStatus('解析が完了しました', 'success')
   } catch (e: any) {
@@ -97,7 +129,8 @@ const exportResults = (format: 'json' | 'csv') => {
   if (format === 'json') {
     FileIO.downloadJson(store.units, 'parsed_results.json')
   } else {
-    const csv = store.getManagedData('CSV')
+    // getCsv() converts store.units directly to CSV string
+    const csv = store.shuttle.getCsv()
     FileIO.downloadCsv(csv, 'parsed_results.csv')
   }
 }
@@ -115,6 +148,7 @@ const filterOptions = ref({
 const applyFilters = () => {
   if (!store.hasUnits) return
   store.process(filterOptions.value)
+  currentPage.value = 1
   store.setStatus('フィルタを適用しました', 'success')
 }
 
@@ -224,7 +258,7 @@ const applyFilters = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(seg, idx) in store.units" :key="idx">
+                <tr v-for="seg in paginatedUnits" :key="seg.idx">
                   <td class="idx">{{ seg.idx + 1 }}</td>
                   <td class="text">{{ seg.src }}</td>
                   <td class="text">{{ seg.tgt }}</td>
@@ -234,6 +268,39 @@ const applyFilters = () => {
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- Pagination Controls -->
+          <div class="pagination-footer" v-if="store.hasUnits && totalPages > 1">
+            <div class="pagination-info">
+              Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage,
+                store.unitCount) }} of {{ store.unitCount }} entries
+            </div>
+            <div class="pagination-controls">
+              <button class="btn-page" :disabled="currentPage === 1" @click="setPage(1)" title="First Page">
+                <ChevronsLeft :size="16" />
+              </button>
+              <button class="btn-page" :disabled="currentPage === 1" @click="setPage(currentPage - 1)"
+                title="Previous Page">
+                <ChevronLeft :size="16" />
+              </button>
+
+              <div class="page-jump">
+                <input type="number" v-model.number="jumpPageInput" @keyup.enter="handleJumpPage" @blur="handleJumpPage"
+                  min="1" :max="totalPages" class="input-jump" />
+                <span class="page-divider">/</span>
+                <span class="page-total">{{ totalPages }}</span>
+              </div>
+
+              <button class="btn-page" :disabled="currentPage === totalPages" @click="setPage(currentPage + 1)"
+                title="Next Page">
+                <ChevronRight :size="16" />
+              </button>
+              <button class="btn-page" :disabled="currentPage === totalPages" @click="setPage(totalPages)"
+                title="Last Page">
+                <ChevronsRight :size="16" />
+              </button>
+            </div>
           </div>
 
           <div class="empty-state" v-else>
@@ -475,5 +542,95 @@ td.note {
 
 .btn-outline-action:hover {
   background: var(--accent-glow);
+}
+
+/* Pagination Styles */
+.pagination-footer {
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.pagination-info {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-page {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 6px;
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-page:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-page:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  transition: var(--transition);
+}
+
+.page-jump:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.input-jump {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-weight: 700;
+  width: 40px;
+  text-align: center;
+  font-size: 0.85rem;
+  outline: none;
+  padding: 2px 0;
+}
+
+/* Remove arrows from number input */
+.input-jump::-webkit-outer-spin-button,
+.input-jump::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.page-divider {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.page-total {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 </style>

@@ -6,6 +6,7 @@ import { ShuttleConverter } from './components/converter.js'
 import { ShuttleAnalyzer } from './components/analyzer.js'
 import { ShuttleManager } from './components/manager.js'
 import { ShuttleBuilder } from './components/builder.js'
+import { ShuttleSearch } from './components/search.js'
 import { ShuttleRequests, type ShuttleOptions, type TaskResponse, type UserRequest } from './components/requests.js'
 
 export interface ChunkInfo {
@@ -36,6 +37,7 @@ export class SheepShuttle {
   public analyzer: ShuttleAnalyzer
   public manager: ShuttleManager
   public builder: ShuttleBuilder
+  public searcher: ShuttleSearch
   public requests: ShuttleRequests
 
   constructor(options?: ShuttleOptions) {
@@ -45,6 +47,7 @@ export class SheepShuttle {
     this.analyzer = new ShuttleAnalyzer(this)
     this.manager = new ShuttleManager(this)
     this.builder = new ShuttleBuilder(this)
+    this.searcher = new ShuttleSearch()
     this.requests = new ShuttleRequests(this, options)
   }
 

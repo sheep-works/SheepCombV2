@@ -6,7 +6,7 @@ definePageMeta({
 
 import { ref, computed } from 'vue'
 import { Split, Play, Trash2, Import, FileText, CheckCircle, AlertCircle } from 'lucide-vue-next'
-import { useDiffStore } from '../stores/diffStore'
+import { useDiffStore } from '../../stores/diffStore'
 
 const store = useDiffStore()
 const isChecked = ref(false)
@@ -32,7 +32,7 @@ const runCheck = () => {
       return
     }
   }
-  
+
   store.batchCheck()
   isChecked.value = true
 }
@@ -57,7 +57,7 @@ const clearAll = () => {
             <button class="btn primary" @click="runCheck" :disabled="!store.srcText && !store.tgtText">
               <Play :size="18" /> 差分を確認
             </button>
-            
+
             <button class="btn secondary" @click="handleImport">
               <Import :size="18" /> パーサーから読み込む
             </button>
@@ -90,11 +90,15 @@ const clearAll = () => {
         <!-- Input Area -->
         <div class="input-grid" v-if="!isChecked">
           <div class="card">
-            <div class="card-header"><h3>旧テキスト (Old)</h3></div>
+            <div class="card-header">
+              <h3>旧テキスト (Old)</h3>
+            </div>
             <textarea v-model="store.srcText" class="diff-textarea" placeholder="比較元のテキストを貼り付け"></textarea>
           </div>
           <div class="card">
-            <div class="card-header"><h3>新テキスト (New)</h3></div>
+            <div class="card-header">
+              <h3>新テキスト (New)</h3>
+            </div>
             <textarea v-model="store.tgtText" class="diff-textarea" placeholder="比較先のテキストを貼り付け"></textarea>
           </div>
         </div>
@@ -178,8 +182,14 @@ const clearAll = () => {
   font-size: 0.75rem;
 }
 
-.stat-label { color: var(--text-muted); }
-.stat-value { color: var(--accent); font-weight: 700; }
+.stat-label {
+  color: var(--text-muted);
+}
+
+.stat-value {
+  color: var(--accent);
+  font-weight: 700;
+}
 
 .alert-info {
   margin-top: 16px;
@@ -248,12 +258,27 @@ const clearAll = () => {
   vertical-align: top;
 }
 
-.w-idx { width: 50px; }
-.w-text { width: 30%; }
-.w-diff { width: 40%; }
+.w-idx {
+  width: 50px;
+}
 
-.idx { color: var(--text-muted); font-size: 0.75rem; }
-.text-source { color: var(--text-secondary); word-break: break-all; }
+.w-text {
+  width: 30%;
+}
+
+.w-diff {
+  width: 40%;
+}
+
+.idx {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.text-source {
+  color: var(--text-secondary);
+  word-break: break-all;
+}
 
 .diff-rendered {
   line-height: 1.6;
@@ -303,5 +328,7 @@ const clearAll = () => {
   gap: 6px;
 }
 
-.space-between { justify-content: space-between; }
+.space-between {
+  justify-content: space-between;
+}
 </style>

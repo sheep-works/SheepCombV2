@@ -23,7 +23,9 @@ export const useShuttleStore = defineStore('shuttle', () => {
   // --- 内部インスタンス ---
   const shuttle = new SheepShuttle({
     baseUrl: config.public.apiBaseUrl as string,
-    port: config.public.apiPort as string | number
+    port: config.public.apiPort as string | number,
+    apiKey: config.public.apiKey as string,
+    isDev: config.public.apiDev as boolean | string === 'true'
   })
 
   // --- State ---
@@ -36,10 +38,20 @@ export const useShuttleStore = defineStore('shuttle', () => {
   const chunks = ref<ChunkInfo[]>([])
 
   const isApiAvailable = ref(false)
+  const isDevOverride = ref(config.public.apiDev as boolean | string === 'true')
 
   const currentFileName = ref('')
   const isLoading = ref(false)
   const statusMsg = ref({ text: '', type: 'info' as 'info' | 'success' | 'error' })
+
+  // --- Watchers ---
+  watch(isDevOverride, (newVal) => {
+    shuttle.requests.updateOptions({
+      isDev: newVal,
+      baseUrl: config.public.apiBaseUrl as string,
+      port: config.public.apiPort as string | number
+    })
+  })
 
   // --- Getters ---
   const hasData = computed(() => data.value !== null)
@@ -119,7 +131,34 @@ export const useShuttleStore = defineStore('shuttle', () => {
   function convert() { shuttle.convert(); syncState() }
   async function analyze(wasmAnalyzeAll?: any) {
     await shuttle.analyze(wasmAnalyzeAll)
+    // Automatically build search index after analysis
+    buildSearchIndex()
     syncState()
+  }
+
+  /**
+   * 検索インデックスの構築
+   */
+  function buildSearchIndex() {
+    if (shuttle.data) {
+      shuttle.searcher.indexShwvData(shuttle.data)
+    } else if (shuttle.units.length > 0) {
+      shuttle.searcher.indexUnits(shuttle.units)
+    }
+  }
+
+  /**
+   * コンコーダンス検索の実行
+   */
+  function searchConcordance(query: string, limit: number = 100) {
+    return shuttle.searcher.search(query, limit)
+  }
+
+  /**
+   * インデックスの生データをエクスポート
+   */
+  async function exportSearchIndex() {
+    return await shuttle.searcher.exportIndexData()
   }
 
   /**
@@ -192,6 +231,21 @@ export const useShuttleStore = defineStore('shuttle', () => {
     }
   }, { immediate: true })
 
+  let isStorageErrorActive = false
+  if (typeof window !== 'undefined') {
+    window.addEventListener('shuttle-storage-error', () => {
+      if (isStorageErrorActive) return
+      isStorageErrorActive = true
+
+      setStatus('データサイズが大きいため、ブラウザ保存（永続化）はスキップされます', 'error')
+
+      // 一定時間後にフラグをリセット
+      setTimeout(() => {
+        isStorageErrorActive = false
+      }, 5000)
+    })
+  }
+
   return {
     // State
     units,
@@ -201,6 +255,7 @@ export const useShuttleStore = defineStore('shuttle', () => {
     tbs,
     chunks,
     isApiAvailable,
+    isDevOverride,
     currentFileName,
     isLoading,
     statusMsg,
@@ -229,21 +284,40 @@ export const useShuttleStore = defineStore('shuttle', () => {
     clear,
     setStatus,
     rehydrate,
+    buildSearchIndex,
+    searchConcordance,
+    exportSearchIndex,
     // インスタンスへの直接アクセスが必要な場合用
     shuttle
   }
 }, {
   persist: {
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storage: typeof window !== 'undefined' ? {
+      getItem(key: string) {
+        return window.localStorage.getItem(key)
+      },
+      setItem(key: string, value: string) {
+        try {
+          window.localStorage.setItem(key, value)
+        } catch (e: any) {
+          if (e.name === 'QuotaExceededError' || e.message.includes('quota') || e.message.includes('size')) {
+            // 非同期でイベントを飛ばして無限ループを防ぐ
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('shuttle-storage-error'))
+            }, 0)
+          }
+        }
+      }
+    } : undefined,
     // 保存対象を指定 (shuttle インスタンス自体は除外)
+    // TMs / TBs は数MB〜数百MBになる可能性があり、localStorage (5MB制限) を超えてしまうため永続化から除外
     pick: [
       'units',
       'files',
       'data',
-      'tms',
-      'tbs',
       'chunks',
-      'currentFileName'
+      'currentFileName',
+      'isDevOverride'
     ]
   }
 })

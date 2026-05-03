@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Trash2 } from 'lucide-vue-next'
+import { Trash2, ChevronDown, Database, Layers, Zap, Code2, Cloud, Split, Search } from 'lucide-vue-next'
 import { useShuttleStore } from '../stores/shuttleStore'
 
 const store = useShuttleStore()
@@ -23,74 +23,91 @@ const handleReset = () => {
 <template>
   <header class="app-header">
     <div class="header-left">
-      <div class="logo-area">
-        <h1 class="logo-text">
-          <span class="logo-icon">🐑</span>
-          SheepComb
-          <span class="logo-version">Web</span>
-        </h1>
-        <p class="logo-subtitle">{{ currentTitle }}</p>
-      </div>
+      <NuxtLink to="/" class="logo-link">
+        <div class="logo-area">
+          <h1 class="logo-text">
+            <span class="logo-icon">🐑</span>
+            SheepComb
+            <span class="logo-version">Web</span>
+          </h1>
+          <p class="logo-subtitle">{{ currentTitle }}</p>
+        </div>
+      </NuxtLink>
     </div>
 
     <nav class="header-nav">
-      <div class="nav-group">
-        <NuxtLink to="/parser" class="nav-link" active-class="active">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <ellipse cx="12" cy="5" rx="9" ry="3" />
-            <path d="M3 5V19A9 3 0 0 0 21 19V5" />
-            <path d="M3 12A9 3 0 0 0 21 12" />
-          </svg>
-          <span>パーサー</span>
-        </NuxtLink>
-        <NuxtLink to="/shuttle-parse" class="nav-link" active-class="active">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-          </svg>
-          <span>構造化</span>
-        </NuxtLink>
-        <NuxtLink to="/shuttle-analyze" class="nav-link" active-class="active">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-          </svg>
-          <span>解析</span>
-        </NuxtLink>
-        <NuxtLink to="/shuttle-manage" class="nav-link" active-class="active">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="m18 8 4 4-4 4" />
-            <path d="m6 8-4 4 4 4" />
-            <path d="m14.5 4-5 16" />
-          </svg>
-          <span>管理</span>
-        </NuxtLink>
-        <NuxtLink to="/api" class="nav-link" active-class="active">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
-          </svg>
-          <span>API</span>
-        </NuxtLink>
-      </div>
+      <div class="nav-main-groups">
+        <!-- Shuttle Group -->
+        <div class="nav-item has-dropdown">
+          <button class="nav-group-trigger" :class="{ active: route.path.startsWith('/shuttle') }">
+            <Database :size="16" />
+            <span>Shuttle</span>
+            <ChevronDown :size="14" class="chevron" />
+          </button>
+          <div class="dropdown-menu">
+            <NuxtLink to="/shuttle/parser" class="dropdown-item" active-class="active">
+              <Database :size="14" />
+              <div class="item-text">
+                <span class="label">パーサー</span>
+                <span class="desc">Rawファイルの抽出</span>
+              </div>
+            </NuxtLink>
+            <NuxtLink to="/shuttle/shuttle-parser" class="dropdown-item" active-class="active">
+              <Layers :size="14" />
+              <div class="item-text">
+                <span class="label">構造化</span>
+                <span class="desc">ShWvデータへの変換</span>
+              </div>
+            </NuxtLink>
+            <NuxtLink to="/shuttle/shuttle-analyzer" class="dropdown-item" active-class="active">
+              <Zap :size="14" />
+              <div class="item-text">
+                <span class="label">解析</span>
+                <span class="desc">TM/TBマッチング</span>
+              </div>
+            </NuxtLink>
+            <NuxtLink to="/shuttle/shuttle-manage" class="dropdown-item" active-class="active">
+              <Code2 :size="14" />
+              <div class="item-text">
+                <span class="label">管理</span>
+                <span class="desc">データの結合・分割</span>
+              </div>
+            </NuxtLink>
+            <div class="dropdown-divider"></div>
+            <NuxtLink to="/shuttle/api" class="dropdown-item" active-class="active">
+              <Cloud :size="14" />
+              <div class="item-text">
+                <span class="label">API</span>
+                <span class="desc">LLM処理設定</span>
+              </div>
+            </NuxtLink>
+          </div>
+        </div>
 
-      <div class="nav-spacer"></div>
-
-      <div class="nav-group">
-        <NuxtLink to="/batch" class="nav-link" active-class="active">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3" />
-            <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
-            <path d="M3 16v3a2 2 0 0 0 2 2h3" />
-            <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
-            <line x1="12" y1="8" x2="12" y2="16" />
-            <line x1="8" y1="12" x2="16" y2="12" />
-          </svg>
-          <span>一括差分</span>
-        </NuxtLink>
+        <!-- Tools Group -->
+        <div class="nav-item has-dropdown">
+          <button class="nav-group-trigger" :class="{ active: route.path.startsWith('/tools') }">
+            <Split :size="16" />
+            <span>Tools</span>
+            <ChevronDown :size="14" class="chevron" />
+          </button>
+          <div class="dropdown-menu">
+            <NuxtLink to="/tools/batch" class="dropdown-item" active-class="active">
+              <Split :size="14" />
+              <div class="item-text">
+                <span class="label">一括差分</span>
+                <span class="desc">テキスト比較ツール</span>
+              </div>
+            </NuxtLink>
+            <NuxtLink to="/tools/concordance" class="dropdown-item" active-class="active">
+              <Search :size="14" />
+              <div class="item-text">
+                <span class="label">コンコーダンス</span>
+                <span class="desc">高速な一致検索</span>
+              </div>
+            </NuxtLink>
+          </div>
+        </div>
       </div>
     </nav>
 
@@ -125,6 +142,15 @@ const handleReset = () => {
   display: flex;
   align-items: center;
   min-width: 200px;
+}
+
+.logo-link {
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.logo-link:hover {
+  opacity: 0.8;
 }
 
 .logo-text {
@@ -167,9 +193,118 @@ const handleReset = () => {
 .header-nav {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   flex: 1;
   padding: 0 40px;
+}
+
+.nav-main-groups {
+  display: flex;
+  gap: 16px;
+}
+
+.nav-item {
+  position: relative;
+}
+
+.nav-group-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.nav-group-trigger:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.nav-group-trigger.active {
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.chevron {
+  opacity: 0.5;
+  transition: transform 0.3s ease;
+}
+
+.nav-item:hover .chevron {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  min-width: 220px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 200;
+}
+
+.nav-item:hover .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(4px);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-xs);
+  text-decoration: none;
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.dropdown-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.dropdown-item.active {
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.item-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.desc {
+  font-size: 0.68rem;
+  opacity: 0.6;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 4px;
 }
 
 .nav-group {
