@@ -1,10 +1,10 @@
 <script setup lang="ts">
 /**
- * web/pages/shuttle-manage.vue
+ * web/pages/shuttle/manage.vue
  * 解析済みデータ（ShWvData）の管理・分割・エクスポートを行う画面。
  */
 definePageMeta({
-  title: 'Shuttle Manage',
+  title: '管理',
   icon: 'settings',
 })
 import { ref, computed } from 'vue'
@@ -254,7 +254,7 @@ function doClear() {
             <JsonViewer v-if="hasData" :data="store.data" />
             <div class="empty-state" v-else>
               <FileJson :size="48" class="empty-icon" />
-              <p>表示するデータがありません。<br>解析ページで作成するか、JSONファイルを読み込んでください。</p>
+              <p>表示するデータがありません。<br>「解析」ページで作成するか、JSONファイルを読み込んでください。</p>
             </div>
           </div>
         </div>

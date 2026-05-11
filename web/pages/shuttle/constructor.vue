@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * web/pages/shuttle/constructor.vue
+ */
 definePageMeta({
   title: '構造化',
   icon: 'layers',
@@ -58,15 +61,15 @@ async function doConvert() {
     }
 
     if (!store.hasUnits) {
-      throw new Error('構造化するユニットがありません。解析ページでファイルを読み込んでください。')
+      throw new Error('構造化するユニットがありません。「解析」ページでファイルを読み込んでください。')
     }
 
     // 構造化（ShWvData への変換）実行
     store.convert()
 
-    statusMsg.value = { text: '構造化完了！解析ページに移動します。', type: 'success' }
+    statusMsg.value = { text: '構造化完了！「解析」ページに移動します。', type: 'success' }
     setTimeout(() => {
-      router.push('/shuttle/shuttle-analyze')
+      router.push('/shuttle/analyzer')
     }, 800)
 
   } catch (e: any) {
@@ -137,7 +140,7 @@ async function doConvert() {
         </div>
         <div v-else-if="!hasUnitsInStore && !hasFiles" class="status-box info">
           <AlertCircle :size="18" />
-          <span>解析ページでファイルを読み込んでください</span>
+          <span>「解析」ページでファイルを読み込んでください</span>
         </div>
 
         <button class="btn-run" @click="doConvert" :disabled="isProcessing || (!hasUnitsInStore && !hasFiles)">

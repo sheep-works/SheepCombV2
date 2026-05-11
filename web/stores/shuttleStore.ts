@@ -155,10 +155,18 @@ export const useShuttleStore = defineStore('shuttle', () => {
   }
 
   /**
-   * インデックスの生データをエクスポート
+   * 検索状態（インデックスとエントリ）をエクスポート
    */
-  async function exportSearchIndex() {
-    return await shuttle.searcher.exportIndexData()
+  async function exportSearchData() {
+    return await shuttle.searcher.exportFullData()
+  }
+
+  /**
+   * 検索状態をインポート
+   */
+  async function importSearchData(data: any) {
+    await shuttle.searcher.importFullData(data)
+    syncState()
   }
 
   /**
@@ -286,7 +294,8 @@ export const useShuttleStore = defineStore('shuttle', () => {
     rehydrate,
     buildSearchIndex,
     searchConcordance,
-    exportSearchIndex,
+    exportSearchData,
+    importSearchData,
     // インスタンスへの直接アクセスが必要な場合用
     shuttle
   }

@@ -7,9 +7,9 @@ definePageMeta({
 
 const shuttleLinks = [
   { to: '/shuttle/parser', label: 'パーサー', desc: 'Rawファイルからセグメントを抽出', icon: Database },
-  { to: '/shuttle/shuttle-parser', label: '構造化', desc: 'ユニットをShWvデータに変換', icon: Layers },
-  { to: '/shuttle/shuttle-analyzer', label: '解析', desc: 'TM/TBを使用したマッチング処理', icon: Zap },
-  { to: '/shuttle/shuttle-manage', label: '管理', desc: 'データの分割・結合・管理', icon: Code2 },
+  { to: '/shuttle/constructor', label: '構造化', desc: 'ユニットをShWvデータに変換', icon: Layers },
+  { to: '/shuttle/analyzer', label: '解析', desc: 'TM/TBを使用したマッチング処理', icon: Zap },
+  { to: '/shuttle/manage', label: '管理', desc: 'データの分割・結合・管理', icon: Code2 },
   { to: '/shuttle/api', label: 'API', desc: 'LLMリクエストとキャッシュ設定', icon: Cloud },
 ]
 

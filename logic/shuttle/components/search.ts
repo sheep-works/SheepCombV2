@@ -16,11 +16,11 @@ export interface SearchEntry {
 export class ShuttleSearch {
     private index: any;
     private entries: SearchEntry[] = [];
+    private config: any;
 
     constructor() {
-        // Initialize FlexSearch Document index
-        // Using character-level tokenization for robust matching in CJK text
-        this.index = new (flexsearch as any).Document({
+        // Store config for consistent re-initialization
+        this.config = {
             document: {
                 id: "id",
                 index: ["src", "tgt"],
@@ -28,7 +28,6 @@ export class ShuttleSearch {
             },
             tokenize: "strict",
             // Custom encoder to generate N-grams (Bi-gram + Uni-gram)
-            // This solves the CJK noise issue without requiring language-specific tokenizers
             encode: (str: string) => {
                 if (!str) return [];
                 const s = str.toLowerCase();
@@ -41,7 +40,8 @@ export class ShuttleSearch {
                 }
                 return tokens;
             }
-        });
+        };
+        this.index = new (flexsearch as any).Document(this.config);
     }
 
     /**
@@ -88,15 +88,12 @@ export class ShuttleSearch {
     public search(query: string, limit: number = 100) {
         if (!query || query.trim() === '') return [];
 
-        // Fetch more candidates to allow for strict post-filtering
-        // Using "and" boolean logic ensures all n-grams from the query must be present
         const results = this.index.search(query, {
             limit: limit * 10,
             enrich: true,
             bool: "and"
         });
 
-        // Flatten and unique the candidates
         const seenIds = new Set<number>();
         const candidates: SearchEntry[] = [];
 
@@ -109,8 +106,6 @@ export class ShuttleSearch {
             }
         }
 
-        // Exact substring post-filtering for true Concordance precision
-        // This perfectly filters out "any single character" noise
         const q = query.toLowerCase();
         const finalResults = candidates.filter(entry => {
             return (entry.src && entry.src.toLowerCase().includes(q)) ||
@@ -120,20 +115,22 @@ export class ShuttleSearch {
         return finalResults.slice(0, limit);
     }
 
+    /**
+     * Clear all indexed data and reset the index instance.
+     */
     public clear(): void {
         this.entries = [];
-        // Resetting the index is simplest by re-initializing in the constructor-like logic
-        // but for now we just clear the local entries reference.
+        this.index = new (flexsearch as any).Document(this.config);
     }
 
     /**
-     * Export the internal FlexSearch index data.
+     * Export the full search state (index + entries).
      */
-    public async exportIndexData(): Promise<Record<string, any>> {
-        const dump: Record<string, any> = {};
+    public async exportFullData(): Promise<{ index: Record<string, any>, entries: SearchEntry[] }> {
+        const indexDump: Record<string, any> = {};
         try {
             const promise = this.index.export((key: string | number, data: any) => {
-                dump[key] = data;
+                indexDump[key] = data;
             });
             if (promise && typeof promise.then === 'function') {
                 await promise;
@@ -141,7 +138,29 @@ export class ShuttleSearch {
         } catch (e) {
             console.error('Failed to export index:', e);
         }
-        return dump;
+        return {
+            index: indexDump,
+            entries: this.entries
+        };
+    }
+
+    /**
+     * Import the full search state.
+     */
+    public async importFullData(data: { index: Record<string, any>, entries: SearchEntry[] }): Promise<void> {
+        if (!data || !data.index) return;
+        
+        this.clear();
+        this.entries = data.entries || [];
+        
+        try {
+            const keys = Object.keys(data.index);
+            for (const key of keys) {
+                await this.index.import(key, data.index[key]);
+            }
+        } catch (e) {
+            console.error('Failed to import index:', e);
+        }
     }
 
     /**

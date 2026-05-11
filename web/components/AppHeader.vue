@@ -52,21 +52,21 @@ const handleReset = () => {
                 <span class="desc">Rawファイルの抽出</span>
               </div>
             </NuxtLink>
-            <NuxtLink to="/shuttle/shuttle-parser" class="dropdown-item" active-class="active">
+            <NuxtLink to="/shuttle/constructor" class="dropdown-item" active-class="active">
               <Layers :size="14" />
               <div class="item-text">
                 <span class="label">構造化</span>
                 <span class="desc">ShWvデータへの変換</span>
               </div>
             </NuxtLink>
-            <NuxtLink to="/shuttle/shuttle-analyzer" class="dropdown-item" active-class="active">
+            <NuxtLink to="/shuttle/analyzer" class="dropdown-item" active-class="active">
               <Zap :size="14" />
               <div class="item-text">
                 <span class="label">解析</span>
                 <span class="desc">TM/TBマッチング</span>
               </div>
             </NuxtLink>
-            <NuxtLink to="/shuttle/shuttle-manage" class="dropdown-item" active-class="active">
+            <NuxtLink to="/shuttle/manage" class="dropdown-item" active-class="active">
               <Code2 :size="14" />
               <div class="item-text">
                 <span class="label">管理</span>

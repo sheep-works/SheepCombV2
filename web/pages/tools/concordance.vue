@@ -10,13 +10,14 @@ definePageMeta({
 })
 
 import { ref, watch } from 'vue'
-import { Search, Hash, FileText, Database, Info, Loader2, Download } from 'lucide-vue-next'
+import { Search, Hash, FileText, Database, Info, Loader2, Download, Upload } from 'lucide-vue-next'
 import { useShuttleStore } from '../../stores/shuttleStore'
 
 const store = useShuttleStore()
 const searchQuery = ref('')
 const results = ref<any[]>([])
 const isSearching = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 /**
  * 検索の実行
@@ -33,13 +34,13 @@ const performSearch = () => {
   isSearching.value = false
 }
 
-// クエリの変更を監視して自動検索（デバウンスなしでも FlexSearch なら十分速い）
+// クエリの変更を監視して自動検索
 watch(searchQuery, () => {
   performSearch()
 })
 
 /**
- * インデックスの再構築（データが更新された場合など）
+ * インデックスの再構築
  */
 const reindex = () => {
   store.buildSearchIndex()
@@ -47,19 +48,47 @@ const reindex = () => {
 }
 
 /**
- * インデックスデータをJSONでダウンロード
+ * 検索データをJSONでダウンロード
  */
-const downloadIndex = async () => {
-  const data = await store.exportSearchIndex()
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+const downloadData = async () => {
+  const data = await store.exportSearchData()
+  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = 'flexsearch-index.json'
+  a.download = `concordance-data-${new Date().getTime()}.json`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
+
+/**
+ * インポートボタンクリック
+ */
+const triggerUpload = () => {
+  fileInput.value?.click()
+}
+
+/**
+ * ファイル選択時の処理
+ */
+const handleUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file) return
+
+  try {
+    const text = await file.text()
+    const data = JSON.parse(text)
+    await store.importSearchData(data)
+    performSearch()
+    // Reset input
+    target.value = ''
+  } catch (e) {
+    console.error('Import failed:', e)
+    alert('インポートに失敗しました。ファイル形式を確認してください。')
+  }
 }
 </script>
 
@@ -94,9 +123,22 @@ const downloadIndex = async () => {
             <button class="btn-text" @click="reindex">
               <Database :size="14" /> インデックス再構築
             </button>
-            <button class="btn-text" @click="downloadIndex">
-              <Download :size="14" /> インデックス出力 (JSON)
-            </button>
+            
+            <div class="action-group-horizontal">
+              <button class="btn-text" @click="downloadData">
+                <Download :size="14" /> データ出力
+              </button>
+              <button class="btn-text" @click="triggerUpload">
+                <Upload :size="14" /> データ読込
+              </button>
+              <input 
+                type="file" 
+                ref="fileInput" 
+                style="display: none" 
+                accept=".json" 
+                @change="handleUpload" 
+              />
+            </div>
           </div>
         </div>
 
@@ -108,6 +150,9 @@ const downloadIndex = async () => {
           <p>
             読み込まれた原文(Source)および訳文(Target)の中から、特定のキーワードが含まれるすべてのセグメントを高速に抽出します。
             表記の揺れ確認や、過去の訳例の参照に最適です。
+          </p>
+          <p class="mt-2">
+            <strong>データ出力/読込:</strong> 大規模なファイルを再度パースすることなく、構築済みのインデックスを即座に復元できます。
           </p>
         </div>
       </aside>
@@ -238,6 +283,16 @@ const downloadIndex = async () => {
 
 .status-item .label { color: var(--text-muted); }
 .status-item .value { color: var(--accent); font-weight: 700; }
+
+.action-group-horizontal {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.mt-2 {
+  margin-top: 8px;
+}
 
 .btn-text {
   background: none;

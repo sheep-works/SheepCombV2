@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * web/pages/shuttle/analyzer.vue
+ */
 definePageMeta({
   title: '解析',
   icon: 'zap',
@@ -33,7 +36,7 @@ function removeTb(index: number) { tbFiles.value.splice(index, 1) }
  */
 async function doAnalyze() {
   if (!store.hasData) {
-    statusMsg.value = { text: '構造化データがありません。先に構造化を実行してください。', type: 'error' }
+    statusMsg.value = { text: '構造化データがありません。先に「構造化」を実行してください。', type: 'error' }
     return
   }
 
@@ -77,7 +80,7 @@ async function doAnalyze() {
 
     statusMsg.value = { text: '解析完了！', type: 'success' }
     setTimeout(() => {
-      router.push('/shuttle/shuttle-manage')
+      router.push('/shuttle/manage')
     }, 800)
 
   } catch (e: any) {
