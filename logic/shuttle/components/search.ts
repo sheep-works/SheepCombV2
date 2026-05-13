@@ -42,8 +42,6 @@ export class ShuttleSearch {
             }
         };
         const fs: any = flexsearch;
-        console.log("[SheepComb:Search] flexsearch module type:", typeof fs);
-        if (fs) console.log("[SheepComb:Search] flexsearch keys:", Object.keys(fs));
         const FlexSearchDoc = fs && (fs.Document || fs.default?.Document);
         if (!FlexSearchDoc) {
             throw new Error("Failed to load FlexSearch Document constructor.");
