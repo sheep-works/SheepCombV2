@@ -1,4 +1,4 @@
-import flexsearch from 'flexsearch';
+import * as flexsearch from 'flexsearch';
 import type { TranslationPair, ShWvData } from '../../types/shwv.js';
 
 export interface SearchEntry {
@@ -41,7 +41,11 @@ export class ShuttleSearch {
                 return tokens;
             }
         };
-        this.index = new (flexsearch as any).Document(this.config);
+        const FlexSearchDoc = (flexsearch as any).Document || (flexsearch as any).default?.Document;
+        if (!FlexSearchDoc) {
+            throw new Error("Failed to load FlexSearch Document constructor.");
+        }
+        this.index = new FlexSearchDoc(this.config);
     }
 
     /**
@@ -120,7 +124,8 @@ export class ShuttleSearch {
      */
     public clear(): void {
         this.entries = [];
-        this.index = new (flexsearch as any).Document(this.config);
+        const FlexSearchDoc = (flexsearch as any).Document || (flexsearch as any).default?.Document;
+        this.index = new FlexSearchDoc(this.config);
     }
 
     /**
