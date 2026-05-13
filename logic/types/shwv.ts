@@ -7,6 +7,7 @@ export interface TranslationPair {
   tgt: string
   note?: string
   isSub?: boolean
+  status?: number
   placeholders?: Record<number, string>
 }
 

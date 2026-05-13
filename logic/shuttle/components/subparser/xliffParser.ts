@@ -22,6 +22,12 @@ export async function parseXliff(content: string, startIdx: number): Promise<Tra
     const tgt = targetNode ? (targetNode.innerHTML || targetNode.textContent || '') : ''
     let note = noteNode ? (noteNode.textContent || '') : ''
 
+    // Status extraction (XLIFF approved or MXLIFF m:confirmed)
+    let status = 0
+    if (tu.getAttribute('approved') === 'yes' || tu.getAttribute('m:confirmed') === '1') {
+      status = 1
+    }
+
     // Advanced: split by newline if present
     const srcParts = src.split('\n')
     let tgtParts = tgt.split('\n')
@@ -40,7 +46,8 @@ export async function parseXliff(content: string, startIdx: number): Promise<Tra
         const unit: TranslationPair = {
           idx: currentIdx,
           src: srcParts[k] || "",
-          tgt: tgtParts[k] || ""
+          tgt: tgtParts[k] || "",
+          status: status
         }
         if (!isLastNode) unit.isSub = true
         if (note && k === 0) unit.note = note
@@ -53,6 +60,7 @@ export async function parseXliff(content: string, startIdx: number): Promise<Tra
         idx: currentIdx,
         src: src,
         tgt: tgt,
+        status: status
       }
       if (note) unit.note = note
       units.push(unit)

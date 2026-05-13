@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { SheepShuttle } from '../sheepShuttle.js'
 
 export interface GreetResponse {

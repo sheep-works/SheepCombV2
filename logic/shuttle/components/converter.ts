@@ -37,6 +37,7 @@ export class ShuttleConverter {
         tgt: p.tgt ? protectTags(p.tgt) : '',
         note: p.note,
         isSub: p.isSub,
+        status: p.status || 0,
         ref: { tms: [], tb: [], quoted: [], quoted100: [] },
         placeholders
       }

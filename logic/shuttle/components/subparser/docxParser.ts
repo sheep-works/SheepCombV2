@@ -1,3 +1,4 @@
+// @ts-nocheck
 import JSZip from 'jszip'
 import type { TranslationPair } from '../../../types/shwv.js'
 

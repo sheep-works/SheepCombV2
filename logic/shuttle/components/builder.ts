@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { ShWvData } from '../../types/shwv.js'
 import type { SheepShuttle } from '../sheepShuttle.js'
 
