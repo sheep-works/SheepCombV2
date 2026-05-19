@@ -152,6 +152,23 @@ const applyFilters = () => {
   store.setStatus('フィルタを適用しました', 'success')
 }
 
+// --- サンプリング設定 ---
+const samplingTotalChars = ref(500)
+
+/**
+ * サンプリングを適用してデータを抽出
+ */
+const applySampling = () => {
+  if (!store.hasUnits) return
+  if (!samplingTotalChars.value || samplingTotalChars.value <= 0) {
+    store.setStatus('目標文字数には1以上の数値を指定してください', 'error')
+    return
+  }
+  store.sampling(samplingTotalChars.value)
+  currentPage.value = 1
+  store.setStatus(`目標 ${samplingTotalChars.value} 文字でサンプリングを適用しました`, 'success')
+}
+
 
 
 </script>
@@ -181,7 +198,7 @@ const applyFilters = () => {
           </div>
         </div>
 
-        <div class="card actions" :class="{ disabled: selectedFiles.length === 0 || isProcessing }">
+        <div class="card actions" :class="{ disabled: (selectedFiles.length === 0 && !store.hasUnits) || isProcessing }">
           <div class="card-header">
             <h2>アクション</h2>
           </div>
@@ -218,6 +235,21 @@ const applyFilters = () => {
 
             <button class="btn-outline-action" @click="applyFilters">
               フィルタを適用
+            </button>
+
+            <div class="filter-divider"></div>
+            <h3 class="filter-title">サンプリング評価</h3>
+            <p class="sampling-hint-text">
+              各ファイルから文字数の比率に応じてランダムに抽出します。
+            </p>
+
+            <div class="input-group">
+              <span class="input-label">目標抽出文字数:</span>
+              <input type="number" v-model.number="samplingTotalChars" class="input-sm full-width" min="1" />
+            </div>
+
+            <button class="btn-outline-action btn-sampling" @click="applySampling">
+              サンプリング実行
             </button>
           </div>
         </div>
@@ -542,6 +574,37 @@ td.note {
 
 .btn-outline-action:hover {
   background: var(--accent-glow);
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.input-sm.full-width {
+  width: 100%;
+}
+
+.sampling-hint-text {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+.btn-sampling {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.btn-sampling:hover {
+  background: rgba(59, 130, 246, 0.12);
 }
 
 /* Pagination Styles */

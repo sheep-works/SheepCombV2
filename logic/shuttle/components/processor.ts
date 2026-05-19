@@ -1,10 +1,15 @@
-import type { TranslationPair, ProcessorOptions, DntFilterType } from '../../types/shwv.js'
+import type { TranslationPair, TranslationPairWithFile, ProcessorOptions, DntFilterType } from '../../types/shwv.js'
 import type { SheepShuttle } from '../sheepShuttle.js'
 
-export class ShuttleProcessor {
-  private parent: SheepShuttle
+export interface SamplingTranslationPair extends TranslationPairWithFile {
+  striped: string
+  lenWoTags: number
+}
 
-  constructor(parent: SheepShuttle) {
+export class ShuttleProcessor {
+  private parent: SheepShuttle<any>
+
+  constructor(parent: SheepShuttle<any>) {
     this.parent = parent
   }
 
@@ -112,5 +117,93 @@ export class ShuttleProcessor {
     }
 
     return chunks
+  }
+
+  /**
+   * Sample translation pairs for evaluation.
+   */
+  public sampling(sampledTotal: number): TranslationPair[] {
+    const filesInfo = (this.parent.data?.meta?.files && this.parent.data.meta.files.length > 0)
+      ? this.parent.data.meta.files
+      : (this.parent.files && this.parent.files.length > 0)
+        ? this.parent.files
+        : [{ name: 'default', start: 0, end: this.parent.units.length - 1 }]
+
+    const unitsByFile: TranslationPair[][] = []
+    for (const file of filesInfo) {
+      const start = Math.max(0, file.start)
+      const end = Math.min(this.parent.units.length - 1, file.end)
+      if (start <= end) {
+        unitsByFile.push(this.parent.units.slice(start, end + 1))
+      } else {
+        unitsByFile.push([])
+      }
+    }
+
+    const fileTotals: number[] = []
+    const samplingUnitsByFile: SamplingTranslationPair[][] = []
+
+    for (let i = 0; i < unitsByFile.length; i++) {
+      const fileUnits = unitsByFile[i]!
+      const fileName = filesInfo[i]?.name || 'default'
+      let fileTotalCharCount = 0
+      const mapped = fileUnits.map(unit => {
+        const striped = (unit.src || '').replace(/<[^>]+>|&lt;[\s\S]*?&gt;/g, '')
+        const lenWoTags = striped.length
+        fileTotalCharCount += lenWoTags
+        return {
+          ...unit,
+          striped,
+          lenWoTags,
+          file: fileName
+        } as SamplingTranslationPair
+      })
+      samplingUnitsByFile.push(mapped)
+      fileTotals.push(fileTotalCharCount)
+    }
+
+    const totalChars = fileTotals.reduce((sum, count) => sum + count, 0)
+
+    const shuffleArray = <T>(array: T[]): T[] => {
+      const arr = [...array]
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        const temp = arr[i]!
+        arr[i] = arr[j]!
+        arr[j] = temp
+      }
+      return arr
+    }
+
+    const allSamples: SamplingTranslationPair[] = []
+
+    for (let i = 0; i < samplingUnitsByFile.length; i++) {
+      const fileTotal = fileTotals[i]!
+      const targetChars = totalChars > 0 ? (fileTotal / totalChars) * sampledTotal : 0
+      const shuffled = shuffleArray(samplingUnitsByFile[i]!)
+
+      const selected: SamplingTranslationPair[] = []
+      let currentSum = 0
+
+      for (const unit of shuffled) {
+        const nextSum = currentSum + unit.lenWoTags
+        if (nextSum > targetChars) {
+          const diffBefore = Math.abs(currentSum - targetChars)
+          const diffAfter = Math.abs(nextSum - targetChars)
+          if (diffAfter < diffBefore) {
+            selected.push(unit)
+          }
+          break
+        } else {
+          selected.push(unit)
+          currentSum = nextSum
+        }
+      }
+
+      allSamples.push(...selected)
+    }
+
+    this.parent.units = allSamples
+    return allSamples
   }
 }
