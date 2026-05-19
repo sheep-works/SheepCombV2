@@ -120,9 +120,21 @@ export class ShuttleProcessor {
   }
 
   /**
+   * Mulberry32 algorithm for seedable pseudo-random number generation.
+   */
+  private createRandomWithSeed(seed: number): () => number {
+    let h = seed;
+    return () => {
+      h = Math.imul(h ^ (h >>> 15), h | 1);
+      h ^= h + Math.imul(h ^ (h >>> 7), h | 61);
+      return ((h ^ (h >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /**
    * Sample translation pairs for evaluation.
    */
-  public sampling(sampledTotal: number): TranslationPair[] {
+  public sampling(sampledTotal: number, seed?: number): TranslationPair[] {
     const filesInfo = (this.parent.data?.meta?.files && this.parent.data.meta.files.length > 0)
       ? this.parent.data.meta.files
       : (this.parent.files && this.parent.files.length > 0)
@@ -164,10 +176,12 @@ export class ShuttleProcessor {
 
     const totalChars = fileTotals.reduce((sum, count) => sum + count, 0)
 
+    const randomFunc = seed !== undefined ? this.createRandomWithSeed(seed) : Math.random
+
     const shuffleArray = <T>(array: T[]): T[] => {
       const arr = [...array]
       for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
+        const j = Math.floor(randomFunc() * (i + 1))
         const temp = arr[i]!
         arr[i] = arr[j]!
         arr[j] = temp
@@ -203,7 +217,17 @@ export class ShuttleProcessor {
       allSamples.push(...selected)
     }
 
-    this.parent.units = allSamples
-    return allSamples
+    const finalSamples: TranslationPair[] = [...allSamples]
+    if (seed !== undefined) {
+      finalSamples.unshift({
+        idx: -1,
+        src: 'SEED_VAL',
+        tgt: String(seed),
+        note: 'DO NOT EDIT'
+      })
+    }
+
+    this.parent.units = finalSamples
+    return finalSamples
   }
 }

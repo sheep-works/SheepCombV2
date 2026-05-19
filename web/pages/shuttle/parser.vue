@@ -154,6 +154,7 @@ const applyFilters = () => {
 
 // --- サンプリング設定 ---
 const samplingTotalChars = ref(500)
+const samplingSeed = ref<number | null>(null)
 
 /**
  * サンプリングを適用してデータを抽出
@@ -164,9 +165,17 @@ const applySampling = () => {
     store.setStatus('目標文字数には1以上の数値を指定してください', 'error')
     return
   }
-  store.sampling(samplingTotalChars.value)
+
+  // シード値が指定されていなければ自動生成
+  const seed = (samplingSeed.value !== null && samplingSeed.value !== undefined && !isNaN(samplingSeed.value))
+    ? samplingSeed.value
+    : Math.floor(Math.random() * 1000000)
+
+  samplingSeed.value = seed
+
+  store.sampling(samplingTotalChars.value, seed)
   currentPage.value = 1
-  store.setStatus(`目標 ${samplingTotalChars.value} 文字でサンプリングを適用しました`, 'success')
+  store.setStatus(`目標 ${samplingTotalChars.value} 文字、シード値 ${seed} でサンプリングを適用しました`, 'success')
 }
 
 
@@ -248,7 +257,12 @@ const applySampling = () => {
               <input type="number" v-model.number="samplingTotalChars" class="input-sm full-width" min="1" />
             </div>
 
-            <button class="btn-outline-action btn-sampling" @click="applySampling">
+            <div class="input-group" style="margin-top: 8px;">
+              <span class="input-label">シード値 (任意):</span>
+              <input type="number" v-model.number="samplingSeed" class="input-sm full-width" placeholder="自動生成（空欄）" min="0" />
+            </div>
+
+            <button class="btn-outline-action btn-sampling" @click="applySampling" style="margin-top: 8px;">
               サンプリング実行
             </button>
           </div>

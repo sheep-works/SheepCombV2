@@ -128,7 +128,7 @@ export const useShuttleStore = defineStore('shuttle', () => {
    * プロセッサ、コンバータ、アナライザの実行
    */
   function process(options?: ProcessorOptions) { shuttle.process(options); syncState() }
-  function sampling(sampledTotal: number) { const res = shuttle.sampling(sampledTotal); syncState(); return res }
+  function sampling(sampledTotal: number, seed?: number) { const res = shuttle.sampling(sampledTotal, seed); syncState(); return res }
   function convert() { shuttle.convert(); syncState() }
   async function analyze(wasmAnalyzeAll?: any) {
     await shuttle.analyze(wasmAnalyzeAll)

@@ -138,8 +138,8 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   /**
    * Sample translation pairs for evaluation.
    */
-  public sampling(sampledTotal: number): T[] {
-    return this.processor.sampling(sampledTotal) as T[]
+  public sampling(sampledTotal: number, seed?: number): T[] {
+    return this.processor.sampling(sampledTotal, seed) as T[]
   }
 
   /**
