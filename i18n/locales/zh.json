@@ -1,0 +1,8 @@
+{
+  "testPage": {
+    "title": "i18n测试页面",
+    "description": "这是Nuxt 4中{'@'}nuxtjs/i18n的测试页面。",
+    "greeting": "你好！",
+    "language_switch": "切换语言"
+  }
+}

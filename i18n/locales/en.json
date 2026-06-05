@@ -1,0 +1,8 @@
+{
+  "testPage": {
+    "title": "i18n Test Page",
+    "description": "This is a test page for {'@'}nuxtjs/i18n in Nuxt 4.",
+    "greeting": "Hello!",
+    "language_switch": "Switch Language"
+  }
+}

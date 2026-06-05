@@ -7,8 +7,19 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   modules: [
     '@pinia/nuxt',
-    '@pinia-plugin-persistedstate/nuxt'
+    '@pinia-plugin-persistedstate/nuxt',
+    '@nuxtjs/i18n'
   ],
+  i18n: {
+    locales: [
+      { code: 'ja', file: 'ja.json', name: '日本語' },
+      { code: 'en', file: 'en.json', name: 'English' },
+      { code: 'zh', file: 'zh.json', name: '中文' }
+    ],
+    langDir: 'locales/',
+    defaultLocale: 'ja',
+    strategy: 'prefix_except_default'
+  },
   nitro: {
     preset: 'static',
     devProxy: {
