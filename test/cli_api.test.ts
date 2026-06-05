@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest'
 import * as fs from 'node:fs'
-import { parseFile } from '../cli/api.js'
+import { parseFile } from '../cli/pipeline.js'
 import { DOMParser } from '@xmldom/xmldom'
 
 vi.mock('node:fs')
@@ -16,7 +16,7 @@ describe('CLI: API (api.ts)', () => {
   it('should parse XLIFF file through cli/api', async () => {
     // Mock fs.existsSync and fs.readFileSync
     vi.mocked(fs.existsSync).mockReturnValue(true)
-    vi.mocked(fs.readFileSync).mockReturnValue('<xliff version="1.2"><body><trans-unit id="1"><source>Src</source><target>Tgt</target></trans-unit></body></xliff>')
+    vi.mocked(fs.readFileSync).mockReturnValue('<xliff version="1.2"><file original="dummy.xlf" source-language="en" target-language="ja"><body><trans-unit id="1"><source>Src</source><target>Tgt</target></trans-unit></body></file></xliff>')
 
     const units = await parseFile('dummy.xlf')
     expect(units).toHaveLength(1)

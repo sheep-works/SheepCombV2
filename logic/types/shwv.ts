@@ -17,7 +17,7 @@ export interface TranslationPairWithFile extends TranslationPair {
 
 export interface ShWvDefine {
   name: 'SHWV_DATA'
-  version: '1.0'
+  version: '1.1' | '1.0'
 }
 
 export interface ShWvFileInfo {
@@ -76,10 +76,41 @@ export interface ShWvRefTb {
   file?: string
 }
 
+export interface ProjectFileStatus {
+  source: string
+  xliff: string | null
+  status: 'extracted' | 'translated' | 'merged' | 'error'
+  errorMsg?: string
+}
+
+export interface ProjectGroup {
+  filter: string
+  files: ProjectFileStatus[]
+}
+
+export interface ProjectStats {
+  segments: number
+  untranslated: number
+  qaWarnings: number
+  termsMatched: number
+}
+
+export interface ProjectInfo {
+  version: number
+  projectName: string
+  sourceLanguage: string
+  targetLanguage: string
+  sourceFiles: string[]
+  okapi: ProjectGroup[]
+  lastPreparedAt?: string
+  stats?: ProjectStats
+}
+
 export interface ShWvData {
   define: ShWvDefine
   meta: ShWvMeta
   body: ShWvBody
+  projectInfo?: ProjectInfo
 }
 
 // Manager用

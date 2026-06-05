@@ -1,4 +1,4 @@
-import type { ShWvData, TranslationPair, TranslationPairWithFile, ShWvFileInfo, ManagedDataType, ProcessorOptions } from '../types/shwv.js'
+import type { ShWvData, TranslationPair, TranslationPairWithFile, ShWvFileInfo, ManagedDataType, ProcessorOptions, ProjectInfo } from '../types/shwv.js'
 
 import { ShuttleParser } from './components/parser.js'
 import { ShuttleProcessor } from './components/processor.js'
@@ -138,8 +138,8 @@ export class SheepShuttle {
   /**
    * Convert the current units/files into ShWvData.
    */
-  public convert(): void {
-    this.data = this.converter.fromUnits(this.units, this.files)
+  public convert(projectInfo?: ProjectInfo): void {
+    this.data = this.converter.fromUnits(this.units, this.files, projectInfo)
   }
 
   /**

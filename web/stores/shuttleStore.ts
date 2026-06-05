@@ -13,7 +13,8 @@ import type {
   ShWvUnit,
   ShWvFileInfo,
   ManagedDataType,
-  ProcessorOptions
+  ProcessorOptions,
+  ProjectInfo
 } from '../../logic/types/shwv.js'
 import { type ChunkInfo } from '../../logic/shuttle/sheepShuttle.js'
 
@@ -128,7 +129,7 @@ export const useShuttleStore = defineStore('shuttle', () => {
    * プロセッサ、コンバータ、アナライザの実行
    */
   function process(options?: ProcessorOptions) { shuttle.process(options); syncState() }
-  function convert() { shuttle.convert(); syncState() }
+  function convert(projectInfo?: ProjectInfo) { shuttle.convert(projectInfo); syncState() }
   async function analyze(wasmAnalyzeAll?: any) {
     await shuttle.analyze(wasmAnalyzeAll)
     // Automatically build search index after analysis

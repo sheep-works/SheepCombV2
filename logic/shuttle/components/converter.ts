@@ -1,4 +1,4 @@
-import type { ShWvData, ShWvUnit, TranslationPair, ShWvFileInfo } from '../../types/shwv.js'
+import type { ShWvData, ShWvUnit, TranslationPair, ShWvFileInfo, ProjectInfo } from '../../types/shwv.js'
 import type { SheepShuttle } from '../sheepShuttle.js'
 
 export class ShuttleConverter {
@@ -12,7 +12,7 @@ export class ShuttleConverter {
    * Convert TranslationPairs to ShWvData.
    * Performs tag protection (replacing XML tags with {@idx} and storing in placeholders).
    */
-  fromUnits(units: TranslationPair[], files: ShWvFileInfo[]): ShWvData {
+  fromUnits(units: TranslationPair[], files: ShWvFileInfo[], projectInfo?: ProjectInfo): ShWvData {
     const allUnits: ShWvUnit[] = []
 
     for (const p of units) {
@@ -22,7 +22,7 @@ export class ShuttleConverter {
       // Protect tags function
       const protectTags = (text: string) => {
         if (!text) return ''
-        return text.replace(/(<[^>]+>|&lt;[\s\S]*?&gt;)/g, (tagMatch: string) => {
+        return text.replace(/(<(?:"[^"]*"|'[^']*'|[^'">])+>|&lt;[\s\S]*?&gt;)/g, (tagMatch: string) => {
           placeholders[counter] = tagMatch
           const replaceString = `{@${counter}}`
           counter++
@@ -45,23 +45,36 @@ export class ShuttleConverter {
       allUnits.push(unit)
     }
 
+    // Determine languages from projectInfo, fallback to 'ja'/'en'
+    let sourceLang = 'ja'
+    let targetLang = 'en'
+    if (projectInfo) {
+      if (projectInfo.sourceLanguage) {
+        sourceLang = projectInfo.sourceLanguage.split('-')[0].toLowerCase()
+      }
+      if (projectInfo.targetLanguage) {
+        targetLang = projectInfo.targetLanguage.split('-')[0].toLowerCase()
+      }
+    }
+
     return {
       define: {
         name: 'SHWV_DATA',
-        version: '1.0'
+        version: '1.1'
       },
       meta: {
         bilingualPath: '',
         files: files,
-        sourceLang: 'ja',
-        targetLang: 'en',
+        sourceLang,
+        targetLang,
         tmFiles: [...this.parent.tmFiles],
         tbFiles: [...this.parent.tbFiles]
       },
       body: {
         units: allUnits,
         terms: []
-      }
+      },
+      projectInfo
     }
   }
 

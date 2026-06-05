@@ -33,26 +33,32 @@ export class ShuttleParser {
       const ext = file.name.split('.').pop()?.toLowerCase() || ''
       const start = globalIdx
       let pairs: TranslationPair[] = []
+      let content = file.content
+
+      if (typeof content === 'string' && content.charCodeAt(0) === 0xFEFF) {
+        content = content.slice(1)
+      }
 
       try {
-        if (['xlf', 'xliff', 'mxliff', 'sdlxliff', 'mqxliff'].includes(ext) && typeof file.content === 'string') {
+        if (['xlf', 'xliff', 'mxliff', 'sdlxliff', 'mqxliff'].includes(ext) && typeof content === 'string') {
           // XLF-like files handle isSub natively in parseXliff
-          pairs = await parseXliff(file.content, globalIdx)
-        } else if (ext === 'tmx' && typeof file.content === 'string') {
-          pairs = await parseTmx(file.content, globalIdx)
-        } else if (ext === 'tbx' && typeof file.content === 'string') {
-          pairs = await parseTbx(file.content, globalIdx)
+          pairs = await parseXliff(content, globalIdx)
+        } else if (ext === 'tmx' && typeof content === 'string') {
+          pairs = await parseTmx(content, globalIdx)
+        } else if (ext === 'tbx' && typeof content === 'string') {
+          pairs = await parseTbx(content, globalIdx)
         } else if (['xlsx', 'csv', 'tsv'].includes(ext)) {
-          pairs = (ext === 'csv' || ext === 'tsv') ? await parseCsv(file.content, globalIdx) : await parseXlsx(file.content as any, globalIdx)
-        } else if (ext === 'jsonl' && typeof file.content === 'string') {
-          pairs = await parseJsonl(file.content, globalIdx)
-        } else if (ext === 'json' && typeof file.content === 'string') {
-          pairs = await parseJson(file.content, globalIdx)
+          pairs = (ext === 'csv' || ext === 'tsv') ? await parseCsv(content, globalIdx) : await parseXlsx(content as any, globalIdx)
+        } else if (ext === 'jsonl' && typeof content === 'string') {
+          pairs = await parseJsonl(content, globalIdx)
+        } else if (ext === 'json' && typeof content === 'string') {
+          pairs = await parseJson(content, globalIdx)
         } else if (ext === 'docx' && (file.content instanceof ArrayBuffer || file.content instanceof Uint8Array)) {
           pairs = await parseDocx(file.content as ArrayBuffer, globalIdx)
         }
       } catch (e) {
         console.error(`Failed to parse ${file.name}:`, e)
+        throw e
       }
 
       for (const p of pairs) {

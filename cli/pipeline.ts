@@ -8,7 +8,7 @@ import { DOMParser } from '@xmldom/xmldom'
 import { fileURLToPath } from 'node:url'
 import { SheepShuttle } from '../logic/shuttle/sheepShuttle.js'
 import { analyze_all } from '../logic/pkg/sheep_spindle.js'
-import type { ShWvData } from '../logic/types/shwv.js'
+import type { ShWvData, ProjectInfo } from '../logic/types/shwv.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -17,6 +17,9 @@ const __dirname = path.dirname(__filename)
  * 拡張子に基づきバイナリ読み込みかテキスト読み込みかを判定します。
  */
 function getFileContent(filePath: string): string | Buffer {
+  if (!fs.existsSync(filePath)) {
+    throw new Error('File not found')
+  }
   const ext = filePath.split('.').pop()?.toLowerCase() ?? ''
   const isBinary = ['xlsx', 'docx', 'csv', 'tsv'].includes(ext) // Note: CSV/TSV can be handled as text, but parser expects Buffer if requested
   // For consistency with current parser expectation:
@@ -123,14 +126,14 @@ export async function parseFile(filePath: string): Promise<any[]> {
   ensureShim()
   const shuttle = new SheepShuttle()
   const content = getFileContent(filePath)
-  await shuttle.parser.parse([{ name: path.basename(filePath), content }])
-  return shuttle.units
+  const result = await shuttle.parser.parse([{ name: path.basename(filePath), content }])
+  return result.units
 }
 
 /**
  * 複数ファイルを解析して ShWvData を返します。
  */
-export async function parseFiles(filePaths: string[]): Promise<ShWvData> {
+export async function parseFiles(filePaths: string[], projectInfo?: ProjectInfo): Promise<ShWvData> {
   ensureShim()
   const shuttle = new SheepShuttle()
   const files = filePaths.map(p => ({
@@ -139,7 +142,7 @@ export async function parseFiles(filePaths: string[]): Promise<ShWvData> {
   }))
   await shuttle.parse(files)
   shuttle.process()
-  shuttle.convert()
+  shuttle.convert(projectInfo)
   if (!shuttle.data) throw new Error('Failed to convert units')
   return shuttle.data
 }

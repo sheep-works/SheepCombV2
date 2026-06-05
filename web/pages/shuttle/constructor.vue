@@ -40,6 +40,11 @@ const handleFileSelect = (e: Event) => { const target = e.target as HTMLInputEle
 function removeFile(index: number) { selectedFiles.value.splice(index, 1) }
 function clearFiles() { selectedFiles.value = []; statusMsg.value = { text: '', type: 'info' } }
 
+const includeProjectInfo = ref(false)
+const projectName = ref('SheepWeaveProject')
+const sourceLang = ref('en-US')
+const targetLang = ref('ja-JP')
+
 /**
  * 構造化を実行
  */
@@ -65,7 +70,27 @@ async function doConvert() {
     }
 
     // 構造化（ShWvData への変換）実行
-    store.convert()
+    let projectInfo = undefined
+    if (includeProjectInfo.value) {
+      projectInfo = {
+        version: 2,
+        projectName: projectName.value,
+        sourceLanguage: sourceLang.value,
+        targetLanguage: targetLang.value,
+        sourceFiles: selectedFiles.value.length > 0 ? selectedFiles.value.map(f => f.name) : store.fileList.map(f => f.name),
+        okapi: [
+          {
+            filter: "auto",
+            files: (selectedFiles.value.length > 0 ? selectedFiles.value.map(f => f.name) : store.fileList.map(f => f.name)).map(name => ({
+              source: `Data/${name}`,
+              xliff: `Working/03_XLF_JSON/${name}`,
+              status: "extracted" as const
+            }))
+          }
+        ]
+      }
+    }
+    store.convert(projectInfo)
 
     statusMsg.value = { text: '構造化完了！「解析」ページに移動します。', type: 'success' }
     setTimeout(() => {
@@ -128,6 +153,41 @@ async function doConvert() {
             <button class="btn-remove" @click.stop="removeFile(index)" :disabled="isProcessing">
               <Trash2 :size="14" />
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ProjectInfo 入力フォーム -->
+      <div class="project-info-section">
+        <label class="toggle-label">
+          <input type="checkbox" v-model="includeProjectInfo" :disabled="isProcessing" />
+          <span>ProjectInfo (プロジェクト設定) を含める</span>
+        </label>
+        
+        <div class="form-container" v-if="includeProjectInfo">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">プロジェクト名:</label>
+              <input type="text" v-model="projectName" class="form-input" :disabled="isProcessing" placeholder="プロジェクト名を入力" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">ソース言語:</label>
+              <select v-model="sourceLang" class="form-select" :disabled="isProcessing">
+                <option value="en-US">英語 (en-US)</option>
+                <option value="ja-JP">日本語 (ja-JP)</option>
+                <option value="zh-CN">中国語 (zh-CN)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">ターゲット言語:</label>
+              <select v-model="targetLang" class="form-select" :disabled="isProcessing">
+                <option value="en-US">英語 (en-US)</option>
+                <option value="ja-JP">日本語 (ja-JP)</option>
+                <option value="zh-CN">中国語 (zh-CN)</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -424,5 +484,80 @@ async function doConvert() {
 .status-desc {
   font-size: 0.85rem;
   color: var(--text-secondary);
+}
+
+/* ProjectInfo Form Styles */
+.project-info-section {
+  margin: 0 24px 24px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.toggle-label input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
+
+.form-container {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.form-group {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-input,
+.form-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  outline: none;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.form-input:focus,
+.form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
 }
 </style>

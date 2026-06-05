@@ -43,7 +43,7 @@ describe('SheepShuttle Pipeline', () => {
     expect(shwvData.body.units[0].ref.tms).toEqual([])
 
     // 5. Manager (Export)
-    const exportedJson = shuttle.manager.exportToJson(shwvData)
+    const exportedJson = shuttle.manager.getPairs(shwvData.body.units)
     expect(exportedJson).toHaveLength(1)
     expect(exportedJson[0].src).toBe('Hello')
 
