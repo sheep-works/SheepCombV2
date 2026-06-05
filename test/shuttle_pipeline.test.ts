@@ -51,4 +51,90 @@ describe('SheepShuttle Pipeline', () => {
     const rebuiltXliff = await shuttle.builder.build(xliff, shwvData)
     expect(rebuiltXliff).toContain('<target state="translated">こんにちは</target>')
   })
+
+  it('should sample units proportional to file character lengths', async () => {
+    const localShuttle = new SheepShuttle()
+    
+    // Set up dummy units and files
+    // File 1 has total 20 characters
+    // File 2 has total 80 characters
+    // Combined total = 100 characters
+    // If we request sampledTotal = 50:
+    // File 1 target = 10 characters
+    // File 2 target = 40 characters
+    localShuttle.units = [
+      { idx: 0, src: '1234567890', tgt: '' }, // 10 chars
+      { idx: 1, src: '1234567890', tgt: '' }, // 10 chars
+      { idx: 2, src: '12345678901234567890', tgt: '' }, // 20 chars
+      { idx: 3, src: '12345678901234567890', tgt: '' }, // 20 chars
+      { idx: 4, src: '12345678901234567890', tgt: '' }, // 20 chars
+      { idx: 5, src: '12345678901234567890', tgt: '' }  // 20 chars
+    ]
+    localShuttle.files = [
+      { name: 'file1.xlf', start: 0, end: 1 }, // 20 chars total
+      { name: 'file2.xlf', start: 2, end: 5 }  // 80 chars total
+    ]
+
+    const sampled = localShuttle.sampling(50)
+    expect(sampled.length).toBeGreaterThan(0)
+    expect(localShuttle.units).toBe(sampled)
+
+    for (const unit of sampled as any[]) {
+      expect(unit.striped).toBeDefined()
+      expect(unit.lenWoTags).toBeDefined()
+      expect(unit.lenWoTags).toBe(unit.striped.length)
+      expect(unit.file).toBeDefined()
+      if (unit.idx <= 1) {
+        expect(unit.file).toBe('file1.xlf')
+      } else {
+        expect(unit.file).toBe('file2.xlf')
+      }
+    }
+  })
+
+  it('should strip both standard and escaped tags in striped and lenWoTags', () => {
+    const localShuttle = new SheepShuttle()
+    localShuttle.units = [
+      { idx: 0, src: 'Hello <tag>world</tag>!', tgt: '' },
+      { idx: 1, src: 'Hello &lt;tag&gt;world&lt;/tag&gt;!', tgt: '' }
+    ]
+    localShuttle.files = [
+      { name: 'tags.xlf', start: 0, end: 1 }
+    ]
+
+    const sampled = localShuttle.sampling(100)
+    expect(sampled).toHaveLength(2)
+    
+    // Both should strip tags down to 'Hello world!' which is 12 characters
+    expect((sampled[0] as any).striped).toBe('Hello world!')
+    expect((sampled[0] as any).lenWoTags).toBe(12)
+    expect((sampled[0] as any).file).toBe('tags.xlf')
+    
+    expect((sampled[1] as any).striped).toBe('Hello world!')
+    expect((sampled[1] as any).lenWoTags).toBe(12)
+    expect((sampled[1] as any).file).toBe('tags.xlf')
+  })
+
+  it('should include file column in getCsv when units contain file attribute', () => {
+    const localShuttle = new SheepShuttle<any>()
+    localShuttle.units = [
+      { idx: 0, src: 'Hello', tgt: 'こんにちは', note: 'greetings', file: 'test1.xlf' }
+    ]
+    
+    const csv = localShuttle.getCsv()
+    expect(csv).toContain('idx,src,tgt,note,file')
+    expect(csv).toContain('"0","Hello","こんにちは","greetings","test1.xlf"')
+  })
+
+  it('should not include file column in getCsv when units do not contain file attribute', () => {
+    const localShuttle = new SheepShuttle()
+    localShuttle.units = [
+      { idx: 0, src: 'Hello', tgt: 'こんにちは', note: 'greetings' }
+    ]
+    
+    const csv = localShuttle.getCsv()
+    expect(csv).toContain('idx,src,tgt,note')
+    expect(csv).not.toContain('file')
+    expect(csv).toContain('"0","Hello","こんにちは","greetings"')
+  })
 })

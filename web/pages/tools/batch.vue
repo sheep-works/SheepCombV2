@@ -5,15 +5,26 @@ definePageMeta({
 })
 
 import { ref, computed } from 'vue'
-import { Split, Play, Trash2, Import, FileText, CheckCircle, AlertCircle } from 'lucide-vue-next'
+import { Split, Play, Trash2, Import, FileText, CheckCircle, AlertCircle, Download } from 'lucide-vue-next'
 import { useDiffStore } from '../../stores/diffStore'
 
 const store = useDiffStore()
 const isChecked = ref(false)
 const errorMsg = ref('')
+const showAllLines = ref(false)
 
 const srcLines = computed(() => store.srcText.split('\n').filter(l => l !== '').length)
 const tgtLines = computed(() => store.tgtText.split('\n').filter(l => l !== '').length)
+
+const filteredDiff = computed(() => {
+  if (showAllLines.value) {
+    return store.batchDiff
+  } else {
+    return store.batchDiff.filter(item => item.hasDiff)
+  }
+})
+
+const diffCount = computed(() => store.batchDiff.filter(item => item.hasDiff).length)
 
 const handleImport = () => {
   const success = store.importFromShuttle()
@@ -41,6 +52,117 @@ const clearAll = () => {
   store.clear()
   isChecked.value = false
   errorMsg.value = ''
+  showAllLines.value = false
+}
+
+const escapeHtml = (text: string): string => {
+  if (!text) return ''
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+const downloadHtml = () => {
+  const items = filteredDiff.value
+  if (items.length === 0) return
+
+  let htmlContent = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>一括差分結果</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 24px;
+      color: #1a1a1a;
+      background-color: #fcfcfc;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+      color: #111;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid #e1e4e8;
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 14px;
+      vertical-align: top;
+      word-break: break-all;
+    }
+    th {
+      background-color: #f6f8fa;
+      font-weight: 600;
+      color: #57606a;
+    }
+    tr:nth-child(even) {
+      background-color: #fafbfc;
+    }
+    ins {
+      background-color: #dafbe1;
+      color: #1a7f37;
+      text-decoration: none;
+      padding: 2px 4px;
+      border-radius: 2px;
+    }
+    del {
+      background-color: #ffebe9;
+      color: #cf222e;
+      text-decoration: line-through;
+      padding: 2px 4px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h2>一括差分結果 (${items.filter(item => item.hasDiff).length} 件の差異)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 30%;">旧 (Old)</th>
+        <th style="width: 30%;">新 (New)</th>
+        <th style="width: 40%;">差分 (Diff)</th>
+      </tr>
+    </thead>
+    <tbody>
+`
+
+  for (const item of items) {
+    const escapedSrc = escapeHtml(item.s)
+    const escapedTgt = escapeHtml(item.t)
+    htmlContent += `      <tr>
+        <td>${escapedSrc}</td>
+        <td>${escapedTgt}</td>
+        <td>${item.d}</td>
+      </tr>\n`
+  }
+
+  htmlContent += `    </tbody>
+  </table>
+</body>
+</html>`
+
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', 'diff_results.html')
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 </script>
 
@@ -65,6 +187,18 @@ const clearAll = () => {
             <button class="btn outline" @click="clearAll">
               <Trash2 :size="18" /> クリア
             </button>
+
+            <div class="result-settings" v-if="isChecked">
+              <div class="filter-divider"></div>
+              <label class="checkbox-label">
+                <input type="checkbox" v-model="showAllLines" />
+                <span>差分がない行も表示</span>
+              </label>
+
+              <button class="btn-outline-action" @click="downloadHtml">
+                <Download :size="14" /> HTMLダウンロード
+              </button>
+            </div>
           </div>
 
           <div class="stats-box" v-if="srcLines || tgtLines">
@@ -106,7 +240,7 @@ const clearAll = () => {
         <!-- Result Area -->
         <div class="card result-card" v-else>
           <div class="card-header space-between">
-            <h2>比較結果 ({{ store.batchDiff.length }} 件の差異)</h2>
+            <h2>比較結果 ({{ diffCount }} 件の差異)</h2>
             <button class="btn-sm" @click="isChecked = false">
               <FileText :size="14" /> 入力を編集
             </button>
@@ -122,8 +256,8 @@ const clearAll = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(item, idx) in store.batchDiff" :key="idx">
-                  <td class="idx">{{ idx + 1 }}</td>
+                <tr v-for="(item, idx) in filteredDiff" :key="idx">
+                  <td class="idx">{{ item.lineNo }}</td>
                   <td class="text-source">{{ item.s }}</td>
                   <td class="text-source">{{ item.t }}</td>
                   <td class="text-diff">
@@ -330,5 +464,50 @@ const clearAll = () => {
 
 .space-between {
   justify-content: space-between;
+}
+
+.filter-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 12px 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.checkbox-label input {
+  accent-color: var(--accent);
+}
+
+.result-settings {
+  margin-top: 8px;
+}
+
+.btn-outline-action {
+  width: 100%;
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-outline-action:hover {
+  background: var(--accent-glow);
 }
 </style>

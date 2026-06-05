@@ -4,9 +4,11 @@ import { DiffUtils } from '../utils/diffUtils'
 import { useShuttleStore } from './shuttleStore'
 
 export interface DiffResult {
+  lineNo: number
   s: string
   t: string
   d: string
+  hasDiff: boolean
 }
 
 export const useDiffStore = defineStore('diff', () => {
@@ -29,14 +31,15 @@ export const useDiffStore = defineStore('diff', () => {
       const s = srcs[i] || ''
       const t = tgts[i] || ''
 
-      if (s === t && s !== '') {
-        // 同一の場合は表示しないか、フラグ立てるか検討。
-        // サンプルのロジックでは差異がある場合のみ push している
-        continue
-      }
-
+      const hasDiff = s !== t
       const d = DiffUtils.getDiffHtml(s, t)
-      batchDiff.value.push({ s, t, d })
+      batchDiff.value.push({
+        lineNo: i + 1,
+        s,
+        t,
+        d,
+        hasDiff
+      })
     }
   }
 

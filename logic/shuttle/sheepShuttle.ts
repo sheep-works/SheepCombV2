@@ -19,9 +19,9 @@ export interface ChunkInfo {
 /**
  * Orchestrator class for SheepShuttle data transformations and conversions.
  */
-export class SheepShuttle {
+export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   // State properties
-  public units: TranslationPair[] = []
+  public units: T[] = []
   public files: ShWvFileInfo[] = []
   public data: ShWvData | null = null
   public tms: TranslationPairWithFile[] = []
@@ -124,7 +124,7 @@ export class SheepShuttle {
    */
   public async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[]): Promise<void> {
     const result = await this.parser.parse(files)
-    this.units = result.units
+    this.units = result.units as T[]
     this.files = result.files
   }
 
@@ -132,7 +132,14 @@ export class SheepShuttle {
    * Process (filter) the current units.
    */
   public process(options?: ProcessorOptions): void {
-    this.units = this.processor.filter(this.units, options)
+    this.units = this.processor.filter(this.units, options) as T[]
+  }
+
+  /**
+   * Sample translation pairs for evaluation.
+   */
+  public sampling(sampledTotal: number, seed?: number): T[] {
+    return this.processor.sampling(sampledTotal, seed) as T[]
   }
 
   /**
@@ -169,7 +176,13 @@ export class SheepShuttle {
    * Get the current units as a CSV/TSV string.
    */
   public getCsv(delimiter: string = ','): string {
-    const header = ['idx', 'src', 'tgt', 'note'].join(delimiter)
+    const hasFile = this.units.some(u => 'file' in u && (u as any).file)
+    const headers = ['idx', 'src', 'tgt', 'note']
+    if (hasFile) {
+      headers.push('file')
+    }
+    const header = headers.join(delimiter)
+
     const rows = this.units.map(u => {
       const row = [
         u.idx,
@@ -177,6 +190,9 @@ export class SheepShuttle {
         u.tgt || '',
         u.note || ''
       ]
+      if (hasFile) {
+        row.push((u as any).file || '')
+      }
       return row.map(val => {
         const str = String(val).replace(/"/g, '""').replace(/\n/g, '\\n').replace(/\r/g, '\\r')
         return `"${str}"`
