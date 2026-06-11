@@ -12,8 +12,10 @@ definePageMeta({
 import { ref, watch } from 'vue'
 import { Search, Hash, FileText, Database, Info, Loader2, Download, Upload } from 'lucide-vue-next'
 import { useShuttleStore } from '../../stores/shuttleStore'
+import { useI18n } from 'vue-i18n'
 
 const store = useShuttleStore()
+const { t } = useI18n()
 const searchQuery = ref('')
 const results = ref<any[]>([])
 const isSearching = ref(false)
@@ -87,7 +89,7 @@ const handleUpload = async (event: Event) => {
     target.value = ''
   } catch (e) {
     console.error('Import failed:', e)
-    alert('インポートに失敗しました。ファイル形式を確認してください。')
+    alert(t('tools.concordance.err_import'))
   }
 }
 </script>
@@ -99,7 +101,7 @@ const handleUpload = async (event: Event) => {
       <aside class="search-sidebar">
         <div class="card">
           <div class="card-header">
-            <h2>検索設定</h2>
+            <h2>{{ $t('tools.concordance.title_settings') }}</h2>
           </div>
           <div class="search-input-area">
             <div class="input-with-icon">
@@ -107,29 +109,29 @@ const handleUpload = async (event: Event) => {
               <input 
                 type="text" 
                 v-model="searchQuery" 
-                placeholder="単語やフレーズを入力..." 
+                :placeholder="$t('tools.concordance.placeholder_search')" 
                 class="search-input"
                 autoFocus
               />
             </div>
-            <p class="search-hint">※ 日本語・中国語などの1文字検索にも対応しています。</p>
+            <p class="search-hint">{{ $t('tools.concordance.search_hint') }}</p>
           </div>
 
           <div class="data-status">
             <div class="status-item">
-              <span class="label">対象件数:</span>
-              <span class="value">{{ store.unitCount }} segments</span>
+              <span class="label">{{ $t('tools.concordance.lbl_target_count') }}</span>
+              <span class="value">{{ $t('tools.concordance.segments', { count: store.unitCount }) }}</span>
             </div>
             <button class="btn-text" @click="reindex">
-              <Database :size="14" /> インデックス再構築
+              <Database :size="14" /> {{ $t('tools.concordance.btn_reindex') }}
             </button>
             
             <div class="action-group-horizontal">
               <button class="btn-text" @click="downloadData">
-                <Download :size="14" /> データ出力
+                <Download :size="14" /> {{ $t('tools.concordance.btn_export') }}
               </button>
               <button class="btn-text" @click="triggerUpload">
-                <Upload :size="14" /> データ読込
+                <Upload :size="14" /> {{ $t('tools.concordance.btn_import') }}
               </button>
               <input 
                 type="file" 
@@ -145,14 +147,13 @@ const handleUpload = async (event: Event) => {
         <div class="info-card">
           <div class="info-header">
             <Info :size="16" />
-            <h3>コンコーダンス検索とは</h3>
+            <h3>{{ $t('tools.concordance.title_info') }}</h3>
           </div>
           <p>
-            読み込まれた原文(Source)および訳文(Target)の中から、特定のキーワードが含まれるすべてのセグメントを高速に抽出します。
-            表記の揺れ確認や、過去の訳例の参照に最適です。
+            {{ $t('tools.concordance.info_desc1') }}
           </p>
           <p class="mt-2">
-            <strong>データ出力/読込:</strong> 大規模なファイルを再度パースすることなく、構築済みのインデックスを即座に復元できます。
+            <strong>{{ $t('tools.concordance.info_desc2_title') }}</strong>{{ $t('tools.concordance.info_desc2') }}
           </p>
         </div>
       </aside>
@@ -162,9 +163,9 @@ const handleUpload = async (event: Event) => {
         <div class="card full-height">
           <div class="card-header space-between">
             <div class="title-group">
-              <h2>検索結果</h2>
+              <h2>{{ $t('tools.concordance.title_result') }}</h2>
               <span class="badge" v-if="results.length > 0">
-                {{ results.length }} hits
+                {{ $t('tools.concordance.hits', { count: results.length }) }}
               </span>
             </div>
           </div>
@@ -192,13 +193,13 @@ const handleUpload = async (event: Event) => {
 
           <div class="empty-state" v-else-if="searchQuery.length > 0">
             <Search :size="48" class="empty-icon" />
-            <p>"{{ searchQuery }}" に一致するデータは見つかりませんでした</p>
+            <p>{{ $t('tools.concordance.empty_not_found', { query: searchQuery }) }}</p>
           </div>
 
           <div class="empty-state" v-else>
             <Database :size="48" class="empty-icon" />
-            <p>検索クエリを入力してください</p>
-            <p class="sub-text">読み込まれた {{ store.unitCount }} 件のデータから検索します</p>
+            <p>{{ $t('tools.concordance.empty_input') }}</p>
+            <p class="sub-text">{{ $t('tools.concordance.empty_subtext', { count: store.unitCount }) }}</p>
           </div>
         </div>
       </main>

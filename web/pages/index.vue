@@ -5,18 +5,23 @@ definePageMeta({
   title: 'Home',
 })
 
-const shuttleLinks = [
-  { to: '/shuttle/parser', label: 'パーサー', desc: 'Rawファイルからセグメントを抽出', icon: Database },
-  { to: '/shuttle/constructor', label: '構造化', desc: 'ユニットをShWvデータに変換', icon: Layers },
-  { to: '/shuttle/analyzer', label: '解析', desc: 'TM/TBを使用したマッチング処理', icon: Zap },
-  { to: '/shuttle/manage', label: '管理', desc: 'データの分割・結合・管理', icon: Code2 },
-  { to: '/shuttle/api', label: 'API', desc: 'LLMリクエストとキャッシュ設定', icon: Cloud },
-]
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
-const toolLinks = [
-  { to: '/tools/batch', label: '一括差分', desc: '左右のテキストを高速に一括比較', icon: Split },
-  { to: '/tools/concordance', label: 'コンコーダンス', desc: 'FlexSearchによる高速な一致検索', icon: Search },
-]
+const { t } = useI18n()
+
+const shuttleLinks = computed(() => [
+  { to: '/shuttle/parser', label: t('header.nav.parser'), desc: t('index.parser_desc'), icon: Database },
+  { to: '/shuttle/constructor', label: t('header.nav.constructor'), desc: t('index.constructor_desc'), icon: Layers },
+  { to: '/shuttle/analyzer', label: t('header.nav.analyzer'), desc: t('index.analyzer_desc'), icon: Zap },
+  { to: '/shuttle/manage', label: t('header.nav.manage'), desc: t('index.manage_desc'), icon: Code2 },
+  { to: '/shuttle/api', label: t('header.nav.api'), desc: t('index.api_desc'), icon: Cloud },
+])
+
+const toolLinks = computed(() => [
+  { to: '/tools/batch', label: t('header.nav.batch'), desc: t('index.batch_desc'), icon: Split },
+  { to: '/tools/concordance', label: t('header.nav.concordance'), desc: t('index.concordance_desc'), icon: Search },
+])
 </script>
 
 <template>
@@ -28,9 +33,9 @@ const toolLinks = [
           SheepComb<span class="gradient-text">Web</span>
         </h1>
         <p class="hero-subtitle">
-          次世代の翻訳データ処理・解析プラットフォーム。
+          {{ $t('index.hero_subtitle_1') }}
           <br />
-          多言語アセットを自在にパース、構造化、そしてAIで強化。
+          {{ $t('index.hero_subtitle_2') }}
         </p>
       </div>
     </section>
@@ -39,7 +44,7 @@ const toolLinks = [
       <div class="category-section">
         <h2 class="category-title">
           <Database :size="20" />
-          Shuttle ワークフロー
+          {{ $t('index.category_shuttle') }}
         </h2>
         <div class="nav-grid">
           <NuxtLink v-for="link in shuttleLinks" :key="link.to" :to="link.to" class="nav-card">
@@ -58,7 +63,7 @@ const toolLinks = [
       <div class="category-section">
         <h2 class="category-title">
           <Split :size="20" />
-          ユーティリティ
+          {{ $t('index.category_tools') }}
         </h2>
         <div class="nav-grid">
           <NuxtLink v-for="link in toolLinks" :key="link.to" :to="link.to" class="nav-card tool-card">

@@ -11,9 +11,11 @@ import { ref, computed } from 'vue'
 import { FileUp, Trash2, Play, FileSearch, CheckCircle, AlertCircle, Database, Book } from 'lucide-vue-next'
 import { useShuttleStore } from '../../stores/shuttleStore'
 import { initWasm, getWasm } from '../../../logic/wasm.js'
+import { useI18n } from 'vue-i18n'
 
 const store = useShuttleStore()
 const router = useRouter()
+const { t } = useI18n()
 
 const isProcessing = ref(false)
 const statusMsg = ref({ text: '', type: 'info' as 'info' | 'success' | 'error' })
@@ -36,13 +38,13 @@ function removeTb(index: number) { tbFiles.value.splice(index, 1) }
  */
 async function doAnalyze() {
   if (!store.hasData) {
-    statusMsg.value = { text: '構造化データがありません。先に「構造化」を実行してください。', type: 'error' }
+    statusMsg.value = { text: t('shuttle.analyzer.msg_no_data'), type: 'error' }
     return
   }
 
   try {
     isProcessing.value = true
-    statusMsg.value = { text: 'WASM エンジンを初期化中...', type: 'info' }
+    statusMsg.value = { text: t('shuttle.analyzer.msg_init_wasm'), type: 'info' }
 
     // WASM の初期化（初回のみ）
     let wasm: any
@@ -50,10 +52,10 @@ async function doAnalyze() {
       wasm = await initWasm()
     } catch (e) {
       console.error('WASM Init:', e)
-      throw new Error('WASM エンジンの初期化に失敗しました。')
+      throw new Error(t('shuttle.analyzer.err_init_wasm'))
     }
 
-    statusMsg.value = { text: 'TM/TB を読み込み中...', type: 'info' }
+    statusMsg.value = { text: t('shuttle.analyzer.msg_loading_tmtb'), type: 'info' }
 
     // TM 読み込み
     if (tmFiles.value.length > 0) {
@@ -73,19 +75,19 @@ async function doAnalyze() {
       await store.addTbs(tbs)
     }
 
-    statusMsg.value = { text: 'マッチング解析を実行中...', type: 'info' }
+    statusMsg.value = { text: t('shuttle.analyzer.msg_analyzing'), type: 'info' }
     // 分析（WASM エンジン等の呼び出し）
     const { analyze_all } = getWasm()
     await store.analyze(analyze_all)
 
-    statusMsg.value = { text: '解析完了！', type: 'success' }
+    statusMsg.value = { text: t('shuttle.analyzer.msg_analyze_success'), type: 'success' }
     setTimeout(() => {
       router.push('/shuttle/manage')
     }, 800)
 
   } catch (e: any) {
     console.error('Analyze error:', e)
-    statusMsg.value = { text: `エラー: ${e.message}`, type: 'error' }
+    statusMsg.value = { text: t('shuttle.analyzer.msg_error', { message: e.message }), type: 'error' }
   } finally {
     isProcessing.value = false
   }
@@ -99,8 +101,8 @@ async function doAnalyze() {
         <div class="header-main">
           <Database :size="24" class="header-icon" />
           <div class="header-text">
-            <h1>解析 (Analyze)</h1>
-            <p>TM（翻訳メモリ）や TB（用語集）を適用し、マッチングを行います</p>
+            <h1>{{ $t('shuttle.analyzer.title') }}</h1>
+            <p>{{ $t('shuttle.analyzer.subtitle') }}</p>
           </div>
         </div>
       </div>
@@ -108,11 +110,11 @@ async function doAnalyze() {
       <!-- プロジェクト状態 -->
       <div class="project-status" v-if="hasDataInStore">
         <CheckCircle :size="16" class="status-icon" />
-        <span>対象データ: {{ store.shwvUnitCount }} セグメント</span>
+        <span>{{ $t('shuttle.analyzer.status_data', { count: store.shwvUnitCount }) }}</span>
       </div>
       <div class="project-status warning" v-else>
         <AlertCircle :size="16" class="status-icon" />
-        <span>構造化データが読み込まれていません</span>
+        <span>{{ $t('shuttle.analyzer.status_no_data') }}</span>
       </div>
 
       <div class="analyze-grid">
@@ -120,13 +122,13 @@ async function doAnalyze() {
         <div class="drop-card">
           <div class="drop-header">
             <Database :size="18" />
-            <h3>翻訳メモリ (TM)</h3>
+            <h3>{{ $t('shuttle.analyzer.tm_title') }}</h3>
           </div>
           <div class="drop-area" @drop.prevent="(e) => addTmFiles(Array.from(e.dataTransfer?.files || []))" @dragover.prevent>
             <input type="file" multiple hidden @change="(e) => addTmFiles(Array.from((e.target as HTMLInputElement).files || []))" ref="tmInput" />
             <div class="drop-label" @click="($refs.tmInput as HTMLInputElement).click()">
               <FileUp :size="32" />
-              <p>TMファイルをドロップ (.csv, .tmx)</p>
+              <p>{{ $t('shuttle.analyzer.tm_drop') }}</p>
             </div>
           </div>
           <div class="file-mini-list" v-if="hasTm">
@@ -141,13 +143,13 @@ async function doAnalyze() {
         <div class="drop-card">
           <div class="drop-header">
             <Book :size="18" />
-            <h3>用語集 (TB)</h3>
+            <h3>{{ $t('shuttle.analyzer.tb_title') }}</h3>
           </div>
           <div class="drop-area" @drop.prevent="(e) => addTbFiles(Array.from(e.dataTransfer?.files || []))" @dragover.prevent>
             <input type="file" multiple hidden @change="(e) => addTbFiles(Array.from((e.target as HTMLInputElement).files || []))" ref="tbInput" />
             <div class="drop-label" @click="($refs.tbInput as HTMLInputElement).click()">
               <FileUp :size="32" />
-              <p>TBファイルをドロップ (.csv, .tbx)</p>
+              <p>{{ $t('shuttle.analyzer.tb_drop') }}</p>
             </div>
           </div>
           <div class="file-mini-list" v-if="hasTb">
@@ -166,7 +168,7 @@ async function doAnalyze() {
         <button class="btn-run" @click="doAnalyze" :disabled="isProcessing || !hasDataInStore">
           <Play v-if="!isProcessing" :size="18" />
           <span v-else class="loader"></span>
-          {{ isProcessing ? '実行中...' : '解析を実行' }}
+          {{ isProcessing ? $t('shuttle.analyzer.btn_analyzing') : $t('shuttle.analyzer.btn_analyze') }}
         </button>
       </div>
     </div>

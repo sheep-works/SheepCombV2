@@ -13,8 +13,10 @@ import { Send, Cloud, Loader2, AlertCircle, RefreshCw, Trash2 } from 'lucide-vue
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
 import { useShuttleStore } from '../../stores/shuttleStore'
 import { SheepShuttle } from '../../../logic/shuttle/sheepShuttle.js'
+import { useI18n } from 'vue-i18n'
 
 const store = useShuttleStore()
+const { t } = useI18n()
 
 onMounted(async () => {
   await store.checkConnection()
@@ -48,7 +50,7 @@ async function processChunk(index: number) {
   // 再チェック
   const ok = await store.checkConnection()
   if (!ok) {
-    errorMsg.value = 'API サーバー (SheepHub) がオフラインです。起動しているか確認してください。'
+    errorMsg.value = t('shuttle.api.err_offline')
     return
   }
 
@@ -67,7 +69,7 @@ async function processAll() {
   // 再チェック
   const ok = await store.checkConnection()
   if (!ok) {
-    errorMsg.value = 'API サーバー (SheepHub) がオフラインです。起動しているか確認してください。'
+    errorMsg.value = t('shuttle.api.err_offline')
     return
   }
 
@@ -109,13 +111,13 @@ function getStatusColor(status: string) {
       <aside class="sidebar">
         <div class="card">
           <div class="card-header">
-            <h2>リクエスト設定</h2>
+            <h2>{{ $t('shuttle.api.title_request') }}</h2>
             <span class="dev-badge">SheepHub v2</span>
           </div>
 
           <div class="config-section">
             <div class="config-group">
-              <label class="config-label">チャンク作成モード</label>
+              <label class="config-label">{{ $t('shuttle.api.lbl_chunk_mode') }}</label>
               <div class="radio-group">
                 <div v-for="m in modes" :key="m.id" class="radio-item" :class="{ active: mode === m.id }"
                   @click="mode = m.id">
@@ -126,7 +128,7 @@ function getStatusColor(status: string) {
             </div>
 
             <div class="config-group">
-              <label class="config-label">リクエスト種別</label>
+              <label class="config-label">{{ $t('shuttle.api.lbl_req_type') }}</label>
               <div class="source-tabs">
                 <button v-for="t in requestTargets" :key="t.id" class="source-tab"
                   :class="{ active: requestTarget === t.id }" @click="requestTarget = t.id as any">
@@ -136,16 +138,16 @@ function getStatusColor(status: string) {
             </div>
 
             <div class="config-group">
-              <label class="config-label">カスタムプロンプト (オプション)</label>
-              <textarea v-model="userPrompt" class="prompt-textarea" placeholder="例: 文末をですます調に統一してください。"></textarea>
+              <label class="config-label">{{ $t('shuttle.api.lbl_prompt') }}</label>
+              <textarea v-model="userPrompt" class="prompt-textarea" :placeholder="$t('shuttle.api.placeholder_prompt')"></textarea>
             </div>
 
             <div class="button-row">
               <button class="btn-action secondary" @click="createChunks" :disabled="!store.hasUnits && !store.hasData">
-                <RefreshCw :size="16" /> チャンク作成
+                <RefreshCw :size="16" /> {{ $t('shuttle.api.btn_create_chunks') }}
               </button>
               <button class="btn-action primary" @click="processAll" :disabled="!store.hasChunks || isRequesting">
-                <Send :size="16" /> 全チャンク処理
+                <Send :size="16" /> {{ $t('shuttle.api.btn_process_all') }}
               </button>
             </div>
           </div>
@@ -153,7 +155,7 @@ function getStatusColor(status: string) {
 
         <div class="card connection-card">
           <div class="card-header">
-            <h2>接続ステータス</h2>
+            <h2>{{ $t('shuttle.api.title_status') }}</h2>
             <div class="status-dot" :class="{ online: store.isApiAvailable }"></div>
           </div>
           
@@ -162,7 +164,7 @@ function getStatusColor(status: string) {
             <label class="toggle-container">
               <input type="checkbox" v-model="store.isDevOverride" />
               <span class="toggle-slider"></span>
-              <span class="toggle-label">開発者モード (Local)</span>
+              <span class="toggle-label">{{ $t('shuttle.api.lbl_dev_mode') }}</span>
             </label>
           </div>
 
@@ -178,7 +180,7 @@ function getStatusColor(status: string) {
 
         <div class="card status-card" v-if="store.hasChunks">
           <div class="card-header">
-            <h2>ステータス概要</h2>
+            <h2>{{ $t('shuttle.api.title_summary') }}</h2>
           </div>
           <div class="status-content">
             <div class="status-stat">
@@ -197,9 +199,9 @@ function getStatusColor(status: string) {
       <section class="response-area">
         <div class="card full-height">
           <div class="card-header space-between">
-            <h2>チャンク一覧</h2>
+            <h2>{{ $t('shuttle.api.title_list') }}</h2>
             <button class="btn-refresh" @click="clearResults" v-if="store.hasChunks">
-              <Trash2 :size="14" /> クリア
+              <Trash2 :size="14" /> {{ $t('shuttle.api.btn_clear') }}
             </button>
           </div>
 
@@ -240,8 +242,8 @@ function getStatusColor(status: string) {
           <!-- Empty State -->
           <div class="empty-state" v-else>
             <Cloud :size="48" class="empty-icon" />
-            <p v-if="!store.hasUnits">まずは Parser タブでファイルを読み込んでください</p>
-            <p v-else>「チャンク作成」ボタンを押してデータを分割してください</p>
+            <p v-if="!store.hasUnits">{{ $t('shuttle.api.empty_no_units') }}</p>
+            <p v-else>{{ $t('shuttle.api.empty_no_chunks') }}</p>
           </div>
         </div>
       </section>

@@ -12,6 +12,8 @@ definePageMeta({
 import { ref, computed } from 'vue'
 import { FileUp, Search, Download, Database, Trash2, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 import { useShuttleStore } from '../../stores/shuttleStore'
 import { SheepShuttle } from '../../../logic/shuttle/sheepShuttle.js'
 import type { TranslationPair } from '../../../logic/types/shwv.js'
@@ -94,7 +96,7 @@ const parseFiles = async () => {
   if (selectedFiles.value.length === 0) return
 
   try {
-    store.setStatus('解析中...', 'info')
+    store.setStatus(t('shuttle.parser.msg_parsing'), 'info')
 
     // File オブジェクトを Shuttle が受け取れる形式に変換
     const files = await Promise.all(selectedFiles.value.map(async file => {
@@ -114,10 +116,10 @@ const parseFiles = async () => {
     store.process()
     currentPage.value = 1
 
-    store.setStatus('解析が完了しました', 'success')
+    store.setStatus(t('shuttle.parser.msg_parse_success'), 'success')
   } catch (e: any) {
     console.error('Parse error:', e)
-    store.setStatus(`エラー: ${e.message}`, 'error')
+    store.setStatus(t('shuttle.parser.msg_error', { message: e.message }), 'error')
   }
 }
 
@@ -149,7 +151,7 @@ const applyFilters = () => {
   if (!store.hasUnits) return
   store.process(filterOptions.value)
   currentPage.value = 1
-  store.setStatus('フィルタを適用しました', 'success')
+  store.setStatus(t('shuttle.parser.msg_filter_applied'), 'success')
 }
 
 // --- サンプリング設定 ---
@@ -162,7 +164,7 @@ const samplingSeed = ref<number | null>(null)
 const applySampling = () => {
   if (!store.hasUnits) return
   if (!samplingTotalChars.value || samplingTotalChars.value <= 0) {
-    store.setStatus('目標文字数には1以上の数値を指定してください', 'error')
+    store.setStatus(t('shuttle.parser.err_sampling_target'), 'error')
     return
   }
 
@@ -175,7 +177,7 @@ const applySampling = () => {
 
   store.sampling(samplingTotalChars.value, seed)
   currentPage.value = 1
-  store.setStatus(`目標 ${samplingTotalChars.value} 文字、シード値 ${seed} でサンプリングを適用しました`, 'success')
+  store.setStatus(t('shuttle.parser.msg_sampling_applied', { chars: samplingTotalChars.value, seed }), 'success')
 }
 
 
@@ -189,12 +191,12 @@ const applySampling = () => {
       <aside class="sidebar">
         <div class="card upload-section">
           <div class="card-header">
-            <h2>ファイルアップロード</h2>
+            <h2>{{ $t('shuttle.parser.upload_title') }}</h2>
           </div>
           <div class="drop-zone" @drop="handleFileDrop" @dragover.prevent @click="fileInput?.click()">
             <FileUp :size="24" class="drop-icon" />
-            <p v-if="selectedFiles.length === 0">ファイルをドラッグ＆ドロップ</p>
-            <p v-else class="file-count">{{ selectedFiles.length }} 個を選択中</p>
+            <p v-if="selectedFiles.length === 0">{{ $t('shuttle.parser.drag_drop') }}</p>
+            <p v-else class="file-count">{{ $t('shuttle.parser.files_selected', { count: selectedFiles.length }) }}</p>
             <input type="file" ref="fileInput" hidden multiple @change="handleFileSelect" />
           </div>
           <div class="file-list" v-if="selectedFiles.length > 0">
@@ -209,61 +211,61 @@ const applySampling = () => {
 
         <div class="card actions" :class="{ disabled: (selectedFiles.length === 0 && !store.hasUnits) || isProcessing }">
           <div class="card-header">
-            <h2>アクション</h2>
+            <h2>{{ $t('shuttle.parser.actions_title') }}</h2>
           </div>
-          <p class="hint-text">各ファイルを順次解析し、一つのリストに統合します。</p>
+          <p class="hint-text">{{ $t('shuttle.parser.actions_hint') }}</p>
           <button class="btn primary" @click="parseFiles" :disabled="selectedFiles.length === 0 || isProcessing">
             <Loader2 v-if="isProcessing" class="spin" :size="18" />
-            <span v-else>解析を実行</span>
+            <span v-else>{{ $t('shuttle.parser.btn_parse') }}</span>
           </button>
 
           <!-- フィルタ設定エリア -->
           <div class="filter-settings" v-if="store.hasUnits">
             <div class="filter-divider"></div>
-            <h3 class="filter-title">フィルタ適用</h3>
+            <h3 class="filter-title">{{ $t('shuttle.parser.filter_title') }}</h3>
 
             <label class="checkbox-label">
               <input type="checkbox" v-model="filterOptions.toFilterDuplicate" />
-              <span>重複行を削除</span>
+              <span>{{ $t('shuttle.parser.filter_duplicate') }}</span>
             </label>
 
             <label class="checkbox-label">
               <input type="checkbox" v-model="filterOptions.toFilterLock" />
-              <span>LOCKED行を削除</span>
+              <span>{{ $t('shuttle.parser.filter_lock') }}</span>
             </label>
 
             <div class="select-group">
-              <span class="select-label">DNTフィルタ:</span>
+              <span class="select-label">{{ $t('shuttle.parser.filter_dnt') }}</span>
               <select v-model="filterOptions.toFilterDnt" class="select-sm">
-                <option :value="null">なし</option>
-                <option value="digit">数字・記号のみ</option>
-                <option value="eng">英字・記号のみ</option>
-                <option value="digit eng">英数字・記号のみ</option>
+                <option :value="null">{{ $t('shuttle.parser.dnt_none') }}</option>
+                <option value="digit">{{ $t('shuttle.parser.dnt_digit') }}</option>
+                <option value="eng">{{ $t('shuttle.parser.dnt_eng') }}</option>
+                <option value="digit eng">{{ $t('shuttle.parser.dnt_digit_eng') }}</option>
               </select>
             </div>
 
             <button class="btn-outline-action" @click="applyFilters">
-              フィルタを適用
+              {{ $t('shuttle.parser.btn_apply_filter') }}
             </button>
 
             <div class="filter-divider"></div>
-            <h3 class="filter-title">サンプリング評価</h3>
+            <h3 class="filter-title">{{ $t('shuttle.parser.sampling_title') }}</h3>
             <p class="sampling-hint-text">
-              各ファイルから文字数の比率に応じてランダムに抽出します。
+              {{ $t('shuttle.parser.sampling_hint') }}
             </p>
 
             <div class="input-group">
-              <span class="input-label">目標抽出文字数:</span>
+              <span class="input-label">{{ $t('shuttle.parser.sampling_target') }}</span>
               <input type="number" v-model.number="samplingTotalChars" class="input-sm full-width" min="1" />
             </div>
 
             <div class="input-group" style="margin-top: 8px;">
-              <span class="input-label">シード値 (任意):</span>
-              <input type="number" v-model.number="samplingSeed" class="input-sm full-width" placeholder="自動生成（空欄）" min="0" />
+              <span class="input-label">{{ $t('shuttle.parser.sampling_seed') }}</span>
+              <input type="number" v-model.number="samplingSeed" class="input-sm full-width" :placeholder="$t('shuttle.parser.sampling_seed_placeholder')" min="0" />
             </div>
 
             <button class="btn-outline-action btn-sampling" @click="applySampling" style="margin-top: 8px;">
-              サンプリング実行
+              {{ $t('shuttle.parser.btn_apply_sampling') }}
             </button>
           </div>
         </div>
@@ -278,9 +280,9 @@ const applySampling = () => {
         <div class="card full-height">
           <div class="card-header space-between">
             <div class="title-group">
-              <h2>解析結果</h2>
+              <h2>{{ $t('shuttle.parser.results_title') }}</h2>
               <span class="badge" v-if="store.hasUnits">
-                {{ store.unitCount }} segments
+                {{ $t('shuttle.parser.segments', { count: store.unitCount }) }}
               </span>
             </div>
             <div class="export-actions" v-if="store.hasUnits">
@@ -351,7 +353,7 @@ const applySampling = () => {
 
           <div class="empty-state" v-else>
             <Search :size="48" class="empty-icon" />
-            <p>ファイルをロードして解析を開始してください</p>
+            <p>{{ $t('shuttle.parser.empty_results') }}</p>
           </div>
         </div>
       </section>

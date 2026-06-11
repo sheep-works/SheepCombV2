@@ -7,8 +7,10 @@ definePageMeta({
 import { ref, computed } from 'vue'
 import { Split, Play, Trash2, Import, FileText, CheckCircle, AlertCircle, Download } from 'lucide-vue-next'
 import { useDiffStore } from '../../stores/diffStore'
+import { useI18n } from 'vue-i18n'
 
 const store = useDiffStore()
+const { t } = useI18n()
 const isChecked = ref(false)
 const errorMsg = ref('')
 const showAllLines = ref(false)
@@ -31,7 +33,7 @@ const handleImport = () => {
   if (success) {
     errorMsg.value = ''
   } else {
-    errorMsg.value = 'パーサーにデータがありません。'
+    errorMsg.value = t('tools.batch.err_no_data')
   }
 }
 
@@ -39,7 +41,7 @@ const runCheck = () => {
   errorMsg.value = ''
   // 行数が極端に違う場合の警告（空行等でズレる可能性があるため）
   if (store.srcText.split('\n').length !== store.tgtText.split('\n').length) {
-    if (!confirm('左右で行数が異なります。ズレが発生する可能性がありますが、実行しますか？')) {
+    if (!confirm(t('tools.batch.confirm_diff_lines'))) {
       return
     }
   }
@@ -73,7 +75,7 @@ const downloadHtml = () => {
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>一括差分結果</title>
+  <title>${t('tools.batch.html_title')}</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -127,13 +129,13 @@ const downloadHtml = () => {
   </style>
 </head>
 <body>
-  <h2>一括差分結果 (${items.filter(item => item.hasDiff).length} 件の差異)</h2>
+  <h2>${t('tools.batch.html_header', { count: items.filter(item => item.hasDiff).length })}</h2>
   <table>
     <thead>
       <tr>
-        <th style="width: 30%;">旧 (Old)</th>
-        <th style="width: 30%;">新 (New)</th>
-        <th style="width: 40%;">差分 (Diff)</th>
+        <th style="width: 30%;">${t('tools.batch.html_th_old')}</th>
+        <th style="width: 30%;">${t('tools.batch.html_th_new')}</th>
+        <th style="width: 40%;">${t('tools.batch.html_th_diff')}</th>
       </tr>
     </thead>
     <tbody>
@@ -173,49 +175,49 @@ const downloadHtml = () => {
       <aside class="sidebar">
         <div class="card">
           <div class="card-header">
-            <h2>一括差分ツール</h2>
+            <h2>{{ $t('tools.batch.title_tool') }}</h2>
           </div>
           <div class="action-list">
             <button class="btn primary" @click="runCheck" :disabled="!store.srcText && !store.tgtText">
-              <Play :size="18" /> 差分を確認
+              <Play :size="18" /> {{ $t('tools.batch.btn_check') }}
             </button>
 
             <button class="btn secondary" @click="handleImport">
-              <Import :size="18" /> パーサーから読み込む
+              <Import :size="18" /> {{ $t('tools.batch.btn_import') }}
             </button>
 
             <button class="btn outline" @click="clearAll">
-              <Trash2 :size="18" /> クリア
+              <Trash2 :size="18" /> {{ $t('tools.batch.btn_clear') }}
             </button>
 
             <div class="result-settings" v-if="isChecked">
               <div class="filter-divider"></div>
               <label class="checkbox-label">
                 <input type="checkbox" v-model="showAllLines" />
-                <span>差分がない行も表示</span>
+                <span>{{ $t('tools.batch.lbl_show_all') }}</span>
               </label>
 
               <button class="btn-outline-action" @click="downloadHtml">
-                <Download :size="14" /> HTMLダウンロード
+                <Download :size="14" /> {{ $t('tools.batch.btn_download_html') }}
               </button>
             </div>
           </div>
 
           <div class="stats-box" v-if="srcLines || tgtLines">
             <div class="stat-item">
-              <span class="stat-label">旧テキスト:</span>
-              <span class="stat-value">{{ srcLines }} lines</span>
+              <span class="stat-label">{{ $t('tools.batch.lbl_old_text') }}</span>
+              <span class="stat-value">{{ $t('tools.batch.lines', { count: srcLines }) }}</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">新テキスト:</span>
-              <span class="stat-value">{{ tgtLines }} lines</span>
+              <span class="stat-label">{{ $t('tools.batch.lbl_new_text') }}</span>
+              <span class="stat-value">{{ $t('tools.batch.lines', { count: tgtLines }) }}</span>
             </div>
           </div>
         </div>
 
         <div class="alert-info">
           <AlertCircle :size="16" />
-          <p>左右の行を1対1で比較します。Excelからの貼り付け時にセル内改行が含まれないようご注意ください。</p>
+          <p>{{ $t('tools.batch.alert_hint') }}</p>
         </div>
       </aside>
 
@@ -225,24 +227,24 @@ const downloadHtml = () => {
         <div class="input-grid" v-if="!isChecked">
           <div class="card">
             <div class="card-header">
-              <h3>旧テキスト (Old)</h3>
+              <h3>{{ $t('tools.batch.title_old') }}</h3>
             </div>
-            <textarea v-model="store.srcText" class="diff-textarea" placeholder="比較元のテキストを貼り付け"></textarea>
+            <textarea v-model="store.srcText" class="diff-textarea" :placeholder="$t('tools.batch.placeholder_old')"></textarea>
           </div>
           <div class="card">
             <div class="card-header">
-              <h3>新テキスト (New)</h3>
+              <h3>{{ $t('tools.batch.title_new') }}</h3>
             </div>
-            <textarea v-model="store.tgtText" class="diff-textarea" placeholder="比較先のテキストを貼り付け"></textarea>
+            <textarea v-model="store.tgtText" class="diff-textarea" :placeholder="$t('tools.batch.placeholder_new')"></textarea>
           </div>
         </div>
 
         <!-- Result Area -->
         <div class="card result-card" v-else>
           <div class="card-header space-between">
-            <h2>比較結果 ({{ diffCount }} 件の差異)</h2>
+            <h2>{{ $t('tools.batch.title_result', { count: diffCount }) }}</h2>
             <button class="btn-sm" @click="isChecked = false">
-              <FileText :size="14" /> 入力を編集
+              <FileText :size="14" /> {{ $t('tools.batch.btn_edit_input') }}
             </button>
           </div>
           <div class="table-container">
@@ -250,9 +252,9 @@ const downloadHtml = () => {
               <thead>
                 <tr>
                   <th class="w-idx">No.</th>
-                  <th class="w-text">旧 (Old)</th>
-                  <th class="w-text">新 (New)</th>
-                  <th class="w-diff">比較結果</th>
+                  <th class="w-text">{{ $t('tools.batch.html_th_old') }}</th>
+                  <th class="w-text">{{ $t('tools.batch.html_th_new') }}</th>
+                  <th class="w-diff">{{ $t('tools.batch.th_result') }}</th>
                 </tr>
               </thead>
               <tbody>

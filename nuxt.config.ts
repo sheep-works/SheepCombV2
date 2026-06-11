@@ -8,8 +8,10 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
     '@pinia-plugin-persistedstate/nuxt',
-    '@nuxtjs/i18n'
+    '@nuxtjs/i18n',
+    '@nuxt/content'
   ],
+
   i18n: {
     locales: [
       { code: 'ja', file: 'ja.json', name: '日本語' },
@@ -18,7 +20,13 @@ export default defineNuxtConfig({
     ],
     langDir: 'locales/',
     defaultLocale: 'ja',
-    strategy: 'prefix_except_default'
+    strategy: 'prefix_except_default',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      redirectOn: 'root', // ルートアクセス時にCookieを見てリダイレクト
+      alwaysRedirect: true
+    }
   },
   nitro: {
     preset: 'static',
@@ -59,6 +67,7 @@ export default defineNuxtConfig({
         'jszip',
         'xlsx',
         'difflib-ts',
+        'flexsearch',
       ]
     }
   },

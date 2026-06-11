@@ -13,9 +13,11 @@ import { FileUp, Trash2, Play, FileText, CheckCircle, AlertCircle, Layers } from
 import { useShuttleStore } from '../../stores/shuttleStore'
 import { SheepShuttle } from '../../../logic/shuttle/sheepShuttle.js'
 import { FileIO } from '../../utils/fileIO'
+import { useI18n } from 'vue-i18n'
 
 const store = useShuttleStore()
 const router = useRouter()
+const { t } = useI18n()
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFiles = ref<File[]>([])
@@ -51,7 +53,7 @@ const targetLang = ref('ja-JP')
 async function doConvert() {
   try {
     isProcessing.value = true
-    statusMsg.value = { text: '構造化を実行中...', type: 'info' }
+    statusMsg.value = { text: t('shuttle.constructor.msg_processing'), type: 'info' }
 
     // ファイルが選択されている場合はまずパース
     if (selectedFiles.value.length > 0) {
@@ -66,7 +68,7 @@ async function doConvert() {
     }
 
     if (!store.hasUnits) {
-      throw new Error('構造化するユニットがありません。「解析」ページでファイルを読み込んでください。')
+      throw new Error(t('shuttle.constructor.err_no_units_throw'))
     }
 
     // 構造化（ShWvData への変換）実行
@@ -92,14 +94,14 @@ async function doConvert() {
     }
     store.convert(projectInfo)
 
-    statusMsg.value = { text: '構造化完了！「解析」ページに移動します。', type: 'success' }
+    statusMsg.value = { text: t('shuttle.constructor.msg_success'), type: 'success' }
     setTimeout(() => {
       router.push('/shuttle/analyzer')
     }, 800)
 
   } catch (e: any) {
     console.error('Convert error:', e)
-    statusMsg.value = { text: `エラー: ${e.message}`, type: 'error' }
+    statusMsg.value = { text: t('shuttle.constructor.msg_error', { message: e.message }), type: 'error' }
   } finally {
     isProcessing.value = false
   }
@@ -113,13 +115,13 @@ async function doConvert() {
         <div class="header-main">
           <Layers :size="24" class="header-icon" />
           <div class="header-text">
-            <h1>構造化 (Structuring)</h1>
-            <p>解析済みのユニットを統合し、構造化データを作成します</p>
+            <h1>{{ $t('shuttle.constructor.title') }}</h1>
+            <p>{{ $t('shuttle.constructor.subtitle') }}</p>
           </div>
         </div>
         <div class="header-actions">
           <button class="btn-clear" @click="clearFiles" :disabled="!hasFiles || isProcessing">
-            <Trash2 :size="16" /> クリア
+            <Trash2 :size="16" /> {{ $t('shuttle.constructor.clear') }}
           </button>
         </div>
       </div>
@@ -128,21 +130,21 @@ async function doConvert() {
       <div class="store-status" v-if="hasUnitsInStore">
         <div class="status-badge">
           <CheckCircle :size="16" />
-          <span>解析済みユニット: {{ store.unitCount }} 件</span>
+          <span>{{ $t('shuttle.constructor.parsed_units', { count: store.unitCount }) }}</span>
         </div>
-        <p class="status-desc">これらのユニットを一つのプロジェクトデータに統合します。</p>
+        <p class="status-desc">{{ $t('shuttle.constructor.parsed_units_desc') }}</p>
       </div>
 
       <div class="drop-zone" v-if="!hasUnitsInStore" @drop="handleFileDrop" @dragover.prevent
         @click="fileInput?.click()">
         <FileUp :size="48" class="drop-icon" />
-        <p class="drop-text">追加でファイルを読み込む</p>
-        <p class="drop-hint">XLIFF, TMX, TBX, XLSX, CSV 等をサポート</p>
+        <p class="drop-text">{{ $t('shuttle.constructor.drop_text') }}</p>
+        <p class="drop-hint">{{ $t('shuttle.constructor.drop_hint') }}</p>
         <input type="file" ref="fileInput" hidden multiple @change="handleFileSelect" />
       </div>
 
       <div v-if="hasFiles" class="file-list-section">
-        <h2 class="section-title">追加ファイル ({{ selectedFiles.length }})</h2>
+        <h2 class="section-title">{{ $t('shuttle.constructor.additional_files', { count: selectedFiles.length }) }}</h2>
         <div class="file-list">
           <div v-for="(file, index) in selectedFiles" :key="index" class="file-item">
             <div class="file-info">
@@ -161,31 +163,31 @@ async function doConvert() {
       <div class="project-info-section">
         <label class="toggle-label">
           <input type="checkbox" v-model="includeProjectInfo" :disabled="isProcessing" />
-          <span>ProjectInfo (プロジェクト設定) を含める</span>
+          <span>{{ $t('shuttle.constructor.include_project_info') }}</span>
         </label>
         
         <div class="form-container" v-if="includeProjectInfo">
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">プロジェクト名:</label>
-              <input type="text" v-model="projectName" class="form-input" :disabled="isProcessing" placeholder="プロジェクト名を入力" />
+              <label class="form-label">{{ $t('shuttle.constructor.project_name_label') }}</label>
+              <input type="text" v-model="projectName" class="form-input" :disabled="isProcessing" :placeholder="$t('shuttle.constructor.project_name_placeholder')" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">ソース言語:</label>
+              <label class="form-label">{{ $t('shuttle.constructor.source_lang') }}</label>
               <select v-model="sourceLang" class="form-select" :disabled="isProcessing">
-                <option value="en-US">英語 (en-US)</option>
-                <option value="ja-JP">日本語 (ja-JP)</option>
-                <option value="zh-CN">中国語 (zh-CN)</option>
+                <option value="en-US">{{ $t('shuttle.constructor.lang_en') }}</option>
+                <option value="ja-JP">{{ $t('shuttle.constructor.lang_ja') }}</option>
+                <option value="zh-CN">{{ $t('shuttle.constructor.lang_zh') }}</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">ターゲット言語:</label>
+              <label class="form-label">{{ $t('shuttle.constructor.target_lang') }}</label>
               <select v-model="targetLang" class="form-select" :disabled="isProcessing">
-                <option value="en-US">英語 (en-US)</option>
-                <option value="ja-JP">日本語 (ja-JP)</option>
-                <option value="zh-CN">中国語 (zh-CN)</option>
+                <option value="en-US">{{ $t('shuttle.constructor.lang_en') }}</option>
+                <option value="ja-JP">{{ $t('shuttle.constructor.lang_ja') }}</option>
+                <option value="zh-CN">{{ $t('shuttle.constructor.lang_zh') }}</option>
               </select>
             </div>
           </div>
@@ -200,13 +202,13 @@ async function doConvert() {
         </div>
         <div v-else-if="!hasUnitsInStore && !hasFiles" class="status-box info">
           <AlertCircle :size="18" />
-          <span>「解析」ページでファイルを読み込んでください</span>
+          <span>{{ $t('shuttle.constructor.err_no_units') }}</span>
         </div>
 
         <button class="btn-run" @click="doConvert" :disabled="isProcessing || (!hasUnitsInStore && !hasFiles)">
           <Play v-if="!isProcessing" :size="18" />
           <span v-else class="loader"></span>
-          {{ isProcessing ? '実行中...' : '構造化を実行' }}
+          {{ isProcessing ? $t('shuttle.constructor.running') : $t('shuttle.constructor.run') }}
         </button>
       </div>
     </div>

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Trash2, ChevronDown, Database, Layers, Zap, Code2, Cloud, Split, Search } from 'lucide-vue-next'
+import { Trash2, ChevronDown, Database, Layers, Zap, Code2, Cloud, Split, Search, BookOpen } from 'lucide-vue-next'
 import { useShuttleStore } from '../stores/shuttleStore'
+import { useI18n } from 'vue-i18n'
 
 const store = useShuttleStore()
-
 const route = useRoute()
+const { t, locale, locales, setLocale } = useI18n()
 
 const isWasmReady = defineModel<boolean>('wasmReady', { default: false })
 
@@ -14,8 +15,20 @@ const currentTitle = computed(() => {
 })
 
 const handleReset = () => {
-  if (confirm('プロジェクトのすべてのデータをリセットしますか？この操作は取り消せません。')) {
+  if (confirm(t('common.reset_confirm'))) {
     store.clear()
+  }
+}
+
+const handleLocaleChange = (event: Event) => {
+  const target = event.target as HTMLSelectElement
+  if (target) {
+    if (target.value === 'ja' || target.value === 'en' || target.value === 'zh') {
+      setLocale(target.value)
+    }
+    else {
+      setLocale('ja')
+    }
   }
 }
 </script>
@@ -41,44 +54,44 @@ const handleReset = () => {
         <div class="nav-item has-dropdown">
           <button class="nav-group-trigger" :class="{ active: route.path.startsWith('/shuttle') }">
             <Database :size="16" />
-            <span>Shuttle</span>
+            <span>{{ $t('header.nav.shuttle') }}</span>
             <ChevronDown :size="14" class="chevron" />
           </button>
           <div class="dropdown-menu">
             <NuxtLink to="/shuttle/parser" class="dropdown-item" active-class="active">
               <Database :size="14" />
               <div class="item-text">
-                <span class="label">パーサー</span>
-                <span class="desc">Rawファイルの抽出</span>
+                <span class="label">{{ $t('header.nav.parser') }}</span>
+                <span class="desc">{{ $t('header.nav.parser_desc') }}</span>
               </div>
             </NuxtLink>
             <NuxtLink to="/shuttle/constructor" class="dropdown-item" active-class="active">
               <Layers :size="14" />
               <div class="item-text">
-                <span class="label">構造化</span>
-                <span class="desc">ShWvデータへの変換</span>
+                <span class="label">{{ $t('header.nav.constructor') }}</span>
+                <span class="desc">{{ $t('header.nav.constructor_desc') }}</span>
               </div>
             </NuxtLink>
             <NuxtLink to="/shuttle/analyzer" class="dropdown-item" active-class="active">
               <Zap :size="14" />
               <div class="item-text">
-                <span class="label">解析</span>
-                <span class="desc">TM/TBマッチング</span>
+                <span class="label">{{ $t('header.nav.analyzer') }}</span>
+                <span class="desc">{{ $t('header.nav.analyzer_desc') }}</span>
               </div>
             </NuxtLink>
             <NuxtLink to="/shuttle/manage" class="dropdown-item" active-class="active">
               <Code2 :size="14" />
               <div class="item-text">
-                <span class="label">管理</span>
-                <span class="desc">データの結合・分割</span>
+                <span class="label">{{ $t('header.nav.manage') }}</span>
+                <span class="desc">{{ $t('header.nav.manage_desc') }}</span>
               </div>
             </NuxtLink>
             <div class="dropdown-divider"></div>
             <NuxtLink to="/shuttle/api" class="dropdown-item" active-class="active">
               <Cloud :size="14" />
               <div class="item-text">
-                <span class="label">API</span>
-                <span class="desc">LLM処理設定</span>
+                <span class="label">{{ $t('header.nav.api') }}</span>
+                <span class="desc">{{ $t('header.nav.api_desc') }}</span>
               </div>
             </NuxtLink>
           </div>
@@ -88,31 +101,46 @@ const handleReset = () => {
         <div class="nav-item has-dropdown">
           <button class="nav-group-trigger" :class="{ active: route.path.startsWith('/tools') }">
             <Split :size="16" />
-            <span>Tools</span>
+            <span>{{ $t('header.nav.tools') }}</span>
             <ChevronDown :size="14" class="chevron" />
           </button>
           <div class="dropdown-menu">
             <NuxtLink to="/tools/batch" class="dropdown-item" active-class="active">
               <Split :size="14" />
               <div class="item-text">
-                <span class="label">一括差分</span>
-                <span class="desc">テキスト比較ツール</span>
+                <span class="label">{{ $t('header.nav.batch') }}</span>
+                <span class="desc">{{ $t('header.nav.batch_desc') }}</span>
               </div>
             </NuxtLink>
             <NuxtLink to="/tools/concordance" class="dropdown-item" active-class="active">
               <Search :size="14" />
               <div class="item-text">
-                <span class="label">コンコーダンス</span>
-                <span class="desc">高速な一致検索</span>
+                <span class="label">{{ $t('header.nav.concordance') }}</span>
+                <span class="desc">{{ $t('header.nav.concordance_desc') }}</span>
               </div>
             </NuxtLink>
           </div>
+        </div>
+
+        <!-- Manual Link -->
+        <div class="nav-item">
+          <a href="https://lambuage.com" target="_blank" rel="noopener noreferrer" class="nav-link">
+            <BookOpen :size="16" class="nav-icon" />
+            <span>{{ $t('header.nav.manual') }}</span>
+          </a>
         </div>
       </div>
     </nav>
 
     <div class="header-right">
-      <button class="btn-reset" @click="handleReset" title="プロジェクトをリセット">
+      <div class="locale-switcher">
+        <select :value="locale" @change="handleLocaleChange" class="locale-select">
+          <option v-for="loc in locales" :key="loc.code" :value="loc.code">
+            {{ loc.name }}
+          </option>
+        </select>
+      </div>
+      <button class="btn-reset" @click="handleReset" :title="$t('common.reset_project')">
         <Trash2 :size="16" />
       </button>
       <div class="wasm-badge" :class="isWasmReady ? 'ready' : 'loading'">
@@ -376,6 +404,27 @@ const handleReset = () => {
   background: rgba(239, 68, 68, 0.1);
   color: var(--error);
   border-color: var(--error);
+}
+
+.locale-switcher {
+  display: flex;
+  align-items: center;
+}
+
+.locale-select {
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  outline: none;
+  transition: var(--transition);
+}
+
+.locale-select:hover {
+  border-color: var(--accent);
 }
 
 .wasm-badge {
