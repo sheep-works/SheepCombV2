@@ -4,7 +4,7 @@ import { DOMParser as XMLDOMParser } from '@xmldom/xmldom'
 /**
  * XLIFF (and siblings) to TranslationPair parser.
  */
-export async function parseXliff(content: string, startIdx: number): Promise<TranslationPair[]> {
+export async function parseXliff(content: string, startIdx: number, splitByNewline: boolean = true): Promise<TranslationPair[]> {
   const parser = typeof DOMParser !== 'undefined' ? new DOMParser() : new XMLDOMParser()
   const doc = parser.parseFromString(content, 'text/xml')
   const units: TranslationPair[] = []
@@ -38,7 +38,7 @@ export async function parseXliff(content: string, startIdx: number): Promise<Tra
     const srcParts = src.split('\n')
     let tgtParts = tgt.split('\n')
 
-    if (srcParts.length > 1 || tgtParts.length > 1) {
+    if (splitByNewline && (srcParts.length > 1 || tgtParts.length > 1)) {
       if (srcParts.length > tgtParts.length) {
         const diff = srcParts.length - tgtParts.length
         for (let k = 0; k < diff; k++) tgtParts.push('')

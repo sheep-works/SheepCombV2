@@ -24,7 +24,7 @@ export class ShuttleParser {
    * Also generates ShWvFileInfo for each file.
    * isSub splitting is performed here for XLF-like files.
    */
-  public async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[], onProgress?: (msg: string) => void): Promise<ParsedResult> {
+  public async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[], onProgress?: (msg: string) => void, splitByNewline: boolean = true): Promise<ParsedResult> {
     const fileinfo: ShWvFileInfo[] = []
     const allUnits: TranslationPair[] = []
     let globalIdx = 0
@@ -43,7 +43,7 @@ export class ShuttleParser {
       try {
         if (['xlf', 'xliff', 'mxliff', 'sdlxliff', 'mqxliff'].includes(ext) && typeof content === 'string') {
           // XLF-like files handle isSub natively in parseXliff
-          pairs = await parseXliff(content, globalIdx)
+          pairs = await parseXliff(content, globalIdx, splitByNewline)
         } else if (ext === 'tmx' && typeof content === 'string') {
           pairs = await parseTmx(content, globalIdx)
         } else if (ext === 'tbx' && typeof content === 'string') {

@@ -210,7 +210,10 @@ function getStatusColor(status: string) {
 
               <div class="cors-warning" style="font-size: 0.65rem; color: var(--warning); display: flex; gap: 4px; align-items: flex-start; margin-top: 4px;">
                 <AlertCircle :size="12" style="flex-shrink: 0; margin-top: 2px;" />
-                <span>ブラウザからの直接アクセスのため、CORSの設定が必要です（OLLAMA_ORIGINS="*" 等）</span>
+                <span>
+                  ブラウザからの直接アクセスのため、CORSの設定が必要です（OLLAMA_ORIGINS="*" 等）
+                  <NuxtLink to="/shuttle/api-tips" style="color: inherit; text-decoration: underline; margin-left: 4px; font-weight: bold;">設定方法はこちら</NuxtLink>
+                </span>
               </div>
             </template>
           </div>

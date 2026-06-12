@@ -122,8 +122,8 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   /**
    * Parse main source files and store result in units/files.
    */
-  public async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[], onProgress?: (msg: string) => void) {
-    const result = await this.parser.parse(files, onProgress);
+  public async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[], onProgress?: (msg: string) => void, splitByNewline: boolean = true) {
+    const result = await this.parser.parse(files, onProgress, splitByNewline);
     this.units = result.units as T[]
     this.files = result.files
   }

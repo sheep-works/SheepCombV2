@@ -142,12 +142,12 @@ export const useShuttleStore = defineStore('shuttle', () => {
   /**
    * ソースファイルのパースを実行
    */
-  async function parseFiles(inputFiles: { name: string, content: string | ArrayBuffer | Uint8Array }[]) {
+  async function parseFiles(inputFiles: { name: string, content: string | ArrayBuffer | Uint8Array }[], splitByNewline: boolean = true) {
     isLoading.value = true
     try {
       await shuttle.parse(inputFiles, (msg) => {
         progressText.value = msg
-      })
+      }, splitByNewline)
       syncState()
       currentFileName.value = inputFiles.length === 1 ? inputFiles[0]!.name : `${inputFiles.length} files`
     } finally {

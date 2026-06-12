@@ -64,6 +64,7 @@ const handleJumpPage = () => {
 
 // 選択された File オブジェクトのリスト
 const selectedFiles = ref<File[]>([])
+const splitByNewline = ref(true)
 
 /**
  * ドラッグ&ドロップによるファイル選択のハンドリング
@@ -115,7 +116,7 @@ const parseFiles = async () => {
     }))
 
     // ストア経由でパース実行
-    await store.parseFiles(files)
+    await store.parseFiles(files, splitByNewline.value)
 
     // プロセッサ（フィルタ等）を実行してステートを更新
     store.process()
@@ -219,6 +220,12 @@ const applySampling = () => {
             <h2>{{ $t('shuttle.parser.actions_title') }}</h2>
           </div>
           <p class="hint-text">{{ $t('shuttle.parser.actions_hint') }}</p>
+
+          <label class="checkbox-label" style="margin-bottom: 8px;">
+            <input type="checkbox" v-model="splitByNewline" />
+            <span>改行で分割してパースする</span>
+          </label>
+
           <button class="btn primary" @click="parseFiles" :disabled="selectedFiles.length === 0 || isProcessing">
             <Loader2 v-if="isProcessing" class="spin" :size="18" />
             <span v-else>{{ $t('shuttle.parser.btn_parse') }}</span>
