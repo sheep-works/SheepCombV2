@@ -1,11 +1,12 @@
 import type { TranslationPair } from '../../../types/shwv.js'
+import { DOMParser as XMLDOMParser } from '@xmldom/xmldom'
 
 /**
  * TMX to TranslationPair parser.
  */
 export async function parseTmx(content: string, startIdx: number): Promise<TranslationPair[]> {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(content, 'application/xml')
+  const parser = typeof DOMParser !== 'undefined' ? new DOMParser() : new XMLDOMParser()
+  const doc = parser.parseFromString(content, 'text/xml')
   const units: TranslationPair[] = []
   let currentIdx = startIdx
 
@@ -14,12 +15,15 @@ export async function parseTmx(content: string, startIdx: number): Promise<Trans
     const tu = tus[i]
     let src = ''
     let tgt = ''
-    const noteNode = tu.getElementsByTagName('note')[0]
+    const noteNode = tu?.getElementsByTagName('note')[0]
     const note = noteNode ? noteNode.textContent || '' : ''
 
-    const tuvs = tu.getElementsByTagName('tuv')
+    const tuvs = tu?.getElementsByTagName('tuv')
+    if (!tuvs) continue
+
     for (let j = 0; j < tuvs.length; j++) {
       const tuv = tuvs[j]
+      if (!tuv) continue
       const textNode = tuv.getElementsByTagName('seg')[0]
       const text = textNode ? textNode.textContent || '' : ''
 

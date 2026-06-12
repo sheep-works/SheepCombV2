@@ -1,6 +1,7 @@
 // @ts-nocheck
 import JSZip from 'jszip'
 import type { TranslationPair } from '../../../types/shwv.js'
+import { DOMParser as XMLDOMParser } from '@xmldom/xmldom'
 
 /**
  * DOCX to TranslationPair parser.
@@ -17,7 +18,7 @@ export async function parseDocx(content: ArrayBuffer | Buffer, startIdx: number)
       xmlStr = xmlStr.substring(1)
     }
 
-    const parser = new DOMParser()
+    const parser = typeof DOMParser !== 'undefined' ? new DOMParser() : new XMLDOMParser()
     const doc = parser.parseFromString(xmlStr, 'application/xml')
     const tables = doc.getElementsByTagName('w:tbl')
     const numTables = tables.length

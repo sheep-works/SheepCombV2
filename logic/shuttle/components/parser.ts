@@ -24,12 +24,13 @@ export class ShuttleParser {
    * Also generates ShWvFileInfo for each file.
    * isSub splitting is performed here for XLF-like files.
    */
-  async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[]): Promise<ParsedResult> {
+  public async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[], onProgress?: (msg: string) => void): Promise<ParsedResult> {
     const fileinfo: ShWvFileInfo[] = []
     const allUnits: TranslationPair[] = []
     let globalIdx = 0
 
     for (const file of files) {
+      if (onProgress) onProgress(`Reading file: ${file.name}...`)
       const ext = file.name.split('.').pop()?.toLowerCase() || ''
       const start = globalIdx
       let pairs: TranslationPair[] = []
@@ -48,7 +49,7 @@ export class ShuttleParser {
         } else if (ext === 'tbx' && typeof content === 'string') {
           pairs = await parseTbx(content, globalIdx)
         } else if (['xlsx', 'csv', 'tsv'].includes(ext)) {
-          pairs = (ext === 'csv' || ext === 'tsv') ? await parseCsv(content, globalIdx) : await parseXlsx(content as any, globalIdx)
+          pairs = (ext === 'csv' || ext === 'tsv') ? await parseCsv(content, globalIdx, onProgress) : await parseXlsx(content as any, globalIdx, onProgress)
         } else if (ext === 'jsonl' && typeof content === 'string') {
           pairs = await parseJsonl(content, globalIdx)
         } else if (ext === 'json' && typeof content === 'string') {

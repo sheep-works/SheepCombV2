@@ -37,4 +37,5 @@ yarn-error.log
 
 # Test output
 test_data/
+test_data/*
 instructions/

@@ -50,10 +50,10 @@ export class ShuttleConverter {
     let targetLang = 'en'
     if (projectInfo) {
       if (projectInfo.sourceLanguage) {
-        sourceLang = projectInfo.sourceLanguage.split('-')[0].toLowerCase()
+        sourceLang = projectInfo.sourceLanguage.split('-')[0]?.toLowerCase() || 'ja'
       }
       if (projectInfo.targetLanguage) {
-        targetLang = projectInfo.targetLanguage.split('-')[0].toLowerCase()
+        targetLang = projectInfo.targetLanguage.split('-')[0]?.toLowerCase() || 'en'
       }
     }
 

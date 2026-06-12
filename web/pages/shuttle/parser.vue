@@ -23,8 +23,13 @@ import { FileIO } from '../../utils/fileIO'
 // ストアおよびコンポーネントの状態管理
 const store = useShuttleStore()
 const fileInput = ref<HTMLInputElement | null>(null)
-const isProcessing = computed(() => store.isLoading)
-const statusMsg = computed(() => store.statusMsg)
+const isProcessing = computed(() => store.isLoading || store.isProgressing)
+const statusMsg = computed(() => {
+  if (store.isProgressing) {
+    return { text: store.progressText || 'Processing in background...', type: 'info' }
+  }
+  return store.statusMsg
+})
 
 // Pagination logic
 const currentPage = ref(1)

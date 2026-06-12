@@ -38,7 +38,7 @@
   "devDependencies": {
     "@types/node": "^24.12.2",
     "@vue/tsconfig": "^0.9.1",
-    "@xmldom/xmldom": "^0.9.9",
+    "@xmldom/xmldom": "^0.9.10",
     "tsx": "^4.21.0",
     "typescript": "~6.0.2",
     "vite": "^8.0.4",

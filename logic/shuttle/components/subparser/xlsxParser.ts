@@ -4,7 +4,7 @@ import type { TranslationPair } from '../../../types/shwv.js'
 /**
  * XLSX/CSV to TranslationPair parser.
  */
-export async function parseXlsx(content: string | ArrayBuffer | Uint8Array, startIdx: number): Promise<TranslationPair[]> {
+export async function parseXlsx(content: string | ArrayBuffer | Uint8Array, startIdx: number, onProgress?: (msg: string) => void): Promise<TranslationPair[]> {
   const units: TranslationPair[] = []
   let type: 'string' | 'array' | 'buffer' = 'array'
   
@@ -42,11 +42,15 @@ export async function parseXlsx(content: string | ArrayBuffer | Uint8Array, star
         note: note || undefined
       })
     }
+
+    if (onProgress && units.length % 5000 === 0) {
+      onProgress(`Parsing CSV/Excel... ${units.length} rows processed`)
+    }
   }
 
   return units
 }
 
-export async function parseCsv(content: string | ArrayBuffer | Uint8Array, startIdx: number): Promise<TranslationPair[]> {
-  return parseXlsx(content, startIdx)
+export async function parseCsv(content: string | ArrayBuffer | Uint8Array, startIdx: number, onProgress?: (msg: string) => void): Promise<TranslationPair[]> {
+  return parseXlsx(content, startIdx, onProgress)
 }

@@ -41,18 +41,23 @@ export const useShuttleStore = defineStore('shuttle', () => {
   const isApiAvailable = ref(false)
   const isDevOverride = ref(config.public.apiDev as boolean | string === 'true')
 
+  // SubLlm State
+  const provider = ref<'fastapi' | 'ollama' | 'lmstudio'>('fastapi')
+  const providerUrl = ref('')
+  const models = ref<string[]>([])
+  const selectedModel = ref('')
+  const isConnected = ref(false)
+
+  // Progress Integration
+  const isProgressing = ref(false)
+  const progressText = ref('')
+
+
+
   const currentFileName = ref('')
   const isLoading = ref(false)
   const statusMsg = ref({ text: '', type: 'info' as 'info' | 'success' | 'error' })
 
-  // --- Watchers ---
-  watch(isDevOverride, (newVal) => {
-    shuttle.requests.updateOptions({
-      isDev: newVal,
-      baseUrl: config.public.apiBaseUrl as string,
-      port: config.public.apiPort as string | number
-    })
-  })
 
   // --- Getters ---
   const hasData = computed(() => data.value !== null)
@@ -66,12 +71,42 @@ export const useShuttleStore = defineStore('shuttle', () => {
 
   // --- Actions ---
 
+  function syncProviderOptions() {
+    shuttle.requests.updateOptions({
+      provider: provider.value,
+      ollamaUrl: provider.value === 'ollama' ? providerUrl.value : undefined,
+      lmStudioUrl: provider.value === 'lmstudio' ? providerUrl.value : undefined,
+      ollamaModel: provider.value === 'ollama' ? selectedModel.value : undefined,
+      lmStudioModel: provider.value === 'lmstudio' ? selectedModel.value : undefined
+    })
+  }
+
   /**
    * API サーバーの接続確認
    */
   async function checkConnection() {
+    syncProviderOptions()
     isApiAvailable.value = await shuttle.requests.verifyConnection()
     return isApiAvailable.value
+  }
+
+  /**
+   * LLMモデル一覧の取得
+   */
+  async function fetchModels() {
+    syncProviderOptions()
+    if (provider.value === 'fastapi') {
+      models.value = []
+      return
+    }
+    isProgressing.value = true
+    progressText.value = 'Loading models...'
+    models.value = await shuttle.requests.getModels()
+    isConnected.value = models.value.length > 0
+    isProgressing.value = false
+    if (models.value.length > 0 && !models.value.includes(selectedModel.value)) {
+      selectedModel.value = models.value[0] || ''
+    }
   }
 
   /**
@@ -92,7 +127,9 @@ export const useShuttleStore = defineStore('shuttle', () => {
   async function parseFiles(inputFiles: { name: string, content: string | ArrayBuffer | Uint8Array }[]) {
     isLoading.value = true
     try {
-      await shuttle.parse(inputFiles)
+      await shuttle.parse(inputFiles, (msg) => {
+        progressText.value = msg
+      })
       syncState()
       currentFileName.value = inputFiles.length === 1 ? inputFiles[0]!.name : `${inputFiles.length} files`
     } finally {
@@ -141,11 +178,24 @@ export const useShuttleStore = defineStore('shuttle', () => {
   /**
    * 検索インデックスの構築
    */
-  function buildSearchIndex() {
+  async function buildSearchIndex() {
+    if (!shuttle.data && shuttle.units.length === 0) return;
+    
+    isProgressing.value = true
+    progressText.value = 'Preparing search index...'
+    await fallbackBuildSearchIndex()
+    isProgressing.value = false
+  }
+
+  async function fallbackBuildSearchIndex() {
     if (shuttle.data) {
-      shuttle.searcher.indexShwvData(shuttle.data)
+      await shuttle.searcher.indexShwvData(shuttle.data, (msg) => {
+        progressText.value = msg
+      })
     } else if (shuttle.units.length > 0) {
-      shuttle.searcher.indexUnits(shuttle.units)
+      await shuttle.searcher.indexUnits(shuttle.units, (msg) => {
+        progressText.value = msg
+      })
     }
   }
 
@@ -183,6 +233,7 @@ export const useShuttleStore = defineStore('shuttle', () => {
    * API リクエストの実行
    */
   async function processRequests(chunkIndex: number = -1, target: 'CHECK' | 'TRANSLATE' = 'CHECK', prompt?: string) {
+    syncProviderOptions()
     isLoading.value = true
     try {
       await shuttle.processRequests(chunkIndex, target, prompt)
@@ -214,6 +265,8 @@ export const useShuttleStore = defineStore('shuttle', () => {
     shuttle.reset()
     syncState()
     currentFileName.value = ''
+    isProgressing.value = false
+    progressText.value = ''
     statusMsg.value = { text: '', type: 'info' }
   }
 
@@ -268,7 +321,14 @@ export const useShuttleStore = defineStore('shuttle', () => {
     isDevOverride,
     currentFileName,
     isLoading,
+    isProgressing,
+    progressText,
     statusMsg,
+    provider,
+    providerUrl,
+    models,
+    selectedModel,
+    isConnected,
     // Getters
     hasData,
     hasUnits,
@@ -280,6 +340,7 @@ export const useShuttleStore = defineStore('shuttle', () => {
     hasChunks,
     // Actions
     checkConnection,
+    fetchModels,
     parseFiles,
     loadShwvData,
     addTms,
@@ -329,7 +390,10 @@ export const useShuttleStore = defineStore('shuttle', () => {
       'data',
       'chunks',
       'currentFileName',
-      'isDevOverride'
+      'isDevOverride',
+      'provider',
+      'providerUrl',
+      'selectedModel'
     ]
   }
 })

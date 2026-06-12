@@ -122,8 +122,8 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   /**
    * Parse main source files and store result in units/files.
    */
-  public async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[]): Promise<void> {
-    const result = await this.parser.parse(files)
+  public async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[], onProgress?: (msg: string) => void) {
+    const result = await this.parser.parse(files, onProgress);
     this.units = result.units as T[]
     this.files = result.files
   }
@@ -258,50 +258,85 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
     const chunk = this.chunks[targetIdx]!;
 
     try {
-      let taskResponse: TaskResponse;
+      const isSyncProvider = this.requests.getProvider() !== 'fastapi';
 
-      // 2. Execute Request
-      // prompt がある、もしくは requests.cacheName が存在する場合は UserRequest を使用
-      if ((prompt && prompt.trim() !== '') || this.requests.cacheName) {
-        const params: UserRequest = {
-          chunk: chunk.data,
-          prompt: prompt && prompt.trim() !== '' ? prompt : undefined,
-          cache_id: (!prompt || prompt.trim() === '') ? this.requests.cacheName : undefined
-        };
+      if (isSyncProvider) {
+        // 同期プロバイダー (Ollama, LM Studio) の場合、そのまま結果を待つ
+        chunk.status = 'pending';
+        let resultResponse: ResultResponse;
 
-        if (requestTarget === 'CHECK') {
-          taskResponse = await this.requests.checkUserAsync(params);
+        if ((prompt && prompt.trim() !== '') || this.requests.cacheName) {
+          const params: UserRequest = {
+            chunk: chunk.data,
+            prompt: prompt && prompt.trim() !== '' ? prompt : undefined,
+            cache_id: (!prompt || prompt.trim() === '') ? this.requests.cacheName : undefined
+          };
+          if (requestTarget === 'CHECK') {
+            resultResponse = await this.requests.checkUserSync(params);
+          } else {
+            resultResponse = await this.requests.transUserSync(params);
+          }
         } else {
-          taskResponse = await this.requests.transUserAsync(params);
+          if (requestTarget === 'CHECK') {
+            resultResponse = await this.requests.checkSync(chunk.data);
+          } else {
+            resultResponse = await this.requests.transSync(chunk.data);
+          }
         }
-      } else {
-        // デフォルトのプロンプトを使用
-        if (requestTarget === 'CHECK') {
-          taskResponse = await this.requests.checkAsync(chunk.data);
-        } else {
-          taskResponse = await this.requests.transAsync(chunk.data);
-        }
-      }
 
-      const taskId = taskResponse.task_id;
-      chunk.status = 'pending';
-
-      // 3. Polling
-      while (true) {
-        // 5秒待機
-        await new Promise(resolve => setTimeout(resolve, 5000));
-
-        const result = await this.requests.getTaskResult(taskId);
-        if (result.status === 'success') {
+        if (resultResponse.status === 'success') {
           chunk.status = 'success';
-          chunk.response = result.result || '';
-          break;
-        } else if (result.status === 'error') {
+          chunk.response = resultResponse.result || '';
+        } else {
           chunk.status = 'error';
-          chunk.response = result.error || 'Unknown error';
-          break;
+          chunk.response = resultResponse.error || 'Unknown error';
         }
-        // 成功・エラー以外（pending等）の場合はループ継続
+        
+      } else {
+        // 非同期プロバイダー (FastAPI) の場合
+        let taskResponse: TaskResponse;
+
+        if ((prompt && prompt.trim() !== '') || this.requests.cacheName) {
+          const params: UserRequest = {
+            chunk: chunk.data,
+            prompt: prompt && prompt.trim() !== '' ? prompt : undefined,
+            cache_id: (!prompt || prompt.trim() === '') ? this.requests.cacheName : undefined
+          };
+
+          if (requestTarget === 'CHECK') {
+            taskResponse = await this.requests.checkUserAsync(params);
+          } else {
+            taskResponse = await this.requests.transUserAsync(params);
+          }
+        } else {
+          // デフォルトのプロンプトを使用
+          if (requestTarget === 'CHECK') {
+            taskResponse = await this.requests.checkAsync(chunk.data);
+          } else {
+            taskResponse = await this.requests.transAsync(chunk.data);
+          }
+        }
+
+        const taskId = taskResponse.task_id;
+        chunk.status = 'pending';
+
+        // 3. Polling
+        while (true) {
+          // 5秒待機
+          await new Promise(resolve => setTimeout(resolve, 5000));
+
+          const result = await this.requests.getTaskResult(taskId);
+          if (result.status === 'success') {
+            chunk.status = 'success';
+            chunk.response = result.result || '';
+            break;
+          } else if (result.status === 'error') {
+            chunk.status = 'error';
+            chunk.response = result.error || 'Unknown error';
+            break;
+          }
+          // 成功・エラー以外（pending等）の場合はループ継続
+        }
       }
 
     } catch (error) {

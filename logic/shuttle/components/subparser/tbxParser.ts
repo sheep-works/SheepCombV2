@@ -1,11 +1,12 @@
 import type { TranslationPair } from '../../../types/shwv.js'
+import { DOMParser as XMLDOMParser } from '@xmldom/xmldom'
 
 /**
  * TBX to TranslationPair parser.
  */
 export async function parseTbx(content: string, startIdx: number): Promise<TranslationPair[]> {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(content, 'application/xml')
+  const parser = typeof DOMParser !== 'undefined' ? new DOMParser() : new XMLDOMParser()
+  const doc = parser.parseFromString(content, 'text/xml')
   const units: TranslationPair[] = []
   let currentIdx = startIdx
 
@@ -15,9 +16,12 @@ export async function parseTbx(content: string, startIdx: number): Promise<Trans
     let src = ''
     let tgt = ''
 
-    const langSets = entry.getElementsByTagName('langSet')
+    const langSets = entry?.getElementsByTagName('langSet')
+    if (!langSets) continue
+
     for (let j = 0; j < langSets.length; j++) {
       const ls = langSets[j]
+      if (!ls) continue
       const termNode = ls.getElementsByTagName('term')[0]
       const extracted = termNode ? termNode.textContent || '' : ''
 

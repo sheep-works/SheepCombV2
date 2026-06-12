@@ -52,7 +52,7 @@ export class ShuttleSearch {
     /**
      * Index raw TranslationPair array.
      */
-    public indexUnits(units: TranslationPair[]): void {
+    public indexUnits(units: TranslationPair[], onProgress?: (msg: string) => void): void {
         this.entries = units.map((u, i) => ({
             id: i,
             src: u.src,
@@ -60,15 +60,16 @@ export class ShuttleSearch {
             note: u.note || ''
         }));
 
-        for (const entry of this.entries) {
-            this.index.add(entry);
+        for (let i = 0; i < this.entries.length; i++) {
+            if (onProgress && i % 1000 === 0) onProgress(`Indexing raw units... ${i} / ${this.entries.length}`);
+            this.index.add(this.entries[i]);
         }
     }
 
     /**
      * Index structured ShWvData.
      */
-    public indexShwvData(data: ShWvData): void {
+    public indexShwvData(data: ShWvData, onProgress?: (msg: string) => void): void {
         this.entries = data.body.units.map(u => {
             const fileInfo = data.meta.files.find(f => u.idx >= f.start && u.idx <= f.end);
             return {
@@ -80,8 +81,9 @@ export class ShuttleSearch {
             };
         });
 
-        for (const entry of this.entries) {
-            this.index.add(entry);
+        for (let i = 0; i < this.entries.length; i++) {
+            if (onProgress && i % 1000 === 0) onProgress(`Indexing search data... ${i} / ${this.entries.length}`);
+            this.index.add(this.entries[i]);
         }
     }
 

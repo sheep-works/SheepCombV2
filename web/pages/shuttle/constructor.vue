@@ -21,8 +21,14 @@ const { t } = useI18n()
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFiles = ref<File[]>([])
-const isProcessing = ref(false)
-const statusMsg = ref({ text: '', type: 'info' as 'info' | 'success' | 'error' })
+
+const isProcessing = computed(() => store.isLoading || store.isProgressing)
+const statusMsg = computed(() => {
+  if (store.isProgressing) {
+    return { text: store.progressText, type: 'info' as const }
+  }
+  return { text: store.statusMsg.text, type: store.statusMsg.type as 'info' | 'success' | 'error' }
+})
 
 const hasUnitsInStore = computed(() => store.unitCount > 0)
 const hasFiles = computed(() => selectedFiles.value.length > 0)
@@ -40,7 +46,7 @@ function addFiles(files: File[]) {
 const handleFileDrop = (e: DragEvent) => { e.preventDefault(); if (e.dataTransfer?.files) addFiles(Array.from(e.dataTransfer.files)) }
 const handleFileSelect = (e: Event) => { const target = e.target as HTMLInputElement; if (target.files) addFiles(Array.from(target.files)) }
 function removeFile(index: number) { selectedFiles.value.splice(index, 1) }
-function clearFiles() { selectedFiles.value = []; statusMsg.value = { text: '', type: 'info' } }
+function clearFiles() { selectedFiles.value = []; store.setStatus('', 'info') }
 
 const includeProjectInfo = ref(false)
 const projectName = ref('SheepWeaveProject')
@@ -52,8 +58,7 @@ const targetLang = ref('ja-JP')
  */
 async function doConvert() {
   try {
-    isProcessing.value = true
-    statusMsg.value = { text: t('shuttle.constructor.msg_processing'), type: 'info' }
+    store.setStatus(t('shuttle.constructor.msg_processing'), 'info')
 
     // ファイルが選択されている場合はまずパース
     if (selectedFiles.value.length > 0) {
@@ -94,16 +99,14 @@ async function doConvert() {
     }
     store.convert(projectInfo)
 
-    statusMsg.value = { text: t('shuttle.constructor.msg_success'), type: 'success' }
+    store.setStatus(t('shuttle.constructor.msg_success'), 'success')
     setTimeout(() => {
       router.push('/shuttle/analyzer')
     }, 800)
 
   } catch (e: any) {
     console.error('Convert error:', e)
-    statusMsg.value = { text: t('shuttle.constructor.msg_error', { message: e.message }), type: 'error' }
-  } finally {
-    isProcessing.value = false
+    store.setStatus(t('shuttle.constructor.msg_error', { message: e.message }), 'error')
   }
 }
 </script>

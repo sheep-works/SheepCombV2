@@ -1,11 +1,12 @@
 import type { TranslationPair } from '../../../types/shwv.js'
+import { DOMParser as XMLDOMParser } from '@xmldom/xmldom'
 
 /**
  * XLIFF (and siblings) to TranslationPair parser.
  */
 export async function parseXliff(content: string, startIdx: number): Promise<TranslationPair[]> {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(content, 'application/xml')
+  const parser = typeof DOMParser !== 'undefined' ? new DOMParser() : new XMLDOMParser()
+  const doc = parser.parseFromString(content, 'text/xml')
   const units: TranslationPair[] = []
   let currentIdx = startIdx
 

@@ -12,14 +12,35 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { Send, Cloud, Loader2, AlertCircle, RefreshCw, Trash2 } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
 import { useShuttleStore } from '../../stores/shuttleStore'
-import { SheepShuttle } from '../../../logic/shuttle/sheepShuttle.js'
 import { useI18n } from 'vue-i18n'
+import defaultCheckPromptText from '../../prompts/default.md?raw'
+import defaultTransPromptText from '../../prompts/default-translation.md?raw'
 
 const store = useShuttleStore()
 const { t } = useI18n()
 
 onMounted(async () => {
+  // FastAPI is disabled for now, default to Ollama
+  if (store.provider === 'fastapi') {
+    store.provider = 'ollama'
+  }
   await store.checkConnection()
+  // if (store.provider !== 'fastapi') {
+  //   await store.fetchModels()
+  // }
+})
+
+watch(() => store.provider, async (newProv, oldProv) => {
+  if (newProv !== 'fastapi') {
+    // If empty or matches the old default, update it to the new default
+    const isOldOllamaDefault = store.providerUrl === 'http://127.0.0.1:11434'
+    const isOldLmStudioDefault = store.providerUrl === 'http://127.0.0.1:1234'
+    
+    if (!store.providerUrl || isOldOllamaDefault || isOldLmStudioDefault) {
+      store.providerUrl = newProv === 'ollama' ? 'http://127.0.0.1:11434' : 'http://127.0.0.1:1234'
+    }
+    await store.fetchModels()
+  }
 })
 
 const modes = [
@@ -33,10 +54,37 @@ const requestTargets = [
   { id: 'TRANSLATE', name: 'Translate' }
 ]
 const requestTarget = ref<'CHECK' | 'TRANSLATE'>('CHECK')
-const userPrompt = ref('')
+const userPrompt = ref(defaultCheckPromptText)
+const sourceLang = ref('英語')
+const targetLang = ref('日本語')
+
+const defaultPrompt = computed(() => {
+  return requestTarget.value === 'CHECK' ? defaultCheckPromptText : defaultTransPromptText
+})
+
+const isEndpointEditable = ref(false)
+
+watch(requestTarget, (newTarget, oldTarget) => {
+  const oldDefault = oldTarget === 'CHECK' ? defaultCheckPromptText : defaultTransPromptText
+  if (!userPrompt.value || userPrompt.value.trim() === oldDefault.trim()) {
+    userPrompt.value = newTarget === 'CHECK' ? defaultCheckPromptText : defaultTransPromptText
+  }
+})
 
 const isRequesting = ref(false)
 const errorMsg = ref<string>('')
+
+function parseChunkResponse(responseText: string) {
+  if (!responseText) return [];
+  const lines = responseText.split('\n').filter(l => l.trim().length > 0);
+  return lines.map(line => {
+    try {
+      return JSON.parse(line);
+    } catch (e) {
+      return { raw: line };
+    }
+  });
+}
 
 async function createChunks() {
   try {
@@ -57,7 +105,11 @@ async function processChunk(index: number) {
   isRequesting.value = true
   errorMsg.value = ''
   try {
-    await store.processRequests(index, requestTarget.value, userPrompt.value)
+    let promptToSend = userPrompt.value.trim();
+    if (promptToSend) {
+      promptToSend = promptToSend.replace(/{source_lang}/g, sourceLang.value).replace(/{target_lang}/g, targetLang.value);
+    }
+    await store.processRequests(index, requestTarget.value, promptToSend)
   } catch (e: any) {
     errorMsg.value = e.message
   } finally {
@@ -109,6 +161,68 @@ function getStatusColor(status: string) {
     <div class="api-layout">
       <!-- Sidebar: Request Settings -->
       <aside class="sidebar">
+        <!-- LLM Provider Settings -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Provider Settings</h2>
+            <span class="dev-badge" :style="{ background: store.isConnected ? 'rgba(0, 200, 100, 0.15)' : 'rgba(255, 100, 100, 0.15)', color: store.isConnected ? '#4ade80' : '#f87171', border: '1px solid ' + (store.isConnected ? 'rgba(74, 222, 128, 0.3)' : 'rgba(248, 113, 113, 0.3)') }">
+              {{ store.isConnected ? 'Connected' : 'Not Connected' }}
+            </span>
+          </div>
+          <div class="config-section">
+            <div class="config-group">
+              <label class="config-label">LLM Engine</label>
+              <div class="radio-group">
+                <!-- FastAPI disabled for now -->
+                <!-- <div class="radio-item" :class="{ active: store.provider === 'fastapi' }" @click="store.provider = 'fastapi'">
+                  <span>FastAPI</span>
+                </div> -->
+                <div class="radio-item" :class="{ active: store.provider === 'ollama' }" @click="store.provider = 'ollama'">
+                  <span>Ollama</span>
+                </div>
+                <div class="radio-item" :class="{ active: store.provider === 'lmstudio' }" @click="store.provider = 'lmstudio'">
+                  <span>LM Studio</span>
+                </div>
+              </div>
+            </div>
+
+            <template v-if="store.provider !== 'fastapi'">
+              <div class="config-group">
+                <label class="config-label">Endpoint URL</label>
+                <input 
+                  type="text" 
+                  v-model="store.providerUrl" 
+                  class="prompt-textarea" 
+                  style="min-height: 40px; padding: 8px; transition: all 0.2s;" 
+                  :style="!isEndpointEditable ? 'cursor: pointer; background: rgba(0,0,0,0.2); border: 1px dashed var(--border); color: var(--text-muted);' : ''"
+                  :readonly="!isEndpointEditable"
+                  @dblclick="isEndpointEditable = true"
+                  @blur="isEndpointEditable = false"
+                  placeholder="http://127.0.0.1:..." 
+                  title="ダブルクリックで編集モードになります"
+                />
+              </div>
+              
+              <div class="config-group">
+                <label class="config-label">Model</label>
+                <div style="display: flex; gap: 8px;">
+                  <select v-model="store.selectedModel" class="prompt-textarea" style="min-height: 40px; padding: 8px; flex: 1;">
+                    <option v-for="m in store.models" :key="m" :value="m">{{ m }}</option>
+                  </select>
+                  <button class="btn-refresh-small" @click="store.fetchModels()" title="Fetch Models" style="width: 40px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm);">
+                    <RefreshCw :size="14" />
+                  </button>
+                </div>
+              </div>
+
+              <div class="cors-warning" style="font-size: 0.65rem; color: var(--warning); display: flex; gap: 4px; align-items: flex-start; margin-top: 4px;">
+                <AlertCircle :size="12" style="flex-shrink: 0; margin-top: 2px;" />
+                <span>ブラウザからの直接アクセスのため、CORSの設定が必要です（OLLAMA_ORIGINS="*" 等）</span>
+              </div>
+            </template>
+          </div>
+        </div>
+
         <div class="card">
           <div class="card-header">
             <h2>{{ $t('shuttle.api.title_request') }}</h2>
@@ -139,7 +253,14 @@ function getStatusColor(status: string) {
 
             <div class="config-group">
               <label class="config-label">{{ $t('shuttle.api.lbl_prompt') }}</label>
-              <textarea v-model="userPrompt" class="prompt-textarea" :placeholder="$t('shuttle.api.placeholder_prompt')"></textarea>
+              
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input type="text" v-model="sourceLang" class="prompt-textarea" style="min-height: 36px; padding: 8px;" placeholder="原文の言語" title="source_lang" />
+                <span style="display: flex; align-items: center; color: var(--text-muted);">→</span>
+                <input type="text" v-model="targetLang" class="prompt-textarea" style="min-height: 36px; padding: 8px;" placeholder="訳文の言語" title="target_lang" />
+              </div>
+
+              <textarea v-model="userPrompt" class="prompt-textarea"></textarea>
             </div>
 
             <div class="button-row">
@@ -159,14 +280,14 @@ function getStatusColor(status: string) {
             <div class="status-dot" :class="{ online: store.isApiAvailable }"></div>
           </div>
           
-          <!-- Developer Toggle -->
-          <div class="dev-toggle-row">
+          <!-- Developer Toggle disabled for now -->
+          <!-- <div class="dev-toggle-row">
             <label class="toggle-container">
               <input type="checkbox" v-model="store.isDevOverride" />
               <span class="toggle-slider"></span>
               <span class="toggle-label">{{ $t('shuttle.api.lbl_dev_mode') }}</span>
             </label>
-          </div>
+          </div> -->
 
           <div class="status-content-inline">
             <span class="status-text" :class="{ online: store.isApiAvailable }">
@@ -233,7 +354,31 @@ function getStatusColor(status: string) {
                 </div>
                 <div class="response-preview" v-if="chunk.response">
                   <label>Response:</label>
-                  <pre>{{ chunk.response }}</pre>
+                  <div class="response-table-wrapper">
+                    <table class="response-table">
+                      <thead>
+                        <tr>
+                          <th style="width: 40px;">Idx</th>
+                          <th style="width: 25%;">Src</th>
+                          <th style="width: 25%;">Tgt</th>
+                          <th>Result / Feedback</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="(item, i) in parseChunkResponse(chunk.response)" :key="i">
+                          <template v-if="item.src !== undefined || item.tgt !== undefined">
+                            <td class="td-idx">{{ item.idx }}</td>
+                            <td>{{ item.src }}</td>
+                            <td>{{ item.tgt }}</td>
+                            <td class="td-result">{{ item.result }}</td>
+                          </template>
+                          <template v-else>
+                            <td colspan="4" class="td-raw">{{ item.raw || JSON.stringify(item) }}</td>
+                          </template>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -639,6 +784,66 @@ pre {
 .response-preview pre {
   border-left: 2px solid var(--success);
   background: rgba(var(--success-rgb), 0.05);
+}
+
+/* Response Table */
+.response-table-wrapper {
+  overflow-x: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
+
+.response-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  text-align: left;
+}
+
+.response-table th {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-weight: 700;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.65rem;
+}
+
+.response-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.response-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.response-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.td-idx {
+  font-family: 'Inter', monospace;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.td-result {
+  color: var(--success);
+  white-space: pre-wrap;
+}
+
+.td-raw {
+  color: var(--warning);
+  font-family: 'Inter', monospace;
+  white-space: pre-wrap;
 }
 
 /* Globals */
