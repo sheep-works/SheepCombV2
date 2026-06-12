@@ -43,9 +43,27 @@ export const useShuttleStore = defineStore('shuttle', () => {
 
   // SubLlm State
   const provider = ref<'fastapi' | 'ollama' | 'lmstudio'>('fastapi')
-  const providerUrl = ref('')
+  const ollamaUrl = ref('http://localhost:11434')
+  const lmStudioUrl = ref('http://localhost:1234')
+  const ollamaModel = ref('')
+  const lmStudioModel = ref('')
   const models = ref<string[]>([])
-  const selectedModel = ref('')
+  
+  const providerUrl = computed({
+    get: () => provider.value === 'ollama' ? ollamaUrl.value : provider.value === 'lmstudio' ? lmStudioUrl.value : '',
+    set: (val) => {
+      if (provider.value === 'ollama') ollamaUrl.value = val
+      if (provider.value === 'lmstudio') lmStudioUrl.value = val
+    }
+  })
+
+  const selectedModel = computed({
+    get: () => provider.value === 'ollama' ? ollamaModel.value : provider.value === 'lmstudio' ? lmStudioModel.value : '',
+    set: (val) => {
+      if (provider.value === 'ollama') ollamaModel.value = val
+      if (provider.value === 'lmstudio') lmStudioModel.value = val
+    }
+  })
   const isConnected = ref(false)
 
   // Progress Integration
@@ -74,10 +92,10 @@ export const useShuttleStore = defineStore('shuttle', () => {
   function syncProviderOptions() {
     shuttle.requests.updateOptions({
       provider: provider.value,
-      ollamaUrl: provider.value === 'ollama' ? providerUrl.value : undefined,
-      lmStudioUrl: provider.value === 'lmstudio' ? providerUrl.value : undefined,
-      ollamaModel: provider.value === 'ollama' ? selectedModel.value : undefined,
-      lmStudioModel: provider.value === 'lmstudio' ? selectedModel.value : undefined
+      ollamaUrl: ollamaUrl.value,
+      lmStudioUrl: lmStudioUrl.value,
+      ollamaModel: ollamaModel.value,
+      lmStudioModel: lmStudioModel.value
     })
   }
 
@@ -392,8 +410,10 @@ export const useShuttleStore = defineStore('shuttle', () => {
       'currentFileName',
       'isDevOverride',
       'provider',
-      'providerUrl',
-      'selectedModel'
+      'ollamaUrl',
+      'lmStudioUrl',
+      'ollamaModel',
+      'lmStudioModel'
     ]
   }
 })

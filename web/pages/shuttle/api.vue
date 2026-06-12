@@ -30,15 +30,8 @@ onMounted(async () => {
   // }
 })
 
-watch(() => store.provider, async (newProv, oldProv) => {
+watch(() => store.provider, async (newProv) => {
   if (newProv !== 'fastapi') {
-    // If empty or matches the old default, update it to the new default
-    const isOldOllamaDefault = store.providerUrl === 'http://127.0.0.1:11434'
-    const isOldLmStudioDefault = store.providerUrl === 'http://127.0.0.1:1234'
-    
-    if (!store.providerUrl || isOldOllamaDefault || isOldLmStudioDefault) {
-      store.providerUrl = newProv === 'ollama' ? 'http://127.0.0.1:11434' : 'http://127.0.0.1:1234'
-    }
     await store.fetchModels()
   }
 })

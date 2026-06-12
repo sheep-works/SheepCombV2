@@ -17,7 +17,7 @@ export class RequestOllama implements SubLlmProvider {
     }
 
     public updateOptions(options: Partial<ShuttleOptions> = {}) {
-        this.OLLAMA_URL = (options.ollamaUrl || 'http://127.0.0.1:11434').replace(/\/$/, '')
+        this.OLLAMA_URL = (options.ollamaUrl || 'http://localhost:11434').replace(/\/$/, '')
         this.MODEL = options.ollamaModel || 'gemma4:e2b'
     }
 
