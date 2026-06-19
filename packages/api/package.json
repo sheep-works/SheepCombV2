@@ -1,0 +1,29 @@
+{
+  "name": "@sheep-family/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc && esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --format=esm --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.4",
+    "@google/genai": "^2.0.0",
+    "@hono/node-server": "^1.13.7",
+    "@hono/swagger-ui": "^0.6.1",
+    "@hono/zod-openapi": "^0.18.4",
+    "@hono/zod-validator": "^0.4.2",
+    "@sheep-family/types": "workspace:*",
+    "dotenv": "^16.4.7",
+    "hono": "^4.6.14",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.2",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.21.0",
+    "typescript": "~6.0.2"
+  }
+}

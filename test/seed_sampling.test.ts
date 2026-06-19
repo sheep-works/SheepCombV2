@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest'
-import { SheepShuttle } from '../logic/shuttle/sheepShuttle.js'
+import { SheepShuttle } from '@sheep-family/core'
 import { DOMParser } from '@xmldom/xmldom'
 
 describe('Seed-based Sampling', () => {

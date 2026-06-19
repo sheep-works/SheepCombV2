@@ -7,9 +7,12 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['./test/setup.ts'],
     alias: {
-      '~': path.resolve(__dirname, './web'),
-      '@': path.resolve(__dirname, './web'),
-      '~~': path.resolve(__dirname, './'),
+      '@sheep-family/core/node-wasm': path.resolve(__dirname, './packages/core/src/pkg/sheep_spindle.js'),
+      '@sheep-family/core/wasm': path.resolve(__dirname, './packages/core/src/wasm.ts'),
+      '@sheep-family/core': path.resolve(__dirname, './packages/core/src/index.ts'),
+      '@sheep-family/types': path.resolve(__dirname, './packages/types/src/index.ts'),
+      '~': path.resolve(__dirname, './packages/web'),
+      '@': path.resolve(__dirname, './packages/web'),
     },
   },
 })

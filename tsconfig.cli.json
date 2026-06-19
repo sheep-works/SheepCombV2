@@ -1,20 +1,18 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
-    "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./*"]
+      "@sheep-family/types": ["./packages/types/src/index.ts"],
+      "@sheep-family/core": ["./packages/core/src/index.ts"],
+      "@sheep-family/core/wasm": ["./packages/core/src/wasm.ts"],
+      "@sheep-family/core/node-wasm": ["./packages/core/src/pkg/sheep_spindle.js"]
     }
   },
-  "include": [
-    "cli/**/*.ts",
-    "logic/**/*.ts",
-    "web/stores/**/*.ts",
-    "SheepShuttle/src/type.d.ts"
-  ]
+  "include": ["packages/cli/src/**/*.ts", "packages/core/src/**/*.ts", "verify_*.ts", "test/**/*.ts"]
 }

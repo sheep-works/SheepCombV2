@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest'
-import { parseXliff } from '../logic/shuttle/components/subparser/xliffParser.js'
-import { parseJson } from '../logic/shuttle/components/subparser/jsonParser.js'
+import { parseXliff } from '../packages/core/src/shuttle/components/subparser/xliffParser.js'
+import { parseJson } from '../packages/core/src/shuttle/components/subparser/jsonParser.js'
 import { DOMParser } from '@xmldom/xmldom'
 
 describe('Subparsers (Direct)', () => {

@@ -1,4 +1,18 @@
 {
-  // https://nuxt.com/docs/guide/concepts/typescript
-  "extends": "./.nuxt/tsconfig.json"
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@sheep-family/types": ["./packages/types/src/index.ts"],
+      "@sheep-family/core": ["./packages/core/src/index.ts"],
+      "@sheep-family/core/wasm": ["./packages/core/src/wasm.ts"],
+      "@sheep-family/core/node-wasm": ["./packages/core/src/pkg/sheep_spindle.js"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
 }

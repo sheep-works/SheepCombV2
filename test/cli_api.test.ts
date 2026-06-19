@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest'
 import * as fs from 'node:fs'
-import { parseFile } from '../cli/pipeline.js'
+import { parseFile } from '../packages/cli/src/pipeline.js'
 import { DOMParser } from '@xmldom/xmldom'
 
 vi.mock('node:fs')

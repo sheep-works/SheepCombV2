@@ -1,0 +1,19 @@
+{
+  "name": "@sheep-family/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./wasm": "./src/wasm.ts",
+    "./node-wasm": "./src/pkg/sheep_spindle.js"
+  },
+  "dependencies": {
+    "@sheep-family/types": "workspace:*",
+    "difflib-ts": "1.0.3",
+    "flexsearch": "^0.8.212",
+    "jszip": "^3.10.1",
+    "xlsx": "^0.18.5",
+    "@xmldom/xmldom": "^0.9.10"
+  }
+}

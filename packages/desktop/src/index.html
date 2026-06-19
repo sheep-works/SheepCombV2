@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>SheepHub Local</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: #151c2c;
+      --terminal-bg: #090d16;
+      --text-color: #e2e8f0;
+      --text-muted: #64748b;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      
+      --status-running: #10b981;
+      --status-starting: #f59e0b;
+      --status-stopped: #ef4444;
+      --status-error: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    header {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .brand-section {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .status-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--status-stopped);
+      position: relative;
+    }
+
+    .status-dot.RUNNING {
+      background-color: var(--status-running);
+      box-shadow: 0 0 8px var(--status-running);
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.STARTING {
+      background-color: var(--status-starting);
+      box-shadow: 0 0 8px var(--status-starting);
+      animation: pulse 1.5s infinite;
+    }
+
+    .status-dot.STOPPED {
+      background-color: var(--status-stopped);
+    }
+
+    .status-dot.ERROR {
+      background-color: var(--status-error);
+      box-shadow: 0 0 8px var(--status-error);
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    .action-btn {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .action-btn:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .action-btn.secondary {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-color);
+    }
+
+    .action-btn.secondary:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      box-shadow: none;
+      transform: none;
+    }
+
+    main {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      gap: 16px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      background-color: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-color);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      width: 250px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+    }
+
+    .terminal-container {
+      flex: 1;
+      background-color: var(--terminal-bg);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .terminal-header {
+      background-color: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .terminal-body {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      font-family: 'Fira Code', 'Courier New', Courier, monospace;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Scrollbar Styling */
+    .terminal-body::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .terminal-body::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .terminal-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    .terminal-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Log line colors */
+    .log-line {
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .log-info {
+      color: #38bdf8;
+    }
+
+    .log-success {
+      color: #34d399;
+    }
+
+    .log-error {
+      color: #f87171;
+    }
+
+    .log-warning {
+      color: #fbbf24;
+    }
+
+    .log-normal {
+      color: #e2e8f0;
+    }
+
+    /* Settings Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background-color: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      width: 480px;
+      max-width: 90%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+      overflow: hidden;
+    }
+
+    .modal-overlay.open .modal-card {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-color);
+    }
+
+    .modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .form-input {
+      background-color: var(--terminal-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-color);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: 'Fira Code', monospace;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+    }
+
+    .form-help {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      background-color: rgba(0, 0, 0, 0.1);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .modal-close-x {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.5rem;
+      line-height: 1;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+
+    .modal-close-x:hover {
+      color: var(--text-color);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand-section">
+      <h1>SheepHub Local</h1>
+      <div class="subtitle">Local Vertex AI Gateway Server</div>
+    </div>
+    <div class="status-group">
+      <div class="status-badge">
+        <div id="status-dot" class="status-dot STOPPED"></div>
+        <span id="status-text">STOPPED</span>
+      </div>
+      <button id="open-ui-btn" class="action-btn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        Open Web UI
+      </button>
+      <button id="settings-btn" class="action-btn secondary" style="padding: 8px;" title="Settings">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <input type="text" id="search-logs" class="search-input" placeholder="Filter logs...">
+      <div style="display: flex; gap: 8px;">
+        <button id="greet-btn" class="action-btn secondary">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+          Test Greet
+        </button>
+        <button id="restart-btn" class="action-btn secondary">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg>
+          Restart Server
+        </button>
+      </div>
+    </div>
+
+    <div class="terminal-container">
+      <div class="terminal-header">
+        <span>CONSOLE OUTPUT (PORT 8000)</span>
+        <span id="log-count">0 lines</span>
+      </div>
+      <div id="terminal-body" class="terminal-body"></div>
+    </div>
+  </main>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span class="modal-title">Gateway Settings</span>
+        <button id="modal-close-x" class="modal-close-x">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="project-id-input" class="form-label">GCP Project ID</label>
+          <input type="text" id="project-id-input" class="form-input" placeholder="e.g. my-gcp-project-123">
+          <span class="form-help">Your Google Cloud Platform Project ID used by Vertex AI.</span>
+        </div>
+        <div class="form-group">
+          <label for="api-key-input" class="form-label">SheepHub API Key</label>
+          <input type="text" id="api-key-input" class="form-input" placeholder="e.g. my-secret-key">
+          <span class="form-help">Access key (X-API-KEY) for authorizing connections from Nuxt Web UI.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="modal-cancel-btn" class="action-btn secondary">Cancel</button>
+        <button id="modal-save-btn" class="action-btn">Save & Restart</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const terminalBody = document.getElementById('terminal-body');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const openUiBtn = document.getElementById('open-ui-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const greetBtn = document.getElementById('greet-btn');
+    const searchLogs = document.getElementById('search-logs');
+    const logCountText = document.getElementById('log-count');
+
+    let allLogs = [];
+    let logLineCounter = 0;
+    let isAutoScrollEnabled = true;
+
+    // Detect user scrolling to disable/enable autoscroll
+    terminalBody.addEventListener('scroll', () => {
+      const threshold = 15;
+      const isAtBottom = terminalBody.scrollHeight - terminalBody.scrollTop - terminalBody.clientHeight < threshold;
+      isAutoScrollEnabled = isAtBottom;
+    });
+
+    // Handle status updates
+    window.apiConsole.onServerStatus((status) => {
+      statusDot.className = 'status-dot ' + status;
+      statusText.textContent = status;
+    });
+
+    // Handle logs
+    window.apiConsole.onServerLog((message) => {
+      // Split into lines
+      const lines = message.split('\n');
+      lines.forEach(line => {
+        if (line.trim() === '' && lines.length > 1) return;
+        
+        // Push to logs storage
+        allLogs.push(line);
+        logLineCounter++;
+        
+        appendLogLine(line);
+      });
+
+      logCountText.textContent = logLineCounter + ' lines';
+      
+      if (isAutoScrollEnabled) {
+        terminalBody.scrollTop = terminalBody.scrollHeight;
+      }
+    });
+
+    function appendLogLine(lineText) {
+      const filterText = searchLogs.value.toLowerCase();
+      if (filterText && !lineText.toLowerCase().includes(filterText)) {
+        return;
+      }
+
+      const lineEl = document.createElement('span');
+      lineEl.className = 'log-line';
+
+      // Style line depending on content
+      if (lineText.includes('[API Error]') || lineText.includes('[Desktop Error]') || lineText.includes('Error:')) {
+        lineEl.classList.add('log-error');
+      } else if (lineText.includes('[Desktop Info]') || lineText.includes('Server is running')) {
+        lineEl.classList.add('log-info');
+      } else if (lineText.includes('success') || lineText.includes('OK') || lineText.includes('Verified')) {
+        lineEl.classList.add('log-success');
+      } else if (lineText.includes('Warning') || lineText.includes('WARN')) {
+        lineEl.classList.add('log-warning');
+      } else {
+        lineEl.classList.add('log-normal');
+      }
+
+      lineEl.textContent = lineText;
+      terminalBody.appendChild(lineEl);
+    }
+
+    // Filter logs in real time
+    searchLogs.addEventListener('input', () => {
+      terminalBody.innerHTML = '';
+      allLogs.forEach(line => {
+        appendLogLine(line);
+      });
+      if (isAutoScrollEnabled) {
+        terminalBody.scrollTop = terminalBody.scrollHeight;
+      }
+    });
+
+    // Interactive buttons
+    openUiBtn.addEventListener('click', () => {
+      window.apiConsole.openWebUi();
+    });
+
+    restartBtn.addEventListener('click', () => {
+      terminalBody.innerHTML = '';
+      allLogs = [];
+      logLineCounter = 0;
+      logCountText.textContent = '0 lines';
+      window.apiConsole.restartServer();
+    });
+
+    greetBtn.addEventListener('click', async () => {
+      const line = `[Desktop Info] Sending test greet request to local Hono API server...`;
+      allLogs.push(line);
+      logLineCounter++;
+      appendLogLine(line);
+      logCountText.textContent = logLineCounter + ' lines';
+      terminalBody.scrollTop = terminalBody.scrollHeight;
+
+      greetBtn.disabled = true;
+      try {
+        const result = await window.apiConsole.greet();
+        const responseLine = `[Desktop Info] Greet Response: ${JSON.stringify(result)}`;
+        allLogs.push(responseLine);
+        logLineCounter++;
+        appendLogLine(responseLine);
+      } catch (err) {
+        const errLine = `[Desktop Error] Greet Request Failed: ${err.message}`;
+        allLogs.push(errLine);
+        logLineCounter++;
+        appendLogLine(errLine);
+      } finally {
+        greetBtn.disabled = false;
+        logCountText.textContent = logLineCounter + ' lines';
+        terminalBody.scrollTop = terminalBody.scrollHeight;
+      }
+    });
+
+    // Settings logic
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const modalCloseX = document.getElementById('modal-close-x');
+    const modalCancelBtn = document.getElementById('modal-cancel-btn');
+    const modalSaveBtn = document.getElementById('modal-save-btn');
+    const projectIdInput = document.getElementById('project-id-input');
+    const apiKeyInput = document.getElementById('api-key-input');
+
+    // Toggle Modal
+    settingsBtn.addEventListener('click', async () => {
+      try {
+        const settings = await window.apiConsole.getSettings();
+        projectIdInput.value = settings.projectId || '';
+        apiKeyInput.value = settings.apiKeySheep || '';
+      } catch (err) {
+        console.error('Failed to load settings:', err);
+      }
+      settingsModal.classList.add('open');
+    });
+
+    function closeSettingsModal() {
+      settingsModal.classList.remove('open');
+    }
+
+    modalCloseX.addEventListener('click', closeSettingsModal);
+    modalCancelBtn.addEventListener('click', closeSettingsModal);
+
+    settingsModal.addEventListener('click', (e) => {
+      if (e.target === settingsModal) {
+        closeSettingsModal();
+      }
+    });
+
+    modalSaveBtn.addEventListener('click', async () => {
+      modalSaveBtn.disabled = true;
+      modalSaveBtn.textContent = 'Saving...';
+      
+      const projectId = projectIdInput.value.trim();
+      const apiKeySheep = apiKeyInput.value.trim();
+
+      try {
+        const result = await window.apiConsole.saveSettings({ projectId, apiKeySheep });
+        if (result.success) {
+          const line = `[Desktop Info] Settings updated successfully. Restarting Hono server...`;
+          allLogs.push(line);
+          logLineCounter++;
+          appendLogLine(line);
+          logCountText.textContent = logLineCounter + ' lines';
+          terminalBody.scrollTop = terminalBody.scrollHeight;
+          closeSettingsModal();
+        } else {
+          alert('Failed to save settings: ' + result.error);
+        }
+      } catch (err) {
+        alert('Error saving settings: ' + err.message);
+      } finally {
+        modalSaveBtn.disabled = false;
+        modalSaveBtn.textContent = 'Save & Restart';
+      }
+    });
+  </script>
+</body>
+</html>

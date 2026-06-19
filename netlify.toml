@@ -1,8 +1,9 @@
 [build]
   # ビルドコマンド
-  command = "npm run generate"
+  command = "pnpm --filter @sheep-family/web generate"
   # 公開ディレクトリ (Nuxt 3 の generate 出力先)
-  publish = ".output/public"
+  publish = "packages/web/.output/public"
+
 
 [build.environment]
   NODE_VERSION = "22"

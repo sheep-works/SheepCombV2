@@ -1,5 +1,5 @@
 {
-  "name": "sheep-comb-web",
+  "name": "sheep-comb-monorepo",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -7,49 +7,19 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "nuxt dev",
-    "build": "nuxt build",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "cli": "tsx --tsconfig tsconfig.cli.json cli/index.ts",
-    "verify": "tsx --tsconfig tsconfig.cli.json verify_pipeline.ts",
-    "verify:requests": "tsx --tsconfig tsconfig.cli.json verify_requests.ts",
-    "verify:docker": "tsx --tsconfig tsconfig.cli.json verify_docker.ts",
-    "verify:api": "tsx --tsconfig tsconfig.cli.json verify_fastapi.ts",
-    "test": "vitest",
-    "test:parse": "vitest test/shuttle_parser.test.ts",
-    "test:api": "vitest test/cli_api.test.ts"
-  },
-  "dependencies": {
-    "@nuxt/content": "^2.13.2",
-    "@nuxtjs/i18n": "^10.4.0",
-    "@pinia-plugin-persistedstate/nuxt": "^1.2.1",
-    "@pinia/nuxt": "^0.11.3",
-    "difflib-ts": "1.0.3",
-    "flexsearch": "^0.8.212",
-    "jszip": "^3.10.1",
-    "lucide-vue-next": "^1.0.0",
-    "nuxt": "^4.4.2",
-    "pinia": "^3.0.2",
-    "vue": "^3.5.32",
-    "xlsx": "^0.18.5"
+    "dev:web": "pnpm --filter @sheep-family/web dev",
+    "build:web": "pnpm --filter @sheep-family/web build",
+    "dev:api": "pnpm --filter @sheep-family/api run dev",
+    "build:api": "pnpm --filter @sheep-family/api run build",
+    "dev:desktop": "pnpm --filter @sheep-family/desktop run dev",
+    "build:desktop": "pnpm --filter @sheep-family/desktop run build",
+    "pack:desktop": "pnpm --filter @sheep-family/desktop run package",
+    "cli": "pnpm --filter @sheep-family/cli run start",
+    "test": "vitest"
   },
   "devDependencies": {
-    "@types/node": "^24.12.2",
-    "@vue/tsconfig": "^0.9.1",
-    "@xmldom/xmldom": "^0.9.10",
-    "tsx": "^4.21.0",
     "typescript": "~6.0.2",
-    "vite": "^8.0.4",
     "vitest": "^3.0.7",
-    "vue-tsc": "^3.2.6"
-  },
-  "pnpm.onlyBuiltDependencies": [
-    "@parcel/watcher",
-    "esbuild",
-    "nuxt",
-    "better-sqlite3",
-    "vue-demi"
-  ]
+    "@xmldom/xmldom": "^0.9.10"
+  }
 }
