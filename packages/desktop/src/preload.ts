@@ -18,6 +18,9 @@ contextBridge.exposeInMainWorld('apiConsole', {
   openWebUi: () => {
     ipcRenderer.send('open-web-ui');
   },
+  openLogsFolder: () => {
+    ipcRenderer.send('open-logs-folder');
+  },
   restartServer: () => {
     ipcRenderer.send('restart-server');
   },
@@ -27,7 +30,18 @@ contextBridge.exposeInMainWorld('apiConsole', {
   getSettings: () => {
     return ipcRenderer.invoke('get-settings');
   },
-  saveSettings: (settings: { projectId: string; apiKeySheep: string }) => {
+  saveSettings: (settings: {
+    ACTIVE_PROVIDER: string;
+    PROJECT_ID: string;
+    API_KEY_SHEEP: string;
+    OLLAMA_URL: string;
+    OLLAMA_MODEL: string;
+    LMSTUDIO_URL: string;
+    LMSTUDIO_MODEL: string;
+  }) => {
     return ipcRenderer.invoke('save-settings', settings);
+  },
+  fetchModels: (provider: string, url: string) => {
+    return ipcRenderer.invoke('fetch-models', provider, url);
   }
 });

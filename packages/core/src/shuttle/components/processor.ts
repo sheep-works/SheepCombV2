@@ -20,7 +20,7 @@ export class ShuttleProcessor {
     let filtered = [...units]
 
     if (options.toFilterDuplicate) {
-      filtered = this.filterDuplicates(filtered)
+      filtered = this.filterDuplicates(filtered, options.filterLevel)
     }
 
     if (options.toFilterDnt) {
@@ -35,12 +35,21 @@ export class ShuttleProcessor {
   }
 
   /**
-   * 原文、訳文、備考の組み合わせが完全に同一である行を削除します。
+   * 重複行を削除します。
+   * filterLevelによって重複判定の基準が変わります（デフォルトは SRC_TGT_NOTE）。
    */
-  private filterDuplicates(units: TranslationPair[]): TranslationPair[] {
+  private filterDuplicates(units: TranslationPair[], filterLevel: "SRC" | "SRC_TGT" | "SRC_TGT_NOTE" = "SRC_TGT_NOTE"): TranslationPair[] {
     const seen = new Set<string>()
     return units.filter(unit => {
-      const key = `${unit.src}|||${unit.tgt}|||${unit.note || ''}`
+      let key = ''
+      if (filterLevel === 'SRC') {
+        key = `${unit.src}`
+      } else if (filterLevel === 'SRC_TGT') {
+        key = `${unit.src}|||${unit.tgt}`
+      } else {
+        key = `${unit.src}|||${unit.tgt}|||${unit.note || ''}`
+      }
+      
       if (seen.has(key)) return false
       seen.add(key)
       return true
@@ -87,13 +96,16 @@ export class ShuttleProcessor {
   /**
    * Split translation pairs into JSONL chunks.
    */
-  public chunkUnits(units: TranslationPair[], maxChars: number): string[] {
+  public chunkUnits(units: TranslationPair[], maxChars: number, targetOnly: boolean = false): string[] {
     const chunks: string[] = []
     let currentChunk: string[] = []
     let currentLen = 0
 
     for (const unit of units) {
-      const obj = {
+      const obj = targetOnly ? {
+        idx: unit.idx,
+        tgt: unit.tgt
+      } : {
         idx: unit.idx,
         src: unit.src,
         tgt: unit.tgt,

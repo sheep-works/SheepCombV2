@@ -15,6 +15,82 @@ export class ShuttleManager {
     }))
   }
 
+  /**
+   * カウント処理
+   * @param units TranslationPair または ShWvUnit の配列
+   * @param countUnit "CHARA" 単位（単純な文字数）または "WORD" 単位（単語数ベースの概算）
+   * @returns srcとtgtのそれぞれのカウント数
+   */
+  countUnits(units: Array<{ src: string, tgt?: string, pre?: string }>, countUnit: "CHARA" | "WORD"): { src: number, tgt: number } {
+    let srcCount = 0;
+    let tgtCount = 0;
+
+    for (const u of units) {
+      const srcText = u.src || '';
+      const tgtText = u.tgt || u.pre || '';
+
+      if (countUnit === 'CHARA') {
+        srcCount += srcText.length;
+        tgtCount += tgtText.length;
+      } else {
+        // WORD count (英数字以外の前後にスペースを入れて分割することでCJKも1文字1単語として概算カウントするハック)
+        const tokenize = (text: string) => {
+          const spaced = text.replace(/([^\w\s])/g, ' $1 ');
+          const tokens = spaced.split(/\s+/).filter(t => t.trim().length > 0);
+          return tokens.length;
+        };
+        srcCount += tokenize(srcText);
+        tgtCount += tokenize(tgtText);
+      }
+    }
+
+    return { src: srcCount, tgt: tgtCount };
+  }
+
+  /**
+   * ウェイト計算のための、TM一致率ごとのカウント集計（srcのみ）
+   * @param data ShWvData
+   * @param countUnit "CHARA" または "WORD"
+   * @returns 5つのセクション（100%, 95-99%, 85-94%, 75-84%, 0-74%）ごとのカウント数の配列
+   */
+  calculateTieredCounts(data: ShWvData, countUnit: "CHARA" | "WORD"): number[] {
+    const counts = [0, 0, 0, 0, 0]; // 100%, 95-99%, 85-94%, 75-84%, 0-74%
+
+    const tokenize = (text: string) => {
+      const spaced = text.replace(/([^\w\s])/g, ' $1 ');
+      const tokens = spaced.split(/\s+/).filter(t => t.trim().length > 0);
+      return tokens.length;
+    };
+
+    for (const unit of data.body.units) {
+      let maxRatio = 0;
+      if (unit.ref && unit.ref.tms && unit.ref.tms.length > 0) {
+        maxRatio = Math.max(...unit.ref.tms.map(tm => tm.ratio));
+      }
+
+      let count = 0;
+      if (countUnit === 'CHARA') {
+        count = unit.src.length;
+      } else {
+        count = tokenize(unit.src);
+      }
+
+      if (maxRatio === 100) {
+        counts[0] += count;
+      } else if (maxRatio >= 95) {
+        counts[1] += count;
+      } else if (maxRatio >= 85) {
+        counts[2] += count;
+      } else if (maxRatio >= 75) {
+        counts[3] += count;
+      } else {
+        counts[4] += count;
+      }
+    }
+
+    return counts;
+  }
+
   formatCsv(pairs: ExportPair[]): string {
     const header = 'src,tgt'
     const rows = pairs.map(pair => {
@@ -83,9 +159,9 @@ export class ShuttleManager {
     return lines.join('\n')
   }
 
-  chunkJsonl(data: ShWvData, maxCharsPerLine: number): string {
+  chunkJsonl(data: ShWvData, maxCharsPerLine: number, targetOnly: boolean = false): string {
     const lines: string[] = []
-    let currentChunk: ChunkedJsonlItem[] = []
+    let currentChunk: any[] = []
     let currentLen = 0
 
     for (const unit of data.body.units) {
@@ -94,7 +170,10 @@ export class ShuttleManager {
         ? unit.ref.tms.map((tm: ShWvRefTm) => ({ src: tm.src, tgt: tm.tgt }))
         : []
 
-      const obj: ChunkedJsonlItem = {
+      const obj: any = targetOnly ? {
+        index: unit.idx,
+        tgt: tgtText,
+      } : {
         index: unit.idx,
         src: unit.src,
         tgt: tgtText,
@@ -147,7 +226,7 @@ export class ShuttleManager {
   }
 
   // Wrappers
-  public getManagedData(type: ManagedDataType, data: ShWvData, maxCharsPerChunk: number = 4000): string {
+  public getManagedData(type: ManagedDataType, data: ShWvData, maxCharsPerChunk: number = 4000, targetOnly: boolean = false): string {
     switch (type) {
       case 'UNITS':
       case 'TMS':
@@ -157,7 +236,7 @@ export class ShuttleManager {
       case 'JSONL':
         return this.getJsonlContent(data.body.units)
       case 'JSONL_CHUNKED':
-        return this.chunkJsonl(data, maxCharsPerChunk)
+        return this.chunkJsonl(data, maxCharsPerChunk, targetOnly)
       case 'CSV':
         return this.formatCsv(this.getPairs(data.body.units))
       case 'SPLIT_BY_FILE':

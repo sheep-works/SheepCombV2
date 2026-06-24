@@ -1,6 +1,6 @@
-# @sheep-family/api
+# SheepBobbin API
 
-SheepHubの翻訳・校正処理を行うHonoベースのAPIサーバー（クライアントUI上では `HonoX` と表現されます）です。
+SheepBobbinの翻訳・校正処理を行うHonoベースのAPIサーバー（クライアントUI上では `HonoX` と表現されます）です。
 Vertex AI (Google Gen AI SDK) を使用し、インメモリのタスク管理機能や、プロンプトキャッシュによる最適化を提供します。
 
 ---

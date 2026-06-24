@@ -30,9 +30,23 @@ loadEnv();
 let mainWindow: BrowserWindow | null = null;
 let apiProcess: ChildProcess | null = null;
 
+function emitLog(win: BrowserWindow | null, msg: string) {
+  try {
+    const logFilePath = path.join(app.getPath('userData'), 'server.log');
+    const timestamp = new Date().toISOString();
+    const cleanMsg = msg.endsWith('\n') ? msg.slice(0, -1) : msg;
+    fs.appendFileSync(logFilePath, `[${timestamp}] ${cleanMsg}\n`);
+  } catch (err) {
+    console.error('Failed to write log:', err);
+  }
+  if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+    win.webContents.send('server-log', msg.endsWith('\n') ? msg : msg + '\n');
+  }
+}
+
 function startHonoServer(win: BrowserWindow) {
   if (apiProcess) {
-    win.webContents.send('server-log', '[Desktop Info] Hono API server is already running.\n');
+    emitLog(win, '[Desktop Info] Hono API server is already running.');
     return;
   }
 
@@ -45,18 +59,22 @@ function startHonoServer(win: BrowserWindow) {
   console.log(`Starting Hono server from: ${apiScript}`);
 
   if (!fs.existsSync(apiScript)) {
-    win.webContents.send('server-log', `[Desktop Error] Compiled Hono API script not found at:\n  ${apiScript}\n\nPlease run "pnpm run build:api" first to compile the API.\n`);
+    emitLog(win, `[Desktop Error] Compiled Hono API script not found at:\n  ${apiScript}\n\nPlease run "pnpm run build:api" first to compile the API.`);
     win.webContents.send('server-status', 'ERROR');
     return;
   }
 
-  win.webContents.send('server-log', `[Desktop Info] Starting Hono API server sidecar...\n`);
+  emitLog(win, `[Desktop Info] Starting Hono API server sidecar...`);
   win.webContents.send('server-status', 'STARTING');
 
   // Use fork instead of spawn('node') so it runs via Electron's Node environment
   // and supports reading from app.asar transparently.
   const proc = fork(apiScript, [], {
-    env: { ...process.env, PORT: '8000' },
+    env: { 
+      ...process.env, 
+      PORT: '8000',
+      USER_DATA_PATH: app.getPath('userData')
+    },
     stdio: 'pipe'
   });
   apiProcess = proc;
@@ -64,19 +82,21 @@ function startHonoServer(win: BrowserWindow) {
   proc.stdout?.on('data', (data) => {
     if (win.isDestroyed()) return;
     const msg = data.toString();
-    win.webContents.send('server-log', msg);
-    win.webContents.send('server-status', 'RUNNING');
+    emitLog(win, msg);
+    if (msg.includes('Server is running on port')) {
+      win.webContents.send('server-status', 'RUNNING');
+    }
   });
 
   proc.stderr?.on('data', (data) => {
     if (win.isDestroyed()) return;
     const msg = data.toString();
-    win.webContents.send('server-log', `[API Stderr] ${msg}`);
+    emitLog(win, `[API Stderr] ${msg}`);
   });
 
   proc.on('error', (err) => {
     if (win.isDestroyed()) return;
-    win.webContents.send('server-log', `[Desktop Error] Failed to start Hono API server: ${err.message}\n`);
+    emitLog(win, `[Desktop Error] Failed to start Hono API server: ${err.message}`);
     win.webContents.send('server-status', 'ERROR');
     apiProcess = null;
   });
@@ -86,7 +106,7 @@ function startHonoServer(win: BrowserWindow) {
       apiProcess = null;
       return;
     }
-    win.webContents.send('server-log', `[Desktop Info] Hono API server exited with code ${code}\n`);
+    emitLog(win, `[Desktop Info] Hono API server exited with code ${code}`);
     win.webContents.send('server-status', 'STOPPED');
     apiProcess = null;
   });
@@ -95,7 +115,7 @@ function startHonoServer(win: BrowserWindow) {
 function stopHonoServer(win: BrowserWindow) {
   if (apiProcess) {
     if (!win.isDestroyed()) {
-      win.webContents.send('server-log', `[Desktop Info] Stopping Hono API server...\n`);
+      emitLog(win, `[Desktop Info] Stopping Hono API server...`);
     }
     apiProcess.kill();
     apiProcess = null;
@@ -113,19 +133,30 @@ function loadConfig() {
       const config = JSON.parse(data);
       if (config.PROJECT_ID) process.env.PROJECT_ID = config.PROJECT_ID;
       if (config.API_KEY_SHEEP) process.env.API_KEY_SHEEP = config.API_KEY_SHEEP;
+      if (config.AI_STUDIO_FREE) process.env.AI_STUDIO_FREE = config.AI_STUDIO_FREE;
       console.log('Loaded config from:', configPath);
     } catch (err) {
       console.error('Failed to read config.json:', err);
     }
   } else {
     const defaultConfig = {
+      ACTIVE_PROVIDER: 'gemini',
       PROJECT_ID: process.env.PROJECT_ID || '',
-      API_KEY_SHEEP: process.env.API_KEY_SHEEP || ''
+      API_KEY_SHEEP: process.env.API_KEY_SHEEP || '71TMRzhzwQSvITAd01PKWVlRfI4zSLa21cdpj_RWu4c',
+      OLLAMA_URL: 'http://localhost:11434',
+      OLLAMA_MODEL: 'gemma4:e2b',
+      LMSTUDIO_URL: 'http://127.0.0.1:1234',
+      LMSTUDIO_MODEL: 'local-model',
+      AI_STUDIO_FREE: process.env.AI_STUDIO_FREE || '',
+      GEMINI_MODEL: 'gemini-1.5-flash'
     };
     try {
       fs.mkdirSync(path.dirname(configPath), { recursive: true });
       fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2), 'utf-8');
       console.log('Created default config.json at:', configPath);
+      process.env.PROJECT_ID = defaultConfig.PROJECT_ID;
+      process.env.API_KEY_SHEEP = defaultConfig.API_KEY_SHEEP;
+      process.env.AI_STUDIO_FREE = defaultConfig.AI_STUDIO_FREE;
     } catch (err) {
       console.error('Failed to create default config.json:', err);
     }
@@ -138,7 +169,7 @@ function createWindow() {
     height: 650,
     minWidth: 700,
     minHeight: 500,
-    title: 'SheepHub Local',
+    title: 'SheepBobbin Local',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -162,6 +193,11 @@ ipcMain.on('open-web-ui', () => {
   shell.openExternal('https://sheepcomb.netlify.app');
 });
 
+ipcMain.on('open-logs-folder', () => {
+  const logFilePath = path.join(app.getPath('userData'), 'server.log');
+  shell.showItemInFolder(logFilePath);
+});
+
 ipcMain.on('restart-server', () => {
   if (mainWindow) {
     stopHonoServer(mainWindow);
@@ -174,26 +210,28 @@ ipcMain.on('restart-server', () => {
 });
 
 ipcMain.handle('get-settings', () => {
-  return {
-    projectId: process.env.PROJECT_ID || '',
-    apiKeySheep: process.env.API_KEY_SHEEP || ''
-  };
+  const configPath = getConfigPath();
+  if (fs.existsSync(configPath)) {
+    try {
+      const data = fs.readFileSync(configPath, 'utf-8');
+      return JSON.parse(data);
+    } catch (err) {
+      console.error('Failed to load settings:', err);
+    }
+  }
+  return {};
 });
 
-ipcMain.handle('save-settings', async (_event, settings: { projectId: string; apiKeySheep: string }) => {
-  process.env.PROJECT_ID = settings.projectId;
-  process.env.API_KEY_SHEEP = settings.apiKeySheep;
-
+ipcMain.handle('save-settings', async (_event, settings: any) => {
   const configPath = getConfigPath();
-  const configData = {
-    PROJECT_ID: settings.projectId,
-    API_KEY_SHEEP: settings.apiKeySheep
-  };
-
   try {
-    fs.writeFileSync(configPath, JSON.stringify(configData, null, 2), 'utf-8');
+    fs.writeFileSync(configPath, JSON.stringify(settings, null, 2), 'utf-8');
     console.log('Saved settings to:', configPath);
-    
+
+    if (settings.PROJECT_ID) process.env.PROJECT_ID = settings.PROJECT_ID;
+    if (settings.API_KEY_SHEEP) process.env.API_KEY_SHEEP = settings.API_KEY_SHEEP;
+    if (settings.AI_STUDIO_FREE) process.env.AI_STUDIO_FREE = settings.AI_STUDIO_FREE;
+
     if (mainWindow) {
       stopHonoServer(mainWindow);
       setTimeout(() => {
@@ -226,6 +264,44 @@ ipcMain.handle('run-greet', async () => {
   } catch (err: any) {
     return { status: 'error', error: err.message };
   }
+});
+
+ipcMain.handle('fetch-models', async (_event, provider: string, url: string) => {
+  const apiKey = process.env.API_KEY_SHEEP || '';
+  const maxRetries = 5;
+  const retryDelay = 300; // ms
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch('http://localhost:8000/gen/models', {
+        headers: {
+          'X-API-KEY': apiKey,
+          'X-LLM-Provider': provider,
+          'X-LLM-URL': url
+        }
+      });
+      if (!res.ok) {
+        console.warn(`[Desktop Warning] Failed to fetch models: Hono returned HTTP ${res.status}`);
+        return [];
+      }
+      return await res.json();
+    } catch (err: any) {
+      const isConnRefused = 
+        err.code === 'ECONNREFUSED' || 
+        err.message?.includes('ECONNREFUSED') || 
+        err.cause?.code === 'ECONNREFUSED' || 
+        err.cause?.message?.includes('ECONNREFUSED');
+
+      if (isConnRefused && attempt < maxRetries) {
+        console.log(`[Desktop Info] Hono server not ready (ECONNREFUSED). Retrying model fetch (${attempt}/${maxRetries}) in ${retryDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        continue;
+      }
+      console.warn(`[Desktop Warning] Failed to fetch models via IPC: ${err.message}`);
+      return [];
+    }
+  }
+  return [];
 });
 
 // App lifecycle

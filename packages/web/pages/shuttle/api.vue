@@ -9,7 +9,7 @@ definePageMeta({
 })
 
 import { ref, computed, watch, onMounted } from 'vue'
-import { Send, Cloud, Loader2, AlertCircle, RefreshCw, Trash2 } from 'lucide-vue-next'
+import { Send, Cloud, Loader2, AlertCircle, RefreshCw, Trash2, Download, Upload, RotateCcw } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
 import { useShuttleStore } from '../../stores/shuttleStore'
 import { useI18n } from 'vue-i18n'
@@ -20,17 +20,8 @@ const store = useShuttleStore()
 const { t } = useI18n()
 
 onMounted(async () => {
-  if (store.provider === 'fastapi' || store.provider === 'honox') {
-    store.provider = 'honox-local'
-  }
+  store.provider = 'honox-local'
   await store.checkConnection()
-})
-
-watch(() => store.provider, async (newProv) => {
-  await store.checkConnection()
-  if (newProv !== 'fastapi' && newProv !== 'honox-local' && newProv !== 'honox-cloud') {
-    await store.fetchModels()
-  }
 })
 
 const modes = [
@@ -41,33 +32,91 @@ const mode = ref('units')
 
 const requestTargets = [
   { id: 'CHECK', name: 'Check' },
-  { id: 'TRANSLATE', name: 'Translate' }
+  { id: 'TRANSLATE', name: 'Translate' },
+  { id: 'PROOF', name: 'Proof' }
 ]
-const requestTarget = ref<'CHECK' | 'TRANSLATE'>('CHECK')
+const requestTarget = ref<'CHECK' | 'TRANSLATE' | 'PROOF'>('CHECK')
 const userPrompt = ref(defaultCheckPromptText)
 const sourceLang = ref('英語')
 const targetLang = ref('日本語')
 
 const defaultPrompt = computed(() => {
-  return requestTarget.value === 'CHECK' ? defaultCheckPromptText : defaultTransPromptText
+  return requestTarget.value === 'TRANSLATE' ? defaultTransPromptText : defaultCheckPromptText
 })
 
 const isEndpointEditable = ref(false)
 
 watch(requestTarget, (newTarget, oldTarget) => {
-  const oldDefault = oldTarget === 'CHECK' ? defaultCheckPromptText : defaultTransPromptText
+  const oldDefault = oldTarget === 'TRANSLATE' ? defaultTransPromptText : defaultCheckPromptText
   if (!userPrompt.value || userPrompt.value.trim() === oldDefault.trim()) {
-    userPrompt.value = newTarget === 'CHECK' ? defaultCheckPromptText : defaultTransPromptText
+    userPrompt.value = newTarget === 'TRANSLATE' ? defaultTransPromptText : defaultCheckPromptText
   }
 })
 
 const isRequesting = ref(false)
 const errorMsg = ref<string>('')
 
+const showConfirmDialog = ref(false)
+const confirmData = ref({ provider: '', model: '', url: '' })
+const confirmAction = ref<(() => Promise<void>) | null>(null)
+
+async function requestWithConfirm(action: () => Promise<void>) {
+  try {
+    const settings = await store.shuttle.requests.getSettings()
+    confirmData.value = settings
+    confirmAction.value = action
+    showConfirmDialog.value = true
+  } catch (e: any) {
+    errorMsg.value = `Failed to get settings: ${e.message}`
+  }
+}
+
+async function executeConfirmedAction() {
+  showConfirmDialog.value = false
+  if (confirmAction.value) {
+    await confirmAction.value()
+    confirmAction.value = null
+  }
+}
+
+function cancelConfirmedAction() {
+  showConfirmDialog.value = false
+  confirmAction.value = null
+}
+
+const promptFileInput = ref<HTMLInputElement | null>(null)
+
+function resetPrompt() {
+  userPrompt.value = defaultPrompt.value
+}
+
+function triggerPromptUpload() {
+  promptFileInput.value?.click()
+}
+
+function onPromptFileChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  if (!target.files || target.files.length === 0) return
+
+  const file = target.files[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    const text = e.target?.result as string
+    if (text) {
+      userPrompt.value = text
+    }
+    target.value = ''
+  }
+  reader.readAsText(file)
+}
+
 function parseChunkResponse(responseText: string) {
   if (!responseText) return [];
-  const lines = responseText.split('\n').filter(l => l.trim().length > 0);
+  const lines = responseText.split('\n'); // 空行もスキップしないようにfilterを除去
   return lines.map(line => {
+    if (line.trim().length === 0) return { raw: '' }; // 空行は空文字列として扱う
     try {
       return JSON.parse(line);
     } catch (e) {
@@ -78,7 +127,7 @@ function parseChunkResponse(responseText: string) {
 
 async function createChunks() {
   try {
-    store.createChunks(mode.value as 'units' | 'data', 4000)
+    store.createChunks(mode.value as 'units' | 'data', 4000, requestTarget.value === 'PROOF')
   } catch (e: any) {
     errorMsg.value = e.message
   }
@@ -136,6 +185,123 @@ function clearResults() {
   store.clearChunks()
 }
 
+function exportCSV() {
+  const rows: string[] = [];
+  rows.push(['Index', 'Source', 'Target', 'Note', 'IssueType', 'Detail'].join(','));
+
+  const escapeCsv = (val: any) => {
+    if (val === undefined || val === null) return '';
+    const str = String(val);
+    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  for (const chunk of store.chunks) {
+    if (chunk.status !== 'success' || !chunk.response) continue;
+
+    let originalData: any[] = [];
+    try {
+      const parsed = JSON.parse(chunk.data);
+      if (Array.isArray(parsed)) originalData = parsed;
+      else originalData = [parsed];
+    } catch(e) {
+      // fallback
+    }
+
+    const feedbackMap = new Map<string, {issueType: string, detail: string}>();
+    
+    // check if response is JSON with idx
+    const resItems = parseChunkResponse(chunk.response);
+    let isJsonResponses = false;
+    for (const rItem of resItems) {
+      if (rItem.idx !== undefined || rItem.Index !== undefined) {
+         isJsonResponses = true;
+         const idxStr = String(rItem.idx ?? rItem.Index);
+         feedbackMap.set(idxStr, {
+           issueType: String(rItem.issueType || rItem.IssueType || ''),
+           detail: String(rItem.detail || rItem.Detail || rItem.result || rItem.raw || '')
+         });
+      }
+    }
+
+    if (!isJsonResponses) {
+      // Parse plain text responses like "Line 0: [Error]" or "Line [0]:"
+      let currentIdx: string | null = null;
+      let currentFeedback: string[] = [];
+      const lines = (chunk.response || '').split('\n');
+      
+      for (const line of lines) {
+        const match = line.match(/^(?:Line|行)\s*\[?(\d+)\]?[\s:]/i);
+        if (match) {
+          if (currentIdx !== null) {
+            feedbackMap.set(currentIdx, { issueType: '', detail: currentFeedback.join('\n').trim() });
+          }
+          currentIdx = match[1]!;
+          currentFeedback = [line];
+        } else if (currentIdx !== null) {
+          currentFeedback.push(line);
+        }
+      }
+      if (currentIdx !== null) {
+        feedbackMap.set(currentIdx, { issueType: '', detail: currentFeedback.join('\n').trim() });
+      }
+    }
+
+    if (originalData.length > 0) {
+      for (const oItem of originalData) {
+        const idxStr = String(oItem.idx ?? oItem.Index ?? '');
+        const feedback = feedbackMap.get(idxStr);
+        
+        const idx = escapeCsv(idxStr);
+        const src = escapeCsv(oItem.src ?? oItem.Source ?? '');
+        const tgt = escapeCsv(oItem.tgt ?? oItem.Target ?? '');
+        const note = escapeCsv(oItem.notes ?? oItem.note ?? oItem.Note ?? '');
+        const issueType = escapeCsv(feedback ? feedback.issueType : '');
+        const detail = escapeCsv(feedback ? feedback.detail : '');
+
+        rows.push([idx, src, tgt, note, issueType, detail].join(','));
+      }
+    } else {
+      // Fallback if originalData is missing
+      for (const rItem of resItems) {
+        const idx = escapeCsv(rItem.idx ?? rItem.Index ?? '');
+        const src = escapeCsv(rItem.src ?? rItem.Source ?? '');
+        const tgt = escapeCsv(rItem.tgt ?? rItem.Target ?? '');
+        const note = escapeCsv(rItem.note ?? rItem.notes ?? rItem.Note ?? '');
+        const issueType = escapeCsv(rItem.issueType ?? rItem.IssueType ?? '');
+        const detail = escapeCsv(rItem.detail ?? rItem.Detail ?? rItem.result ?? rItem.raw ?? '');
+        rows.push([idx, src, tgt, note, issueType, detail].join(','));
+      }
+    }
+  }
+
+  const csvContent = "\uFEFF" + rows.join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'ai_results.csv');
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function exportJSON() {
+  const jsonContent = JSON.stringify(store.chunks, null, 2);
+  const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', 'ai_chunks.json');
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 function getStatusColor(status: string) {
   switch (status) {
     case 'success': return 'var(--success-glow)'
@@ -148,6 +314,23 @@ function getStatusColor(status: string) {
 
 <template>
   <div class="api-view">
+    <!-- Confirmation Dialog -->
+    <div v-if="showConfirmDialog" class="modal-overlay">
+      <div class="modal">
+        <h3>実行前の確認</h3>
+        <p style="margin-bottom: 12px; font-size: 14px;">以下の設定でリクエストを送信します。よろしいですか？</p>
+        <ul class="confirm-list">
+          <li><strong>Provider:</strong> {{ confirmData.provider }}</li>
+          <li><strong>Model:</strong> {{ confirmData.model }}</li>
+          <li v-if="confirmData.url"><strong>URL:</strong> {{ confirmData.url }}</li>
+        </ul>
+        <div class="modal-actions">
+          <button class="btn-outline" @click="cancelConfirmedAction">キャンセル</button>
+          <button class="btn-action primary" @click="executeConfirmedAction">実行する</button>
+        </div>
+      </div>
+    </div>
+
     <div class="api-layout">
       <!-- Sidebar: Request Settings -->
       <aside class="sidebar">
@@ -161,93 +344,36 @@ function getStatusColor(status: string) {
           </div>
           <div class="config-section">
             <div class="config-group">
-              <label class="config-label">LLM Engine</label>
-              <div class="radio-group">
-                <!-- FastAPI disabled for now -->
-                <!-- <div class="radio-item" :class="{ active: store.provider === 'fastapi' }" @click="store.provider = 'fastapi'">
-                  <span>FastAPI</span>
-                </div> -->
-                <div class="radio-item" :class="{ active: store.provider === 'honox-local' }" @click="store.provider = 'honox-local'">
-                  <span>HonoX (local)</span>
-                </div>
-                <div class="radio-item" :class="{ active: store.provider === 'honox-cloud' }" @click="store.provider = 'honox-cloud'">
-                  <span>HonoX (cloud)</span>
-                </div>
-                <div class="radio-item" :class="{ active: store.provider === 'ollama' }" @click="store.provider = 'ollama'">
-                  <span>Ollama</span>
-                </div>
-                <div class="radio-item" :class="{ active: store.provider === 'lmstudio' }" @click="store.provider = 'lmstudio'">
-                  <span>LM Studio</span>
-                </div>
-              </div>
-            </div>
-
-            <template v-if="store.provider !== 'fastapi'">
-              <div class="config-group">
-                <label class="config-label">Endpoint URL</label>
-                <input 
-                  type="text" 
-                  v-model="store.providerUrl" 
-                  class="prompt-textarea" 
-                  style="min-height: 40px; padding: 8px; transition: all 0.2s;" 
-                  :style="!isEndpointEditable ? 'cursor: pointer; background: rgba(0,0,0,0.2); border: 1px dashed var(--border); color: var(--text-muted);' : ''"
-                  :readonly="!isEndpointEditable"
-                  @dblclick="isEndpointEditable = true"
-                  @blur="isEndpointEditable = false"
-                  placeholder="http://127.0.0.1:..." 
-                  title="ダブルクリックで編集モードになります"
-                />
-              </div>
-              
-              <div class="config-group" v-if="store.provider !== 'honox-local' && store.provider !== 'honox-cloud'">
-                <label class="config-label">Model</label>
-                <div style="display: flex; gap: 8px;">
-                  <select v-model="store.selectedModel" class="prompt-textarea" style="min-height: 40px; padding: 8px; flex: 1;">
-                    <option v-for="m in store.models" :key="m" :value="m">{{ m }}</option>
-                  </select>
-                  <button class="btn-refresh-small" @click="store.fetchModels()" title="Fetch Models" style="width: 40px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm);">
-                    <RefreshCw :size="14" />
+              <label class="config-label">{{ $t('shuttle.api.lbl_password') }}</label>
+              <input 
+                type="password" 
+                v-model="store.honoxApiKey" 
+                class="prompt-textarea" 
+                style="min-height: 40px; padding: 8px;" 
+                :placeholder="$t('shuttle.api.ph_password')" 
+              />
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                <div class="status-content-inline" style="padding: 0; background: transparent; border: none;">
+                  <div class="status-dot" :class="{ online: store.isApiAvailable }" style="margin-right: 6px;"></div>
+                  <span class="status-text" :class="{ online: store.isApiAvailable }">
+                    {{ store.isApiAvailable ? 'ONLINE' : 'OFFLINE' }}
+                  </span>
+                  <button class="btn-refresh-small" @click="store.checkConnection" style="margin-left: 6px;">
+                    <RefreshCw :size="12" />
                   </button>
                 </div>
+                <NuxtLink to="/shuttle/api-tips" class="manual-link">
+                  {{ $t('shuttle.api.lnk_manual') }}
+                </NuxtLink>
               </div>
-
-              <div class="config-group" v-if="store.provider === 'honox-local'">
-                <label class="config-label">API Key</label>
-                <input 
-                  type="password" 
-                  v-model="store.honoxApiKey" 
-                  class="prompt-textarea" 
-                  style="min-height: 40px; padding: 8px;" 
-                  placeholder="X-API-KEY" 
-                />
-              </div>
-
-              <div class="config-group" v-if="store.provider === 'honox-cloud'">
-                <label class="config-label">API Key</label>
-                <input 
-                  type="password" 
-                  v-model="store.honoxCloudApiKey" 
-                  class="prompt-textarea" 
-                  style="min-height: 40px; padding: 8px;" 
-                  placeholder="X-API-KEY" 
-                />
-              </div>
-
-              <div class="cors-warning" v-if="store.provider !== 'honox-local' && store.provider !== 'honox-cloud'" style="font-size: 0.65rem; color: var(--warning); display: flex; gap: 4px; align-items: flex-start; margin-top: 4px;">
-                <AlertCircle :size="12" style="flex-shrink: 0; margin-top: 2px;" />
-                <span>
-                  ブラウザからの直接アクセスのため、CORSの設定が必要です（OLLAMA_ORIGINS="*" 等）
-                  <NuxtLink to="/shuttle/api-tips" style="color: inherit; text-decoration: underline; margin-left: 4px; font-weight: bold;">設定方法はこちら</NuxtLink>
-                </span>
-              </div>
-            </template>
+            </div>
           </div>
         </div>
 
         <div class="card">
           <div class="card-header">
             <h2>{{ $t('shuttle.api.title_request') }}</h2>
-            <span class="dev-badge">SheepHub v2</span>
+            <span class="dev-badge">SheepBobbin v2</span>
           </div>
 
           <div class="config-section">
@@ -273,9 +399,20 @@ function getStatusColor(status: string) {
             </div>
 
             <div class="config-group">
-              <label class="config-label">{{ $t('shuttle.api.lbl_prompt') }}</label>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label class="config-label" style="margin-bottom: 0;">{{ $t('shuttle.api.lbl_prompt') }}</label>
+                <div style="display: flex; gap: 4px;">
+                  <button class="btn-refresh-small" @click="resetPrompt" :title="$t('shuttle.api.btn_reset_prompt')">
+                    <RotateCcw :size="14" />
+                  </button>
+                  <button class="btn-refresh-small" @click="triggerPromptUpload" :title="$t('shuttle.api.btn_load_prompt')">
+                    <Upload :size="14" />
+                  </button>
+                </div>
+                <input type="file" ref="promptFileInput" accept=".txt,.md" style="display: none" @change="onPromptFileChange" />
+              </div>
               
-              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <div style="display: flex; gap: 8px; margin-bottom: 8px; margin-top: 8px;">
                 <input type="text" v-model="sourceLang" class="prompt-textarea" style="min-height: 36px; padding: 8px;" placeholder="原文の言語" title="source_lang" />
                 <span style="display: flex; align-items: center; color: var(--text-muted);">→</span>
                 <input type="text" v-model="targetLang" class="prompt-textarea" style="min-height: 36px; padding: 8px;" placeholder="訳文の言語" title="target_lang" />
@@ -288,37 +425,14 @@ function getStatusColor(status: string) {
               <button class="btn-action secondary" @click="createChunks" :disabled="!store.hasUnits && !store.hasData">
                 <RefreshCw :size="16" /> {{ $t('shuttle.api.btn_create_chunks') }}
               </button>
-              <button class="btn-action primary" @click="processAll" :disabled="!store.hasChunks || isRequesting">
+              <button class="btn-action primary" @click="requestWithConfirm(processAll)" :disabled="!store.hasChunks || isRequesting">
                 <Send :size="16" /> {{ $t('shuttle.api.btn_process_all') }}
               </button>
             </div>
           </div>
         </div>
 
-        <div class="card connection-card">
-          <div class="card-header">
-            <h2>{{ $t('shuttle.api.title_status') }}</h2>
-            <div class="status-dot" :class="{ online: store.isApiAvailable }"></div>
-          </div>
-          
-          <!-- Developer Toggle disabled for now -->
-          <!-- <div class="dev-toggle-row">
-            <label class="toggle-container">
-              <input type="checkbox" v-model="store.isDevOverride" />
-              <span class="toggle-slider"></span>
-              <span class="toggle-label">{{ $t('shuttle.api.lbl_dev_mode') }}</span>
-            </label>
-          </div> -->
 
-          <div class="status-content-inline">
-            <span class="status-text" :class="{ online: store.isApiAvailable }">
-              {{ store.isApiAvailable ? 'ONLINE (Accessible)' : 'OFFLINE (Unavailable)' }}
-            </span>
-            <button class="btn-refresh-small" @click="store.checkConnection">
-              <RefreshCw :size="12" />
-            </button>
-          </div>
-        </div>
 
         <div class="card status-card" v-if="store.hasChunks">
           <div class="card-header">
@@ -342,9 +456,17 @@ function getStatusColor(status: string) {
         <div class="card full-height">
           <div class="card-header space-between">
             <h2>{{ $t('shuttle.api.title_list') }}</h2>
-            <button class="btn-refresh" @click="clearResults" v-if="store.hasChunks">
-              <Trash2 :size="14" /> {{ $t('shuttle.api.btn_clear') }}
-            </button>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-outline" @click="exportJSON" v-if="store.hasChunks">
+                <Download :size="14" /> Export JSON
+              </button>
+              <button class="btn-outline" @click="exportCSV" v-if="store.hasChunks">
+                <Download :size="14" /> {{ $t('shuttle.api.btn_export_csv') }}
+              </button>
+              <button class="btn-outline" @click="clearResults" v-if="store.hasChunks">
+                <Trash2 :size="14" /> {{ $t('shuttle.api.btn_clear') }}
+              </button>
+            </div>
           </div>
 
           <!-- Error Panel -->
@@ -363,7 +485,7 @@ function getStatusColor(status: string) {
                   <span class="chunk-size">{{ chunk.data.length }} chars</span>
                   <span class="chunk-status-badge" :class="chunk.status">{{ chunk.status }}</span>
                 </div>
-                <button class="btn-process-small" @click="processChunk(idx)" :disabled="isRequesting">
+                <button class="btn-process-small" @click="requestWithConfirm(() => processChunk(idx))" :disabled="isRequesting">
                   <Loader2 v-if="isRequesting && chunk.status === 'pending'" :size="14" class="spin" />
                   <RefreshCw v-else :size="14" />
                 </button>
@@ -610,6 +732,17 @@ function getStatusColor(status: string) {
 .btn-action:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+.manual-link {
+  font-size: 0.75rem;
+  color: var(--accent);
+  text-decoration: none;
+  margin-top: 4px;
+  display: inline-block;
+}
+.manual-link:hover {
+  text-decoration: underline;
 }
 
 /* Status Card */
@@ -970,4 +1103,22 @@ input:checked + .toggle-slider::before {
   transform: translateX(14px);
   background: #000;
 }
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal {
+  background: var(--bg-primary);
+  padding: 24px; border-radius: 8px; width: 400px; max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  border: 1px solid var(--border);
+}
+.modal h3 { margin-top: 0; margin-bottom: 12px; }
+.confirm-list { margin: 16px 0; padding-left: 20px; color: var(--text-secondary); line-height: 1.6; font-size: 14px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
 </style>

@@ -44,6 +44,25 @@ export const useDiffStore = defineStore('diff', () => {
   }
 
   /**
+   * ブロック単位（全体を1つとして）差分チェックを実行
+   */
+  function batchCheckBlock() {
+    batchDiff.value = []
+    const s = srcText.value
+    const t = tgtText.value
+
+    const hasDiff = s !== t
+    const d = DiffUtils.getDiffHtml(s, t)
+    batchDiff.value.push({
+      lineNo: 1,
+      s,
+      t,
+      d,
+      hasDiff
+    })
+  }
+
+  /**
    * shuttleStore（パーサー）からデータを読み込む
    */
   function importFromShuttle() {
@@ -66,6 +85,7 @@ export const useDiffStore = defineStore('diff', () => {
     tgtText,
     batchDiff,
     batchCheck,
+    batchCheckBlock,
     importFromShuttle,
     clear
   }

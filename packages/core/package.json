@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@sheep-family/types": "workspace:*",
+    "@xmldom/xmldom": "^0.9.10",
     "difflib-ts": "1.0.3",
     "flexsearch": "^0.8.212",
     "jszip": "^3.10.1",
-    "xlsx": "^0.18.5",
-    "@xmldom/xmldom": "^0.9.10"
+    "xlsx": "^0.18.5"
   }
 }

@@ -1,5 +1,5 @@
 /**
- * SheepHub API Client
+ * SheepBobbin API Client
  * Based on sample/openapi.json specification
  */
 
@@ -18,7 +18,7 @@ export interface ResultResponse {
   error?: string | null
 }
 
-export class SheepHubApi {
+export class SheepBobbinApi {
   private baseUrl: string
 
   constructor(baseUrl?: string) {
@@ -105,11 +105,11 @@ export class SheepHubApi {
 }
 
 /** Singleton API instance */
-let _api: SheepHubApi | null = null
+let _api: SheepBobbinApi | null = null
 
-export function getApi(): SheepHubApi {
+export function getApi(): SheepBobbinApi {
   if (!_api) {
-    _api = new SheepHubApi()
+    _api = new SheepBobbinApi()
   }
   return _api
 }

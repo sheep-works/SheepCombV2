@@ -1,6 +1,6 @@
 {
   "name": "@sheep-family/desktop",
-  "productName": "SheepHub Local",
+  "productName": "SheepBobbin Local",
   "version": "1.0.0",
   "private": true,
   "main": "dist/main.js",

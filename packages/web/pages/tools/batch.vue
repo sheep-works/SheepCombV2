@@ -37,7 +37,7 @@ const handleImport = () => {
   }
 }
 
-const runCheck = () => {
+const runCheckLines = () => {
   errorMsg.value = ''
   // 行数が極端に違う場合の警告（空行等でズレる可能性があるため）
   if (store.srcText.split('\n').length !== store.tgtText.split('\n').length) {
@@ -47,6 +47,12 @@ const runCheck = () => {
   }
 
   store.batchCheck()
+  isChecked.value = true
+}
+
+const runCheckBlock = () => {
+  errorMsg.value = ''
+  store.batchCheckBlock()
   isChecked.value = true
 }
 
@@ -178,8 +184,11 @@ const downloadHtml = () => {
             <h2>{{ $t('tools.batch.title_tool') }}</h2>
           </div>
           <div class="action-list">
-            <button class="btn primary" @click="runCheck" :disabled="!store.srcText && !store.tgtText">
-              <Play :size="18" /> {{ $t('tools.batch.btn_check') }}
+            <button class="btn primary" @click="runCheckBlock" :disabled="!store.srcText && !store.tgtText">
+              <Play :size="18" /> {{ $t('tools.batch.btn_check_block') }}
+            </button>
+            <button class="btn outline" @click="runCheckLines" :disabled="!store.srcText && !store.tgtText">
+              <Split :size="18" /> {{ $t('tools.batch.btn_check_lines') }}
             </button>
 
             <button class="btn secondary" @click="handleImport">
@@ -414,10 +423,12 @@ const downloadHtml = () => {
 .text-source {
   color: var(--text-secondary);
   word-break: break-all;
+  white-space: pre-wrap;
 }
 
 .diff-rendered {
   line-height: 1.6;
+  white-space: pre-wrap;
 }
 
 /* diff tags style - standard for the app */

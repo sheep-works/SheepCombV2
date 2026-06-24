@@ -132,6 +132,7 @@ export type DntFilterType = 'digit' | 'eng' | 'digit eng' | null
 
 export interface ProcessorOptions {
   toFilterDuplicate?: boolean
+  filterLevel?: "SRC" | "SRC_TGT" | "SRC_TGT_NOTE"
   toFilterDnt?: DntFilterType
   toFilterLock?: boolean
 }
