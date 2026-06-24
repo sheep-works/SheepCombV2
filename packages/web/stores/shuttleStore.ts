@@ -261,16 +261,17 @@ export const useShuttleStore = defineStore('shuttle', () => {
   /**
    * チャンクの作成
    */
-  function createChunks(type: 'units' | 'data', maxChars?: number) {
-    shuttle.createChunks(type, maxChars)
+  function createChunks(type: 'units' | 'data', maxChars?: number, targetOnly: boolean = false) {
+    shuttle.createChunks(type, maxChars, targetOnly)
     syncState()
   }
 
   /**
-   * API リクエストの実行
+   * API呼び出し
    */
-  async function processRequests(chunkIndex: number = -1, target: 'CHECK' | 'TRANSLATE' = 'CHECK', prompt?: string) {
+  async function processRequests(chunkIndex: number = -1, target: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', prompt?: string) {
     syncProviderOptions()
+    if (!isConnected.value && !isDevOverride.value) return
     isLoading.value = true
     try {
       await shuttle.processRequests(chunkIndex, target, prompt)

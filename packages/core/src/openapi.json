@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "SheepHub",
-    "version": "0.1.0"
+    "title": "SheepBobbin",
+    "version": "1.0.0"
   },
   "paths": {
     "/verify_connection": {

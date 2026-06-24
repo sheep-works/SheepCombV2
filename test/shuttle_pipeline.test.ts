@@ -137,4 +137,37 @@ describe('SheepShuttle Pipeline', () => {
     expect(csv).not.toContain('file')
     expect(csv).toContain('"0","Hello","こんにちは","greetings"')
   })
+
+  it('should auto-cache system prompts when prompt length is greater than 3000 characters', async () => {
+    const localShuttle = new SheepShuttle()
+    localShuttle.chunks = [
+      { chunkId: 0, data: 'dummy-data', status: 'pending', response: '' }
+    ]
+
+    let initPromptCalled = false
+
+    // Mock request calls
+    localShuttle.requests.getProvider = () => 'fastapi'
+    localShuttle.requests.initPrompt = async (params) => {
+      initPromptCalled = true
+      expect(params.system_instruction).toHaveLength(3005)
+      return { status: 'success', result: 'mock-cache-id' }
+    }
+    localShuttle.requests.checkUserAsync = async (params) => {
+      expect(params.prompt).toBeUndefined()
+      expect(params.cache_id).toBe('mock-cache-id')
+      return { task_id: 'mock-task-id', status: 'pending' }
+    }
+    localShuttle.requests.getTaskResult = async () => {
+      return { status: 'success', result: 'mock-result' }
+    }
+
+    // Create a 3005-character prompt
+    const longPrompt = 'a'.repeat(3005)
+    await localShuttle.processRequests(0, 'CHECK', longPrompt)
+
+    expect(initPromptCalled).toBe(true)
+    expect(localShuttle.requests.cacheName).toBe('mock-cache-id')
+    expect(localShuttle.requests.cachedPromptText).toBe(longPrompt)
+  }, 15000)
 })

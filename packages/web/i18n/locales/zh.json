@@ -150,12 +150,15 @@
       "empty_viewer": "无数据显示。\\n请在“解析”页面创建，或加载 JSON 文件。"
     },
     "api": {
-      "err_offline": "API 服务器 (SheepHub) 离线。请检查。",
+      "err_offline": "API 服务器 (SheepBobbin) 离线。请检查。",
       "title_request": "请求设置",
       "lbl_chunk_mode": "分块模式",
       "lbl_req_type": "请求类型",
       "lbl_prompt": "自定义提示 (可选)",
+      "btn_load_prompt": "加载提示词文件",
+      "btn_reset_prompt": "恢复默认提示词",
       "placeholder_prompt": "例: 统一下结尾语气。",
+      "lbl_target_only": "仅输出译文",
       "btn_create_chunks": "创建块",
       "btn_process_all": "处理全部",
       "title_status": "连接状态",
@@ -164,7 +167,11 @@
       "title_list": "分块列表",
       "btn_clear": "清除",
       "empty_no_units": "请先在 Parser 标签中加载文件",
-      "empty_no_chunks": "点击“创建分块”以分割数据"
+      "empty_no_chunks": "点击“创建分块”以分割数据",
+      "lbl_password": "连接密码",
+      "ph_password": "请输入连接密码",
+      "lnk_manual": "查看手册",
+      "btn_export_csv": "导出 CSV"
     }
   },
   "testPage": {
@@ -182,9 +189,10 @@
       "html_th_old": "旧 (Old)",
       "html_th_new": "新 (New)",
       "html_th_diff": "差异 (Diff)",
-      "title_tool": "批量差异工具",
-      "btn_check": "确认差异",
-      "btn_import": "从解析器导入",
+      "title_tool": "批处理工具",
+      "btn_check_block": "检查差异",
+      "btn_check_lines": "检查差异 (按行)",
+      "btn_import": "从编辑器导入",
       "btn_clear": "清除",
       "lbl_show_all": "显示无差异的行",
       "btn_download_html": "下载 HTML",

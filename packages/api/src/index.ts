@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { VertexClient } from './vertex.js';
+import { CostCalculator } from './calculator.js';
 import {
   RequestBodySchema,
   InitPromptRequestSchema,
@@ -17,6 +18,11 @@ import {
   ResultResponseSchema,
   GreetResponseSchema
 } from './schemas.js';
+
+// Vercel AI SDK imports
+import { generateText } from 'ai';
+import { createOpenAI } from '@ai-sdk/openai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,8 +50,47 @@ function loadEnv() {
 }
 loadEnv();
 
+let serverConfig: any = {};
+
+function loadServerConfig() {
+  const userDataPath = process.env.USER_DATA_PATH;
+  if (userDataPath) {
+    const configPath = path.join(userDataPath, 'config.json');
+    if (fs.existsSync(configPath)) {
+      try {
+        const data = fs.readFileSync(configPath, 'utf-8');
+        serverConfig = JSON.parse(data);
+        console.log('[API Info] Loaded configuration from Electron config.json:', serverConfig);
+        
+        // Copy keys to process.env so existing auth & vertexClient code works out-of-the-box
+        if (serverConfig.API_KEY_SHEEP) {
+          process.env.API_KEY_SHEEP = serverConfig.API_KEY_SHEEP;
+        }
+        if (serverConfig.PROJECT_ID) {
+          process.env.PROJECT_ID = serverConfig.PROJECT_ID;
+        }
+      } catch (err) {
+        console.error('[API Error] Failed to read config.json:', err);
+      }
+    }
+  } else {
+    // Standalone dev mode: use environment variables or defaults
+    serverConfig = {
+      ACTIVE_PROVIDER: process.env.ACTIVE_PROVIDER || 'vertex-sheep',
+      OLLAMA_URL: process.env.OLLAMA_URL || 'http://localhost:11434',
+      OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'gemma4:e2b',
+      LMSTUDIO_URL: process.env.LMSTUDIO_URL || 'http://127.0.0.1:1234',
+      LMSTUDIO_MODEL: process.env.LMSTUDIO_MODEL || 'local-model',
+      PROJECT_ID: process.env.PROJECT_ID || '',
+      API_KEY_SHEEP: process.env.API_KEY_SHEEP || ''
+    };
+  }
+}
+loadServerConfig();
+
 const app = new OpenAPIHono();
 const vertexClient = new VertexClient();
+const localCalculator = new CostCalculator(150);
 
 // In-memory task store
 const tasks = new Map<string, { status: string; result: string | null; error: string | null }>();
@@ -57,7 +102,7 @@ app.use('*', cors({
     'http://127.0.0.1:3000',
     'https://sheepcomb.netlify.app'
   ],
-  allowHeaders: ['Content-Type', 'X-API-KEY'],
+  allowHeaders: ['Content-Type', 'X-API-KEY', 'X-LLM-Provider', 'X-LLM-Model', 'X-LLM-URL'],
   allowMethods: ['POST', 'GET', 'OPTIONS'],
   credentials: true,
 }));
@@ -86,6 +131,124 @@ const authMiddleware = async (c: any, next: any) => {
 
 app.use('/verify_connection', authMiddleware);
 app.use('/tasks/*', authMiddleware);
+
+// Vercel AI SDK Helpers
+function getLlmProviderAndModel(c: any) {
+  const provider = c.req.header('X-LLM-Provider') || serverConfig.ACTIVE_PROVIDER || 'vertex';
+  const modelName = c.req.header('X-LLM-Model') || (
+    provider === 'ollama' ? serverConfig.OLLAMA_MODEL : 
+    provider === 'lmstudio' ? serverConfig.LMSTUDIO_MODEL :
+    provider === 'gemini' ? serverConfig.GEMINI_MODEL : undefined
+  );
+  const url = c.req.header('X-LLM-URL') || (
+    provider === 'ollama' ? serverConfig.OLLAMA_URL : 
+    provider === 'lmstudio' ? serverConfig.LMSTUDIO_URL : undefined
+  );
+  return { provider, modelName, url };
+}
+
+function getLlmModel(provider: string, modelName: string, url?: string) {
+  if (provider === 'lmstudio') {
+    const baseUrl = (url || 'http://127.0.0.1:1234').replace(/\/$/, '') + '/v1';
+    const lmstudio = createOpenAI({
+      baseURL: baseUrl,
+      apiKey: 'lm-studio',
+    });
+    return lmstudio(modelName || 'local-model');
+  } else if (provider === 'ollama') {
+    const baseUrl = (url || 'http://localhost:11434').replace(/\/$/, '') + '/v1';
+    const ollama = createOpenAI({
+      baseURL: baseUrl,
+      apiKey: 'ollama',
+    });
+    return ollama(modelName || 'gemma4:e2b');
+  } else if (provider === 'gemini') {
+    const apiKey = serverConfig.AI_STUDIO_FREE || process.env.AI_STUDIO_FREE || '';
+    const google = createGoogleGenerativeAI({
+      apiKey,
+    });
+    return google(modelName || 'gemini-1.5-flash');
+  }
+  throw new Error(`Unsupported provider: ${provider}`);
+}
+
+async function fetchLlmModels(provider: string, url?: string): Promise<string[]> {
+  if (provider === 'ollama') {
+    try {
+      const targetUrl = (url || 'http://localhost:11434').replace(/\/$/, '');
+      const response = await fetch(`${targetUrl}/api/tags`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.models ? data.models.map((m: any) => m.name) : [];
+    } catch (e) {
+      return [];
+    }
+  } else if (provider === 'lmstudio') {
+    try {
+      const targetUrl = (url || 'http://127.0.0.1:1234').replace(/\/$/, '');
+      const response = await fetch(`${targetUrl}/v1/models`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.data ? data.data.map((m: any) => m.id) : [];
+    } catch (e) {
+      return [];
+    }
+  } else if (provider === 'gemini') {
+    try {
+      const apiKey = serverConfig.AI_STUDIO_FREE || process.env.AI_STUDIO_FREE || '';
+      if (!apiKey) return [];
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      if (data.models) {
+        return data.models
+          .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
+          .map((m: any) => m.name.replace(/^models\//, ''));
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+  return [];
+}
+
+async function processChunkWithSdk(
+  provider: string,
+  modelName: string,
+  url: string | undefined,
+  chunkText: string,
+  systemPrompt: string
+): Promise<string> {
+  const model = getLlmModel(provider, modelName, url);
+  const userContent = `\`\`\`jsonl\n${chunkText}\n\`\`\``;
+
+  try {
+    const { text, usage } = await generateText({
+      model,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userContent }],
+      temperature: 0.0,
+      maxRetries: 1
+    });
+
+    if (usage) {
+      const res = localCalculator.calculate(
+        usage.inputTokens ?? 0,
+        usage.outputTokens ?? 0,
+        [0, 0]
+      );
+      console.log(`[API Local LLM] Model: ${modelName}`);
+      console.log(localCalculator.formatLog(res));
+      console.log(localCalculator.formatTotalLog());
+    }
+
+    return text || '';
+  } catch (e: any) {
+    console.error(`[API Local LLM Error]`, e);
+    throw e;
+  }
+}
 
 // Define verify_connection route
 const verifyConnectionRoute = createRoute({
@@ -119,7 +282,19 @@ const verifyConnectionRoute = createRoute({
   }
 });
 
-app.openapi(verifyConnectionRoute, (c) => {
+app.openapi(verifyConnectionRoute, async (c) => {
+  const { provider, url } = getLlmProviderAndModel(c);
+  if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+    try {
+      const models = await fetchLlmModels(provider, url);
+      if (models.length > 0) {
+        return c.json({ status: 'ok', message: `SheepHub Proxy to ${provider} is accessible` }, 200);
+      }
+      return c.json({ error: `No models found for provider ${provider}` }, 403);
+    } catch (e: any) {
+      return c.json({ error: e.message }, 403);
+    }
+  }
   return c.json({ status: 'ok', message: 'SheepHub API is accessible' }, 200);
 });
 
@@ -209,10 +384,76 @@ const greetRoute = createRoute({
 
 genRouter.openapi(greetRoute, async (c) => {
   try {
-    const modelInfo = await vertexClient.greet();
+    const { provider, url } = getLlmProviderAndModel(c);
+    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+      const models = await fetchLlmModels(provider, url);
+      return c.json({ status: 'success', model_info: `${provider === 'gemini' ? 'Google AI Studio' : provider === 'ollama' ? 'Ollama' : 'LM Studio'} Models: ${models.join(', ')}` }, 200);
+    }
+    const modelInfo = await vertexClient.greet(provider);
     return c.json({ status: 'success', model_info: modelInfo }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
+  }
+});
+
+// Models Endpoint
+genRouter.get('/models', async (c) => {
+  try {
+    const { provider, url } = getLlmProviderAndModel(c);
+    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+      const models = await fetchLlmModels(provider, url);
+      return c.json(models, 200);
+    }
+    return c.json([], 200);
+  } catch (e) {
+    return c.json([], 200);
+  }
+});
+
+// Settings Endpoint
+const getSettingsRoute = createRoute({
+  method: 'get',
+  path: '/settings',
+  summary: 'Settings Endpoint',
+  description: 'Get current LLM provider and model settings.',
+  security: [{ ApiKeyAuth: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            provider: z.string(),
+            model: z.string(),
+            url: z.string().optional()
+          })
+        }
+      },
+      description: 'Successful Response'
+    },
+    500: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            provider: z.string(),
+            model: z.string()
+          })
+        }
+      },
+      description: 'Error Response'
+    }
+  }
+});
+
+genRouter.openapi(getSettingsRoute, async (c) => {
+  try {
+    const { provider, modelName, url } = getLlmProviderAndModel(c);
+    return c.json({
+      provider: provider || 'unknown',
+      model: modelName || 'unknown',
+      url: url || ''
+    }, 200);
+  } catch (e: any) {
+    return c.json({ provider: 'error', model: e.message }, 500);
   }
 });
 
@@ -247,7 +488,11 @@ const initPromptRoute = createRoute({
 genRouter.openapi(initPromptRoute, async (c) => {
   const body = c.req.valid('json');
   try {
-    const cacheId = await vertexClient.setupCache(body.system_instruction, body.display_name);
+    const { provider } = getLlmProviderAndModel(c);
+    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+      return c.json({ status: 'success', result: `${provider}-dummy-cache` }, 200);
+    }
+    const cacheId = await vertexClient.setupCache(body.system_instruction, body.display_name, provider);
     return c.json({ status: 'success', result: cacheId }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -285,7 +530,11 @@ const deleteCacheRoute = createRoute({
 genRouter.openapi(deleteCacheRoute, async (c) => {
   const body = c.req.valid('json');
   try {
-    await vertexClient.deleteCache(body.cache_name);
+    const { provider } = getLlmProviderAndModel(c);
+    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+      return c.json({ status: 'success' }, 200);
+    }
+    await vertexClient.deleteCache(body.cache_name, provider);
     return c.json({ status: 'success', result: 'Cache deleted successfully' }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -293,10 +542,24 @@ genRouter.openapi(deleteCacheRoute, async (c) => {
 });
 
 // User task helpers
-async function runUserTaskBackground(taskId: string, chunk: string, prompt?: string | null, cacheId?: string | null) {
+async function runUserTaskBackground(
+  taskId: string,
+  chunk: string,
+  prompt?: string | null,
+  cacheId?: string | null,
+  provider?: string | null,
+  modelName?: string | null,
+  url?: string | null
+) {
   tasks.set(taskId, { status: 'processing', result: null, error: null });
   try {
-    const result = await vertexClient.processWithUserParams(chunk, prompt, cacheId);
+    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+      const systemPrompt = prompt || "あなたは優秀な翻訳チェッカーです。渡された原文と訳文を比較し、誤訳や不自然な箇所があれば指摘してください。問題がなければ 空文字 または 'OK' を返してください。出力は必ず以下の形式のJSONで返してください：\n{ \"result\": \"指摘内容\" }";
+      const result = await processChunkWithSdk(provider, modelName || '', url || undefined, chunk, systemPrompt);
+      tasks.set(taskId, { status: 'success', result, error: null });
+      return;
+    }
+    const result = await vertexClient.processWithUserParams(chunk, prompt, cacheId, provider || undefined);
     tasks.set(taskId, { status: 'success', result, error: null });
   } catch (e: any) {
     tasks.set(taskId, { status: 'error', result: null, error: e.message });
@@ -335,7 +598,8 @@ genRouter.openapi(checkUserRoute, async (c) => {
   const body = c.req.valid('json');
   const taskId = crypto.randomUUID();
   tasks.set(taskId, { status: 'pending', result: null, error: null });
-  runUserTaskBackground(taskId, body.chunk, body.prompt, body.cache_id);
+  const { provider, modelName, url } = getLlmProviderAndModel(c);
+  runUserTaskBackground(taskId, body.chunk, body.prompt, body.cache_id, provider, modelName, url);
   return c.json({ task_id: taskId, status: 'pending' }, 200);
 });
 
@@ -370,7 +634,13 @@ const checkUserSyncRoute = createRoute({
 genRouter.openapi(checkUserSyncRoute, async (c) => {
   const body = c.req.valid('json');
   try {
-    const result = await vertexClient.processWithUserParams(body.chunk, body.prompt, body.cache_id);
+    const { provider, modelName, url } = getLlmProviderAndModel(c);
+    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+      const systemPrompt = body.prompt || "あなたは優秀な翻訳チェッカーです。渡された原文と訳文を比較し、誤訳や不自然な箇所があれば指摘してください。問題がなければ 空文字 または 'OK' を返してください。出力は必ず以下の形式のJSONで返してください：\n{ \"result\": \"指摘内容\" }";
+      const result = await processChunkWithSdk(provider, modelName || '', url || undefined, body.chunk, systemPrompt);
+      return c.json({ status: 'success', result }, 200);
+    }
+    const result = await vertexClient.processWithUserParams(body.chunk, body.prompt, body.cache_id, provider);
     return c.json({ status: 'success', result }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -409,7 +679,8 @@ genRouter.openapi(transUserRoute, async (c) => {
   const body = c.req.valid('json');
   const taskId = crypto.randomUUID();
   tasks.set(taskId, { status: 'pending', result: null, error: null });
-  runUserTaskBackground(taskId, body.chunk, body.prompt, body.cache_id);
+  const { provider, modelName, url } = getLlmProviderAndModel(c);
+  runUserTaskBackground(taskId, body.chunk, body.prompt, body.cache_id, provider, modelName, url);
   return c.json({ task_id: taskId, status: 'pending' }, 200);
 });
 
@@ -444,7 +715,13 @@ const transUserSyncRoute = createRoute({
 genRouter.openapi(transUserSyncRoute, async (c) => {
   const body = c.req.valid('json');
   try {
-    const result = await vertexClient.processWithUserParams(body.chunk, body.prompt, body.cache_id);
+    const { provider, modelName, url } = getLlmProviderAndModel(c);
+    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+      const systemPrompt = body.prompt || "あなたは優秀な翻訳家です。渡された原文を翻訳してください。出力は必ず以下の形式のJSONで返してください：\n{ \"result\": \"翻訳文\" }";
+      const result = await processChunkWithSdk(provider, modelName || '', url || undefined, body.chunk, systemPrompt);
+      return c.json({ status: 'success', result }, 200);
+    }
+    const result = await vertexClient.processWithUserParams(body.chunk, body.prompt, body.cache_id, provider);
     return c.json({ status: 'success', result }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -452,10 +729,22 @@ genRouter.openapi(transUserSyncRoute, async (c) => {
 });
 
 // Background helper for dynamic routes
-async function runTaskBackground(taskId: string, prompt: string, chunk: string) {
+async function runTaskBackground(
+  taskId: string,
+  prompt: string,
+  chunk: string,
+  provider?: string | null,
+  modelName?: string | null,
+  url?: string | null
+) {
   tasks.set(taskId, { status: 'processing', result: null, error: null });
   try {
-    const result = await vertexClient.processChunk(prompt, chunk);
+    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+      const result = await processChunkWithSdk(provider, modelName || '', url || undefined, chunk, prompt);
+      tasks.set(taskId, { status: 'success', result, error: null });
+      return;
+    }
+    const result = await vertexClient.processChunk(prompt, chunk, provider || undefined);
     tasks.set(taskId, { status: 'success', result, error: null });
   } catch (e: any) {
     tasks.set(taskId, { status: 'error', result: null, error: e.message });
@@ -554,7 +843,8 @@ if (fs.existsSync(promptsDir)) {
         }
         const taskId = crypto.randomUUID();
         tasks.set(taskId, { status: 'pending', result: null, error: null });
-        runTaskBackground(taskId, promptContent, body.chunk);
+        const { provider, modelName, url } = getLlmProviderAndModel(c);
+        runTaskBackground(taskId, promptContent, body.chunk, provider, modelName, url);
         return c.json({ task_id: taskId, status: 'pending' }, 200);
       });
 
@@ -564,7 +854,12 @@ if (fs.existsSync(promptsDir)) {
           return c.json({ error: 'JSONL data exceeds 4000 characters limit.' }, 400);
         }
         try {
-          const result = await vertexClient.processChunk(promptContent, body.chunk);
+          const { provider, modelName, url } = getLlmProviderAndModel(c);
+          if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+            const result = await processChunkWithSdk(provider, modelName || '', url || undefined, body.chunk, promptContent);
+            return c.json({ status: 'success', result }, 200);
+          }
+          const result = await vertexClient.processChunk(promptContent, body.chunk, provider);
           return c.json({ status: 'success', result }, 200);
         } catch (e: any) {
           return c.json({ status: 'error', error: e.message }, 200);

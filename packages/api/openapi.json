@@ -318,6 +318,66 @@
         }
       }
     },
+    "/gen/settings": {
+      "get": {
+        "summary": "Settings Endpoint",
+        "description": "Get current LLM provider and model settings.",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "provider",
+                    "model"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "provider",
+                    "model"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/gen/init_prompt": {
       "post": {
         "summary": "Initialize Prompt Cache",

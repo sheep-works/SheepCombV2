@@ -23,6 +23,29 @@ const statusMsg = ref({ text: '', type: 'info' as 'info' | 'success' | 'error' }
 const tmFiles = ref<File[]>([])
 const tbFiles = ref<File[]>([])
 
+const countUnit = ref<'CHARA' | 'WORD'>('CHARA')
+const weights = ref<number[]>([0.1, 0.3, 0.6, 1.0, 1.0])
+const tierCounts = ref<number[] | null>(null)
+
+function doWeightedCount() {
+  if (!store.hasData || !store.shuttle.data) return
+  tierCounts.value = store.shuttle.manager.calculateTieredCounts(store.shuttle.data, countUnit.value)
+}
+
+const weightedSubtotals = computed(() => {
+  if (!tierCounts.value) return [0, 0, 0, 0, 0]
+  return tierCounts.value.map((count, i) => count * weights.value[i])
+})
+
+const totalRawCount = computed(() => {
+  if (!tierCounts.value) return 0
+  return tierCounts.value.reduce((a, b) => a + b, 0)
+})
+
+const totalWeightedCount = computed(() => {
+  return weightedSubtotals.value.reduce((a, b) => a + b, 0)
+})
+
 const hasTm = computed(() => tmFiles.value.length > 0)
 const hasTb = computed(() => tbFiles.value.length > 0)
 const hasDataInStore = computed(() => store.hasData)
@@ -81,9 +104,8 @@ async function doAnalyze() {
     await store.analyze(analyze_all)
 
     statusMsg.value = { text: t('shuttle.analyzer.msg_analyze_success'), type: 'success' }
-    setTimeout(() => {
-      router.push('/shuttle/manage')
-    }, 800)
+    // 自動リダイレクトを削除し、この画面でウェイト計算ができるようにします
+
 
   } catch (e: any) {
     console.error('Analyze error:', e)
@@ -165,11 +187,83 @@ async function doAnalyze() {
         <div v-if="statusMsg.text" :class="['status-box', statusMsg.type]">
           <span>{{ statusMsg.text }}</span>
         </div>
-        <button class="btn-run" @click="doAnalyze" :disabled="isProcessing || !hasDataInStore">
-          <Play v-if="!isProcessing" :size="18" />
-          <span v-else class="loader"></span>
-          {{ isProcessing ? $t('shuttle.analyzer.btn_analyzing') : $t('shuttle.analyzer.btn_analyze') }}
-        </button>
+        <div style="display: flex; gap: 12px; align-items: center;">
+          <button class="btn-outline-action" @click="doWeightedCount" :disabled="!hasDataInStore" style="font-size: 0.9rem; padding: 8px 16px;">
+            ウェイト文字数計算
+          </button>
+          <button class="btn-run" @click="doAnalyze" :disabled="isProcessing || !hasDataInStore">
+            <Play v-if="!isProcessing" :size="18" />
+            <span v-else class="loader"></span>
+            {{ isProcessing ? $t('shuttle.analyzer.btn_analyzing') : $t('shuttle.analyzer.btn_analyze') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ウェイト計算結果テーブル -->
+    <div class="content-card" style="margin-top: 24px;" v-if="tierCounts">
+      <div class="card-header space-between" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="header-main">
+          <div class="header-text">
+            <h1 style="font-size: 1.1rem;">ウェイト計算結果</h1>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; background: var(--bg-secondary); padding: 4px 12px; border-radius: 4px; border: 1px solid var(--border);">
+          <select v-model="countUnit" @change="doWeightedCount" class="select-sm" style="padding: 2px 4px; font-size: 0.8rem; border: none; background: transparent; cursor: pointer; color: var(--text);">
+            <option value="CHARA" style="background: var(--bg-secondary); color: var(--text);">文字数 (Chara)</option>
+            <option value="WORD" style="background: var(--bg-secondary); color: var(--text);">単語数 (Word)</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-container" style="padding: 0 24px 24px;">
+        <table style="width: 100%; text-align: left; border-collapse: collapse; margin-top: 16px;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <th style="padding: 12px 8px;">一致率区分</th>
+              <th style="padding: 12px 8px;">文字数</th>
+              <th style="padding: 12px 8px; width: 100px;">ウェイト</th>
+              <th style="padding: 12px 8px;">小計</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 8px;">100% 一致</td>
+              <td style="padding: 12px 8px; font-variant-numeric: tabular-nums;">{{ tierCounts[0].toLocaleString() }}</td>
+              <td style="padding: 12px 8px;"><input type="number" step="0.1" min="0" max="1" v-model.number="weights[0]" class="input-sm" style="width: 70px;" /></td>
+              <td style="padding: 12px 8px; font-weight: 600; font-variant-numeric: tabular-nums;">{{ Math.round(weightedSubtotals[0]).toLocaleString() }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 8px;">99% ～ 95%</td>
+              <td style="padding: 12px 8px; font-variant-numeric: tabular-nums;">{{ tierCounts[1].toLocaleString() }}</td>
+              <td style="padding: 12px 8px;"><input type="number" step="0.1" min="0" max="1" v-model.number="weights[1]" class="input-sm" style="width: 70px;" /></td>
+              <td style="padding: 12px 8px; font-weight: 600; font-variant-numeric: tabular-nums;">{{ Math.round(weightedSubtotals[1]).toLocaleString() }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 8px;">94% ～ 85%</td>
+              <td style="padding: 12px 8px; font-variant-numeric: tabular-nums;">{{ tierCounts[2].toLocaleString() }}</td>
+              <td style="padding: 12px 8px;"><input type="number" step="0.1" min="0" max="1" v-model.number="weights[2]" class="input-sm" style="width: 70px;" /></td>
+              <td style="padding: 12px 8px; font-weight: 600; font-variant-numeric: tabular-nums;">{{ Math.round(weightedSubtotals[2]).toLocaleString() }}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 8px;">84% ～ 75%</td>
+              <td style="padding: 12px 8px; font-variant-numeric: tabular-nums;">{{ tierCounts[3].toLocaleString() }}</td>
+              <td style="padding: 12px 8px;"><input type="number" step="0.1" min="0" max="1" v-model.number="weights[3]" class="input-sm" style="width: 70px;" /></td>
+              <td style="padding: 12px 8px; font-weight: 600; font-variant-numeric: tabular-nums;">{{ Math.round(weightedSubtotals[3]).toLocaleString() }}</td>
+            </tr>
+            <tr style="border-bottom: 2px solid var(--border);">
+              <td style="padding: 12px 8px;">74% 以下</td>
+              <td style="padding: 12px 8px; font-variant-numeric: tabular-nums;">{{ tierCounts[4].toLocaleString() }}</td>
+              <td style="padding: 12px 8px;"><input type="number" step="0.1" min="0" max="1" v-model.number="weights[4]" class="input-sm" style="width: 70px;" /></td>
+              <td style="padding: 12px 8px; font-weight: 600; font-variant-numeric: tabular-nums;">{{ Math.round(weightedSubtotals[4]).toLocaleString() }}</td>
+            </tr>
+            <tr style="background: var(--bg-hover);">
+              <td style="padding: 12px 8px; font-weight: bold;">合計</td>
+              <td style="padding: 12px 8px; font-weight: bold; font-variant-numeric: tabular-nums; color: var(--accent);">{{ totalRawCount.toLocaleString() }}</td>
+              <td style="padding: 12px 8px;"></td>
+              <td style="padding: 12px 8px; font-weight: bold; font-variant-numeric: tabular-nums; color: var(--accent);">{{ Math.round(totalWeightedCount).toLocaleString() }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

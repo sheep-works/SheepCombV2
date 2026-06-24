@@ -150,12 +150,13 @@
       "empty_viewer": "表示するデータがありません。\\n「解析」ページで作成するか、JSONファイルを読み込んでください。"
     },
     "api": {
-      "err_offline": "API サーバー (SheepHub) がオフラインです。起動しているか確認してください。",
+      "err_offline": "API サーバー (SheepBobbin) がオフラインです。起動しているか確認してください。",
       "title_request": "リクエスト設定",
       "lbl_chunk_mode": "チャンク作成モード",
-      "lbl_req_type": "リクエスト種別",
-      "lbl_prompt": "カスタムプロンプト (オプション)",
-      "placeholder_prompt": "例: 文末をですます調に統一してください。",
+      "lbl_req_type": "処理タイプ",
+      "lbl_prompt": "プロンプト",
+      "btn_load_prompt": "プロンプトファイルを読み込む",
+      "btn_reset_prompt": "プロンプトを初期状態に戻す",
       "btn_create_chunks": "チャンク作成",
       "btn_process_all": "全チャンク処理",
       "title_status": "接続ステータス",
@@ -164,7 +165,12 @@
       "title_list": "チャンク一覧",
       "btn_clear": "クリア",
       "empty_no_units": "まずは Parser タブでファイルを読み込んでください",
-      "empty_no_chunks": "「チャンク作成」ボタンを押してデータを分割してください"
+      "empty_no_chunks": "「チャンク作成」ボタンを押してデータを分割してください",
+      "lbl_password": "接続用パスワード",
+      "ph_password": "接続用パスワードを入力",
+      "lnk_manual": "マニュアルを見る",
+      "btn_export_csv": "CSVエクスポート",
+      "lbl_target_only": "訳文だけ出力"
     }
   },
   "testPage": {
@@ -182,9 +188,10 @@
       "html_th_old": "旧 (Old)",
       "html_th_new": "新 (New)",
       "html_th_diff": "差分 (Diff)",
-      "title_tool": "一括差分ツール",
-      "btn_check": "差分を確認",
-      "btn_import": "パーサーから読み込む",
+      "title_tool": "バッチツール",
+      "btn_check_block": "差分を確認",
+      "btn_check_lines": "差分を確認（行単位）",
+      "btn_import": "エディタからインポート",
       "btn_clear": "クリア",
       "lbl_show_all": "差分がない行も表示",
       "btn_download_html": "HTMLダウンロード",

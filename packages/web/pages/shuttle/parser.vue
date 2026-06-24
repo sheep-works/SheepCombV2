@@ -31,6 +31,13 @@ const statusMsg = computed(() => {
   return store.statusMsg
 })
 
+// Counts
+const countUnit = ref<'CHARA' | 'WORD'>('CHARA')
+const unitCounts = computed(() => {
+  if (!store.hasUnits) return { src: 0, tgt: 0 }
+  return store.shuttle.manager.countUnits(store.units, countUnit.value)
+})
+
 // Pagination logic
 const currentPage = ref(1)
 const itemsPerPage = 100
@@ -146,6 +153,7 @@ const exportResults = (format: 'json' | 'csv') => {
 // --- フィルタ設定 ---
 const filterOptions = ref({
   toFilterDuplicate: false,
+  filterLevel: 'SRC_TGT_NOTE' as 'SRC' | 'SRC_TGT' | 'SRC_TGT_NOTE',
   toFilterDnt: null as 'digit' | 'eng' | 'digit eng' | null,
   toFilterLock: false
 })
@@ -236,9 +244,16 @@ const applySampling = () => {
             <div class="filter-divider"></div>
             <h3 class="filter-title">{{ $t('shuttle.parser.filter_title') }}</h3>
 
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="filterOptions.toFilterDuplicate" />
-              <span>{{ $t('shuttle.parser.filter_duplicate') }}</span>
+            <label class="checkbox-label" style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" v-model="filterOptions.toFilterDuplicate" />
+                <span>{{ $t('shuttle.parser.filter_duplicate') }}</span>
+              </div>
+              <select v-model="filterOptions.filterLevel" class="select-sm" :disabled="!filterOptions.toFilterDuplicate" style="width: auto; padding: 2px 6px; font-size: 0.75rem;">
+                <option value="SRC">原文のみ</option>
+                <option value="SRC_TGT">原文＋訳文</option>
+                <option value="SRC_TGT_NOTE">原文＋訳文＋備考</option>
+              </select>
             </label>
 
             <label class="checkbox-label">
@@ -291,11 +306,22 @@ const applySampling = () => {
       <section class="results-area">
         <div class="card full-height">
           <div class="card-header space-between">
-            <div class="title-group">
-              <h2>{{ $t('shuttle.parser.results_title') }}</h2>
+            <div class="title-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px; width: 100%;">
+              <h2 style="margin: 0;">{{ $t('shuttle.parser.results_title') }}</h2>
               <span class="badge" v-if="store.hasUnits">
                 {{ $t('shuttle.parser.segments', { count: store.unitCount }) }}
               </span>
+
+              <div v-if="store.hasUnits" style="display: flex; align-items: center; gap: 6px; margin-left: auto; font-size: 0.8rem; background: var(--bg-secondary); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border);">
+                <select v-model="countUnit" class="select-sm" style="padding: 2px 4px; font-size: 0.75rem; border: none; background: transparent; cursor: pointer; color: var(--text);">
+                  <option value="CHARA" style="background: var(--bg-secondary); color: var(--text);">文字数 (Chara)</option>
+                  <option value="WORD" style="background: var(--bg-secondary); color: var(--text);">単語数 (Word)</option>
+                </select>
+                <span style="color: var(--text-secondary);">|</span>
+                <span style="color: var(--text);">Src: <strong>{{ unitCounts.src.toLocaleString() }}</strong></span>
+                <span style="color: var(--text-secondary);">/</span>
+                <span style="color: var(--text);">Tgt: <strong>{{ unitCounts.tgt.toLocaleString() }}</strong></span>
+              </div>
             </div>
             <div class="export-actions" v-if="store.hasUnits">
               <button class="btn-outline" @click="exportResults('csv')">

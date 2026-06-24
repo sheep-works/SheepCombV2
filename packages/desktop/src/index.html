@@ -2,19 +2,19 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>SheepHub Local</title>
+  <title>SheepBobbin Local</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-color: #0b0f19;
-      --card-bg: #151c2c;
-      --terminal-bg: #090d16;
-      --text-color: #e2e8f0;
-      --text-muted: #64748b;
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
+      --bg-color: #0f1117;
+      --card-bg: #161822;
+      --terminal-bg: #0d0f14;
+      --text-color: rgba(255, 255, 245, 0.92);
+      --text-muted: rgba(235, 235, 245, 0.5);
+      --primary: #10b981;
+      --primary-hover: #059669;
       
       --status-running: #10b981;
       --status-starting: #f59e0b;
@@ -59,7 +59,7 @@
       font-size: 1.25rem;
       font-weight: 700;
       letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 100%);
+      background: linear-gradient(135deg, #6ee7b7 0%, #10b981 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -151,7 +151,7 @@
     .action-btn:hover {
       background-color: var(--primary-hover);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
 
     .action-btn.secondary {
@@ -278,66 +278,7 @@
       color: #e2e8f0;
     }
 
-    /* Settings Modal Styling */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(11, 15, 25, 0.85);
-      backdrop-filter: blur(8px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-
-    .modal-overlay.open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .modal-card {
-      background-color: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      width: 480px;
-      max-width: 90%;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-      transform: translateY(20px);
-      transition: transform 0.3s ease;
-      overflow: hidden;
-    }
-
-    .modal-overlay.open .modal-card {
-      transform: translateY(0);
-    }
-
-    .modal-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text-color);
-    }
-
-    .modal-body {
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
+    /* Form & Input Styling */
     .form-group {
       display: flex;
       flex-direction: column;
@@ -357,7 +298,7 @@
       padding: 10px 14px;
       border-radius: 8px;
       font-size: 0.9rem;
-      font-family: 'Fira Code', monospace;
+      font-family: inherit;
       outline: none;
       transition: border-color 0.2s;
       width: 100%;
@@ -372,37 +313,109 @@
       color: var(--text-muted);
     }
 
-    .modal-footer {
-      padding: 16px 24px;
-      background-color: rgba(0, 0, 0, 0.1);
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
+    .provider-settings-group {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      border-left: 2px solid var(--primary);
+      padding-left: 12px;
+      margin: 4px 0;
     }
 
-    .modal-close-x {
+    .provider-settings-group.active {
+      display: flex;
+    }
+
+    /* Tab Navigation Styling */
+    .tab-navigation {
+      display: flex;
+      background-color: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 4px;
+    }
+
+    .tab-btn {
       background: none;
       border: none;
       color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
       cursor: pointer;
-      font-size: 1.5rem;
-      line-height: 1;
-      padding: 4px;
-      transition: color 0.2s;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .modal-close-x:hover {
+    .tab-btn:hover {
       color: var(--text-color);
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .tab-btn.active {
+      background-color: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+    }
+
+    /* Tab Content Layout */
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      gap: 16px;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* Settings Workspace Layout */
+    .settings-container {
+      max-width: 620px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 4px;
+    }
+
+    .settings-card {
+      background-color: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
   </style>
 </head>
 <body>
   <header>
     <div class="brand-section">
-      <h1>SheepHub Local</h1>
-      <div class="subtitle">Local Vertex AI Gateway Server</div>
+      <h1>SheepBobbin Local</h1>
+      <div class="subtitle">SheepBobbin Local API Gateway</div>
     </div>
+
+    <div class="tab-navigation">
+      <button id="tab-settings" class="tab-btn active">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Gateway Settings
+      </button>
+      <button id="tab-console" class="tab-btn">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Console (Dev)
+      </button>
+    </div>
+
     <div class="status-group">
       <div class="status-badge">
         <div id="status-dot" class="status-dot STOPPED"></div>
@@ -412,61 +425,159 @@
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
         Open Web UI
       </button>
-      <button id="settings-btn" class="action-btn secondary" style="padding: 8px;" title="Settings">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      </button>
     </div>
   </header>
 
   <main>
-    <div class="toolbar">
-      <input type="text" id="search-logs" class="search-input" placeholder="Filter logs...">
-      <div style="display: flex; gap: 8px;">
-        <button id="greet-btn" class="action-btn secondary">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-          Test Greet
-        </button>
-        <button id="restart-btn" class="action-btn secondary">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg>
-          Restart Server
-        </button>
+    <!-- Settings Tab (Active by Default) -->
+    <div id="content-settings" class="tab-content active" style="overflow-y: auto;">
+      <div class="settings-container">
+        <div class="settings-card">
+          <div class="form-group">
+            <label for="provider-select" class="form-label">Active Provider</label>
+            <select id="provider-select" class="form-input">
+              <option value="vertex-sheep">Vertex AI (Sheep)</option>
+              <option value="vertex">Vertex AI (User Account)</option>
+              <option value="gemini">Google AI Studio (Gemini)</option>
+              <option value="ollama">Ollama (Local)</option>
+              <option value="lmstudio">LM Studio (Local)</option>
+            </select>
+            <span class="form-help">Choose which AI provider handles your requests.</span>
+          </div>
+
+          <div id="vertex-settings" class="provider-settings-group">
+            <div class="form-group">
+              <label for="project-id-input" class="form-label">GCP Project ID</label>
+              <input type="text" id="project-id-input" class="form-input" placeholder="e.g. my-gcp-project-123">
+              <span class="form-help">Your Google Cloud Platform Project ID used by Vertex AI.</span>
+            </div>
+          </div>
+
+          <div id="gemini-settings" class="provider-settings-group">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="gemini-key-input" class="form-label">AI Studio API Key (AI_STUDIO_FREE)</label>
+              <input type="password" id="gemini-key-input" class="form-input" placeholder="Enter AI Studio API Key">
+              <span class="form-help">Google AI Studio API Key. Can also be set in .env.</span>
+            </div>
+            <div class="form-group">
+              <label for="gemini-model-select" class="form-label">Gemini Model</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <select id="gemini-model-select" class="form-input" style="flex: 1;"></select>
+                <input type="text" id="gemini-model-input" class="form-input" placeholder="e.g. gemini-1.5-flash" style="display: none; flex: 1;">
+                <button type="button" id="refresh-gemini-btn" class="action-btn secondary" style="padding: 0 16px; white-space: nowrap; height: 38px; display: flex; align-items: center; gap: 4px;" title="Fetch models from Google AI Studio">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg>
+                  Fetch
+                </button>
+              </div>
+              <div style="margin-top: 4px; text-align: right;">
+                <a href="#" id="toggle-gemini-manual-btn" style="font-size: 0.8rem; color: var(--accent-color); text-decoration: none;">Enter model name manually</a>
+              </div>
+              <span class="form-help">Select the model from AI Studio, or input it manually.</span>
+            </div>
+          </div>
+
+          <div id="ollama-settings" class="provider-settings-group">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="ollama-url-input" class="form-label">Ollama Server URL</label>
+              <input type="text" id="ollama-url-input" class="form-input" placeholder="e.g. http://localhost:11434">
+              <span class="form-help">Base URL of your local Ollama instance.</span>
+            </div>
+            <div class="form-group">
+              <label for="ollama-model-select" class="form-label">Ollama Model</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <select id="ollama-model-select" class="form-input" style="flex: 1;"></select>
+                <input type="text" id="ollama-model-input" class="form-input" placeholder="e.g. gemma4:e2b" style="display: none; flex: 1;">
+                <button type="button" id="refresh-ollama-btn" class="action-btn secondary" style="padding: 0 16px; white-space: nowrap; height: 38px; display: flex; align-items: center; gap: 4px;" title="Fetch models from local Ollama server">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg>
+                  Fetch
+                </button>
+              </div>
+              <div style="margin-top: 4px; text-align: right;">
+                <a href="#" id="toggle-ollama-manual-btn" style="font-size: 0.8rem; color: var(--accent-color); text-decoration: none;">Enter model name manually</a>
+              </div>
+              <span class="form-help">Select the model from Ollama, or input it manually.</span>
+            </div>
+          </div>
+
+          <div id="lmstudio-settings" class="provider-settings-group">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="lmstudio-url-input" class="form-label">LM Studio Server URL</label>
+              <input type="text" id="lmstudio-url-input" class="form-input" placeholder="e.g. http://127.0.0.1:1234">
+              <span class="form-help">Base URL of your LM Studio server.</span>
+            </div>
+            <div class="form-group">
+              <label for="lmstudio-model-select" class="form-label">LM Studio Model</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <select id="lmstudio-model-select" class="form-input" style="flex: 1;"></select>
+                <input type="text" id="lmstudio-model-input" class="form-input" placeholder="e.g. local-model" style="display: none; flex: 1;">
+                <button type="button" id="refresh-lmstudio-btn" class="action-btn secondary" style="padding: 0 16px; white-space: nowrap; height: 38px; display: flex; align-items: center; gap: 4px;" title="Fetch models from local LM Studio server">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg>
+                  Fetch
+                </button>
+              </div>
+              <div style="margin-top: 4px; text-align: right;">
+                <a href="#" id="toggle-lmstudio-manual-btn" style="font-size: 0.8rem; color: var(--accent-color); text-decoration: none;">Enter model name manually</a>
+              </div>
+              <span class="form-help">Select the model from LM Studio, or input it manually.</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="api-key-input" class="form-label">SheepHub API Key</label>
+            <div style="display: flex; gap: 8px; position: relative; align-items: center;">
+              <input type="password" id="api-key-input" class="form-input" placeholder="e.g. my-secret-key" style="flex: 1; padding-right: 40px;">
+              <button type="button" id="toggle-api-key-btn" style="position: absolute; right: 12px; background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center;" title="Show/Hide API Key">
+                <svg id="eye-icon-show" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: block;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg id="eye-icon-hide" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: none;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.024 10.024 0 014.13-4.833M9.9 4.24a9.122 9.122 0 012.1-.24c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 4.83m-4.148-1.275A3 3 0 1111.24 9.88" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
+                </svg>
+              </button>
+            </div>
+            <span class="form-help">Access key (X-API-KEY) for authorizing connections from Nuxt Web UI.</span>
+          </div>
+        </div>
+        
+        <div style="display: flex; justify-content: flex-end;">
+          <button id="save-settings-btn" class="action-btn" style="padding: 12px 24px; font-size: 0.95rem;">
+            Save & Restart Server
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="terminal-container">
-      <div class="terminal-header">
-        <span>CONSOLE OUTPUT (PORT 8000)</span>
-        <span id="log-count">0 lines</span>
+    <!-- Console Tab (Developer Tools) -->
+    <div id="content-console" class="tab-content">
+      <div class="toolbar">
+        <input type="text" id="search-logs" class="search-input" placeholder="Filter logs...">
+        <div style="display: flex; gap: 8px;">
+          <button id="greet-btn" class="action-btn secondary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            Test Greet
+          </button>
+          <button id="restart-btn" class="action-btn secondary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg>
+            Restart Server
+          </button>
+          <button id="open-logs-btn" class="action-btn secondary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+            Open Logs
+          </button>
+        </div>
       </div>
-      <div id="terminal-body" class="terminal-body"></div>
+
+      <div class="terminal-container">
+        <div class="terminal-header">
+          <span>CONSOLE OUTPUT (PORT 8000)</span>
+          <span id="log-count">0 lines</span>
+        </div>
+        <div id="terminal-body" class="terminal-body"></div>
+      </div>
     </div>
   </main>
-
-  <!-- Settings Modal -->
-  <div id="settings-modal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <span class="modal-title">Gateway Settings</span>
-        <button id="modal-close-x" class="modal-close-x">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label for="project-id-input" class="form-label">GCP Project ID</label>
-          <input type="text" id="project-id-input" class="form-input" placeholder="e.g. my-gcp-project-123">
-          <span class="form-help">Your Google Cloud Platform Project ID used by Vertex AI.</span>
-        </div>
-        <div class="form-group">
-          <label for="api-key-input" class="form-label">SheepHub API Key</label>
-          <input type="text" id="api-key-input" class="form-input" placeholder="e.g. my-secret-key">
-          <span class="form-help">Access key (X-API-KEY) for authorizing connections from Nuxt Web UI.</span>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="modal-cancel-btn" class="action-btn secondary">Cancel</button>
-        <button id="modal-save-btn" class="action-btn">Save & Restart</button>
-      </div>
-    </div>
-  </div>
 
   <script>
     const terminalBody = document.getElementById('terminal-body');
@@ -474,6 +585,7 @@
     const statusText = document.getElementById('status-text');
     const openUiBtn = document.getElementById('open-ui-btn');
     const restartBtn = document.getElementById('restart-btn');
+    const openLogsBtn = document.getElementById('open-logs-btn');
     const greetBtn = document.getElementById('greet-btn');
     const searchLogs = document.getElementById('search-logs');
     const logCountText = document.getElementById('log-count');
@@ -558,6 +670,10 @@
       window.apiConsole.openWebUi();
     });
 
+    openLogsBtn.addEventListener('click', () => {
+      window.apiConsole.openLogsFolder();
+    });
+
     restartBtn.addEventListener('click', () => {
       terminalBody.innerHTML = '';
       allLogs = [];
@@ -593,65 +709,312 @@
       }
     });
 
-    // Settings logic
-    const settingsBtn = document.getElementById('settings-btn');
-    const settingsModal = document.getElementById('settings-modal');
-    const modalCloseX = document.getElementById('modal-close-x');
-    const modalCancelBtn = document.getElementById('modal-cancel-btn');
-    const modalSaveBtn = document.getElementById('modal-save-btn');
+    // Tabs Navigation Logic
+    const tabSettingsBtn = document.getElementById('tab-settings');
+    const tabConsoleBtn = document.getElementById('tab-console');
+    const contentSettings = document.getElementById('content-settings');
+    const contentConsole = document.getElementById('content-console');
+
+    function switchTab(activeTab) {
+      tabSettingsBtn.classList.remove('active');
+      tabConsoleBtn.classList.remove('active');
+      contentSettings.classList.remove('active');
+      contentConsole.classList.remove('active');
+
+      if (activeTab === 'settings') {
+        tabSettingsBtn.classList.add('active');
+        contentSettings.classList.add('active');
+      } else {
+        tabConsoleBtn.classList.add('active');
+        contentConsole.classList.add('active');
+      }
+    }
+
+    tabSettingsBtn.addEventListener('click', () => switchTab('settings'));
+    tabConsoleBtn.addEventListener('click', () => switchTab('console'));
+
+    // Settings Logic
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+    
+    const providerSelect = document.getElementById('provider-select');
     const projectIdInput = document.getElementById('project-id-input');
     const apiKeyInput = document.getElementById('api-key-input');
+    
+    // Gemini
+    const geminiKeyInput = document.getElementById('gemini-key-input');
+    const geminiModelInput = document.getElementById('gemini-model-input');
+    const geminiModelSelect = document.getElementById('gemini-model-select');
+    const refreshGeminiBtn = document.getElementById('refresh-gemini-btn');
+    const toggleGeminiManualBtn = document.getElementById('toggle-gemini-manual-btn');
+    let geminiManualMode = false;
 
-    // Toggle Modal
-    settingsBtn.addEventListener('click', async () => {
+    // Ollama
+    const ollamaUrlInput = document.getElementById('ollama-url-input');
+    const ollamaModelInput = document.getElementById('ollama-model-input');
+    const ollamaModelSelect = document.getElementById('ollama-model-select');
+    const refreshOllamaBtn = document.getElementById('refresh-ollama-btn');
+    const toggleOllamaManualBtn = document.getElementById('toggle-ollama-manual-btn');
+    let ollamaManualMode = false;
+
+    // LM Studio
+    const lmstudioUrlInput = document.getElementById('lmstudio-url-input');
+    const lmstudioModelInput = document.getElementById('lmstudio-model-input');
+    const lmstudioModelSelect = document.getElementById('lmstudio-model-select');
+    const refreshLmstudioBtn = document.getElementById('refresh-lmstudio-btn');
+    const toggleLmstudioManualBtn = document.getElementById('toggle-lmstudio-manual-btn');
+    let lmstudioManualMode = false;
+
+    function toggleGeminiMode(manual) {
+      geminiManualMode = manual;
+      if (manual) {
+        geminiModelSelect.style.display = 'none';
+        geminiModelInput.style.display = 'block';
+        toggleGeminiManualBtn.textContent = 'Select from list';
+      } else {
+        geminiModelSelect.style.display = 'block';
+        geminiModelInput.style.display = 'none';
+        toggleGeminiManualBtn.textContent = 'Enter model name manually';
+      }
+    }
+
+    function toggleOllamaMode(manual) {
+      ollamaManualMode = manual;
+      if (manual) {
+        ollamaModelSelect.style.display = 'none';
+        ollamaModelInput.style.display = 'block';
+        toggleOllamaManualBtn.textContent = 'Select from list';
+      } else {
+        ollamaModelSelect.style.display = 'block';
+        ollamaModelInput.style.display = 'none';
+        toggleOllamaManualBtn.textContent = 'Enter model name manually';
+      }
+    }
+
+    function toggleLmstudioMode(manual) {
+      lmstudioManualMode = manual;
+      if (manual) {
+        lmstudioModelSelect.style.display = 'none';
+        lmstudioModelInput.style.display = 'block';
+        toggleLmstudioManualBtn.textContent = 'Select from list';
+      } else {
+        lmstudioModelSelect.style.display = 'block';
+        lmstudioModelInput.style.display = 'none';
+        toggleLmstudioManualBtn.textContent = 'Enter model name manually';
+      }
+    }
+
+    toggleGeminiManualBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleGeminiMode(!geminiManualMode);
+    });
+
+    toggleOllamaManualBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleOllamaMode(!ollamaManualMode);
+    });
+
+    toggleLmstudioManualBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleLmstudioMode(!lmstudioManualMode);
+    });
+
+    geminiModelSelect.addEventListener('change', () => {
+      geminiModelInput.value = geminiModelSelect.value;
+    });
+
+    ollamaModelSelect.addEventListener('change', () => {
+      ollamaModelInput.value = ollamaModelSelect.value;
+    });
+
+    lmstudioModelSelect.addEventListener('change', () => {
+      lmstudioModelInput.value = lmstudioModelSelect.value;
+    });
+
+    async function fetchAndPopulateModels(provider, url, selectEl, inputEl, toggleModeFn, isStartup = false) {
+      try {
+        const models = await window.apiConsole.fetchModels(provider, url);
+        if (Array.isArray(models) && models.length > 0) {
+          selectEl.innerHTML = '';
+          models.forEach(model => {
+            const opt = document.createElement('option');
+            opt.value = model;
+            opt.textContent = model;
+            selectEl.appendChild(opt);
+          });
+          
+          // Select saved model if it matches one of the options
+          const currentValue = inputEl.value;
+          if (models.includes(currentValue)) {
+            selectEl.value = currentValue;
+          } else {
+            // Otherwise, default to first option and update inputEl
+            selectEl.selectedIndex = 0;
+            inputEl.value = selectEl.value;
+          }
+          toggleModeFn(false);
+          return true;
+        } else {
+          if (!isStartup) {
+            alert(`No models found on ${provider} server. Make sure the server is online and has models.`);
+          }
+          selectEl.innerHTML = '<option value="">(No models loaded)</option>';
+          toggleModeFn(true);
+          return false;
+        }
+      } catch (err) {
+        if (!isStartup) {
+          alert(`Failed to connect to ${provider} server at ${url}: ${err.message}`);
+        }
+        selectEl.innerHTML = '<option value="">(Error loading models)</option>';
+        toggleModeFn(true);
+        return false;
+      }
+    }
+
+    refreshGeminiBtn.addEventListener('click', async () => {
+      refreshGeminiBtn.disabled = true;
+      refreshGeminiBtn.textContent = 'Fetching...';
+      await fetchAndPopulateModels('gemini', '', geminiModelSelect, geminiModelInput, toggleGeminiMode);
+      refreshGeminiBtn.disabled = false;
+      refreshGeminiBtn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg> Fetch`;
+    });
+
+    refreshOllamaBtn.addEventListener('click', async () => {
+      refreshOllamaBtn.disabled = true;
+      refreshOllamaBtn.textContent = 'Fetching...';
+      await fetchAndPopulateModels('ollama', ollamaUrlInput.value.trim(), ollamaModelSelect, ollamaModelInput, toggleOllamaMode);
+      refreshOllamaBtn.disabled = false;
+      refreshOllamaBtn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg> Fetch`;
+    });
+
+    refreshLmstudioBtn.addEventListener('click', async () => {
+      refreshLmstudioBtn.disabled = true;
+      refreshLmstudioBtn.textContent = 'Fetching...';
+      await fetchAndPopulateModels('lmstudio', lmstudioUrlInput.value.trim(), lmstudioModelSelect, lmstudioModelInput, toggleLmstudioMode);
+      refreshLmstudioBtn.disabled = false;
+      refreshLmstudioBtn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg> Fetch`;
+    });
+
+    // Toggle API Key visibility logic
+    const toggleApiKeyBtn = document.getElementById('toggle-api-key-btn');
+    const eyeIconShow = document.getElementById('eye-icon-show');
+    const eyeIconHide = document.getElementById('eye-icon-hide');
+
+    toggleApiKeyBtn.addEventListener('click', () => {
+      if (apiKeyInput.type === 'password') {
+        apiKeyInput.type = 'text';
+        eyeIconShow.style.display = 'none';
+        eyeIconHide.style.display = 'block';
+      } else {
+        apiKeyInput.type = 'password';
+        eyeIconShow.style.display = 'block';
+        eyeIconHide.style.display = 'none';
+      }
+    });
+
+    const vertexSettings = document.getElementById('vertex-settings');
+    const geminiSettings = document.getElementById('gemini-settings');
+    const ollamaSettings = document.getElementById('ollama-settings');
+    const lmstudioSettings = document.getElementById('lmstudio-settings');
+
+    // Function to handle switching of active provider settings UI visibility
+    function updateProviderUi(activeProvider) {
+      vertexSettings.classList.remove('active');
+      geminiSettings.classList.remove('active');
+      ollamaSettings.classList.remove('active');
+      lmstudioSettings.classList.remove('active');
+
+      if (activeProvider === 'vertex') {
+        vertexSettings.classList.add('active');
+      } else if (activeProvider === 'gemini') {
+        geminiSettings.classList.add('active');
+      } else if (activeProvider === 'ollama') {
+        ollamaSettings.classList.add('active');
+      } else if (activeProvider === 'lmstudio') {
+        lmstudioSettings.classList.add('active');
+      }
+    }
+
+    providerSelect.addEventListener('change', () => {
+      updateProviderUi(providerSelect.value);
+    });
+
+    // Load initial settings on application startup
+    async function loadSettingsOnStartup() {
       try {
         const settings = await window.apiConsole.getSettings();
-        projectIdInput.value = settings.projectId || '';
-        apiKeyInput.value = settings.apiKeySheep || '';
+        
+        providerSelect.value = settings.ACTIVE_PROVIDER || 'vertex-sheep';
+        projectIdInput.value = settings.PROJECT_ID || '';
+        apiKeyInput.value = settings.API_KEY_SHEEP || '';
+        geminiKeyInput.value = settings.AI_STUDIO_FREE || '';
+        geminiModelInput.value = settings.GEMINI_MODEL || 'gemini-1.5-flash';
+        ollamaUrlInput.value = settings.OLLAMA_URL || 'http://localhost:11434';
+        ollamaModelInput.value = settings.OLLAMA_MODEL || 'gemma4:e2b';
+        lmstudioUrlInput.value = settings.LMSTUDIO_URL || 'http://127.0.0.1:1234';
+        lmstudioModelInput.value = settings.LMSTUDIO_MODEL || 'local-model';
+
+        updateProviderUi(providerSelect.value);
       } catch (err) {
         console.error('Failed to load settings:', err);
       }
-      settingsModal.classList.add('open');
-    });
-
-    function closeSettingsModal() {
-      settingsModal.classList.remove('open');
     }
+    loadSettingsOnStartup();
 
-    modalCloseX.addEventListener('click', closeSettingsModal);
-    modalCancelBtn.addEventListener('click', closeSettingsModal);
-
-    settingsModal.addEventListener('click', (e) => {
-      if (e.target === settingsModal) {
-        closeSettingsModal();
+    let hasFetchedModelsOnStart = false;
+    window.apiConsole.onServerStatus((status) => {
+      if (status === 'STARTING') {
+        hasFetchedModelsOnStart = false;
+      }
+      if (status === 'RUNNING' && !hasFetchedModelsOnStart) {
+        hasFetchedModelsOnStart = true;
+        // Try populating model selectors now that Hono is running
+        if (ollamaUrlInput.value.trim()) {
+          fetchAndPopulateModels('ollama', ollamaUrlInput.value.trim(), ollamaModelSelect, ollamaModelInput, toggleOllamaMode, true);
+        }
+        if (lmstudioUrlInput.value.trim()) {
+          fetchAndPopulateModels('lmstudio', lmstudioUrlInput.value.trim(), lmstudioModelSelect, lmstudioModelInput, toggleLmstudioMode, true);
+        }
+        fetchAndPopulateModels('gemini', '', geminiModelSelect, geminiModelInput, toggleGeminiMode, true);
       }
     });
 
-    modalSaveBtn.addEventListener('click', async () => {
-      modalSaveBtn.disabled = true;
-      modalSaveBtn.textContent = 'Saving...';
+    saveSettingsBtn.addEventListener('click', async () => {
+      saveSettingsBtn.disabled = true;
+      saveSettingsBtn.textContent = 'Saving...';
       
-      const projectId = projectIdInput.value.trim();
-      const apiKeySheep = apiKeyInput.value.trim();
+      const payload = {
+        ACTIVE_PROVIDER: providerSelect.value,
+        PROJECT_ID: projectIdInput.value.trim(),
+        API_KEY_SHEEP: apiKeyInput.value.trim(),
+        AI_STUDIO_FREE: geminiKeyInput.value.trim(),
+        GEMINI_MODEL: geminiModelInput.value.trim(),
+        OLLAMA_URL: ollamaUrlInput.value.trim(),
+        OLLAMA_MODEL: ollamaModelInput.value.trim(),
+        LMSTUDIO_URL: lmstudioUrlInput.value.trim(),
+        LMSTUDIO_MODEL: lmstudioModelInput.value.trim()
+      };
 
       try {
-        const result = await window.apiConsole.saveSettings({ projectId, apiKeySheep });
+        const result = await window.apiConsole.saveSettings(payload);
         if (result.success) {
+          // Switch to console to let user see status/restarting logs
+          switchTab('console');
+          
           const line = `[Desktop Info] Settings updated successfully. Restarting Hono server...`;
           allLogs.push(line);
           logLineCounter++;
           appendLogLine(line);
           logCountText.textContent = logLineCounter + ' lines';
           terminalBody.scrollTop = terminalBody.scrollHeight;
-          closeSettingsModal();
         } else {
           alert('Failed to save settings: ' + result.error);
         }
       } catch (err) {
         alert('Error saving settings: ' + err.message);
       } finally {
-        modalSaveBtn.disabled = false;
-        modalSaveBtn.textContent = 'Save & Restart';
+        saveSettingsBtn.disabled = false;
+        saveSettingsBtn.textContent = 'Save & Restart Server';
       }
     });
   </script>

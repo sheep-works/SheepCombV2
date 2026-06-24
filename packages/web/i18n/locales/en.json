@@ -150,11 +150,13 @@
       "empty_viewer": "No data to display.\\nCreate on 'Analyzer' page or load a JSON file."
     },
     "api": {
-      "err_offline": "API Server (SheepHub) is offline. Please check.",
+      "err_offline": "API Server (SheepBobbin) is offline. Please check.",
       "title_request": "Request Settings",
       "lbl_chunk_mode": "Chunking Mode",
       "lbl_req_type": "Request Type",
-      "lbl_prompt": "Custom Prompt (Optional)",
+      "lbl_prompt": "Prompt",
+      "btn_load_prompt": "Load Prompt from File",
+      "btn_reset_prompt": "Reset Prompt to Default",
       "placeholder_prompt": "e.g., Unify the ending style.",
       "btn_create_chunks": "Create Chunks",
       "btn_process_all": "Process All",
@@ -164,7 +166,12 @@
       "title_list": "Chunk List",
       "btn_clear": "Clear",
       "empty_no_units": "Load files in the Parser tab first",
-      "empty_no_chunks": "Press 'Create Chunks' to split the data"
+      "empty_no_chunks": "Press 'Create Chunks' to split the data",
+      "lbl_password": "Connection Password",
+      "ph_password": "Enter Connection Password",
+      "lnk_manual": "View Manual",
+      "btn_export_csv": "Export CSV",
+      "lbl_target_only": "Output Target Only"
     }
   },
   "testPage": {
@@ -182,9 +189,10 @@
       "html_th_old": "Old",
       "html_th_new": "New",
       "html_th_diff": "Diff",
-      "title_tool": "Batch Diff Tool",
-      "btn_check": "Check Diff",
-      "btn_import": "Import from Parser",
+      "title_tool": "Batch Tool",
+      "btn_check_block": "Check Diff",
+      "btn_check_lines": "Check Diff (Line by Line)",
+      "btn_import": "Import from Editor",
       "btn_clear": "Clear",
       "lbl_show_all": "Show unmodified lines",
       "btn_download_html": "Download HTML",

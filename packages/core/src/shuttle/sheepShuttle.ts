@@ -211,11 +211,11 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   /**
    * Create chunks for API processing and store them in this.chunks.
    */
-  public createChunks(type: 'units' | 'data', maxCharsPerChunk: number = 4000): void {
+  public createChunks(type: 'units' | 'data', maxCharsPerChunk: number = 4000, targetOnly: boolean = false): void {
     this.chunks = []
 
     if (type === 'units') {
-      const chunkStrings = this.processor.chunkUnits(this.units, maxCharsPerChunk)
+      const chunkStrings = this.processor.chunkUnits(this.units, maxCharsPerChunk, targetOnly)
       this.chunks = chunkStrings.map((s, i) => ({
         chunkId: i,
         data: s,
@@ -227,7 +227,7 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
         throw new Error('No data available')
       }
       // manager.getManagedData('JSONL_CHUNKED', ...) returns newline-separated chunk strings
-      const rawData = this.manager.getManagedData('JSONL_CHUNKED', this.data, maxCharsPerChunk)
+      const rawData = this.manager.getManagedData('JSONL_CHUNKED', this.data, maxCharsPerChunk, targetOnly)
       const chunkStrings = rawData.split('\n').filter(s => s.trim().length > 0)
       this.chunks = chunkStrings.map((s, i) => ({
         chunkId: i,
@@ -240,7 +240,7 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
 
   public async processRequests(
     chunkIndex: number = -1,
-    requestTarget: 'CHECK' | 'TRANSLATE' = 'CHECK',
+    requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK',
     prompt?: string): Promise<void> {
 
     // 1. Target chunk selection
@@ -257,19 +257,53 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
 
     const chunk = this.chunks[targetIdx]!;
 
+    // Auto-caching logic for long prompts (> 3000 chars)
+    if (prompt && prompt.length > 3000) {
+      if (!this.requests.cacheName || this.requests.cachedPromptText !== prompt) {
+        if (this.requests.cacheName) {
+          try {
+            await this.requests.deleteCache({ cache_name: this.requests.cacheName });
+          } catch (e) {
+            console.warn('Failed to delete old prompt cache:', e);
+          }
+        }
+        const displayName = `auto-prompt-${Date.now()}`;
+        try {
+          const res = await this.requests.initPrompt({
+            system_instruction: prompt,
+            display_name: displayName
+          });
+          if (res.status === 'success' && res.result) {
+            this.requests.cacheName = res.result;
+            this.requests.cachedPromptText = prompt;
+          }
+        } catch (e) {
+          console.error('Failed to initialize prompt cache:', e);
+        }
+      }
+    }
+
     try {
       const isSyncProvider = this.requests.getProvider() !== 'fastapi';
+      
+      let finalPrompt = prompt && prompt.trim() !== '' ? prompt : undefined;
+      let finalCacheId = (!prompt || prompt.trim() === '') ? this.requests.cacheName : undefined;
+
+      if (prompt && prompt.length > 3000 && this.requests.cacheName) {
+        finalPrompt = undefined;
+        finalCacheId = this.requests.cacheName;
+      }
 
       if (isSyncProvider) {
         // 同期プロバイダー (Ollama, LM Studio) の場合、そのまま結果を待つ
         chunk.status = 'pending';
         let resultResponse: ResultResponse;
 
-        if ((prompt && prompt.trim() !== '') || this.requests.cacheName) {
+        if (finalPrompt || finalCacheId) {
           const params: UserRequest = {
             chunk: chunk.data,
-            prompt: prompt && prompt.trim() !== '' ? prompt : undefined,
-            cache_id: (!prompt || prompt.trim() === '') ? this.requests.cacheName : undefined
+            prompt: finalPrompt,
+            cache_id: finalCacheId
           };
           if (requestTarget === 'CHECK') {
             resultResponse = await this.requests.checkUserSync(params);
@@ -296,11 +330,11 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
         // 非同期プロバイダー (FastAPI) の場合
         let taskResponse: TaskResponse;
 
-        if ((prompt && prompt.trim() !== '') || this.requests.cacheName) {
+        if (finalPrompt || finalCacheId) {
           const params: UserRequest = {
             chunk: chunk.data,
-            prompt: prompt && prompt.trim() !== '' ? prompt : undefined,
-            cache_id: (!prompt || prompt.trim() === '') ? this.requests.cacheName : undefined
+            prompt: finalPrompt,
+            cache_id: finalCacheId
           };
 
           if (requestTarget === 'CHECK') {
