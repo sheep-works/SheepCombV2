@@ -13,6 +13,7 @@ import { Send, Cloud, Loader2, AlertCircle, RefreshCw, Trash2, Download, Upload,
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
 import { useShuttleStore } from '../../stores/shuttleStore'
 import { useI18n } from 'vue-i18n'
+import type { ChunkOptions } from '@sheep-family/types'
 import defaultCheckPromptText from '../../prompts/default.md?raw'
 import defaultTransPromptText from '../../prompts/default-translation.md?raw'
 
@@ -26,19 +27,34 @@ onMounted(async () => {
 
 const modes = [
   { id: 'units', name: 'Raw Units' },
-  { id: 'data', name: 'ShWvData' }
+  { id: 'data', name: 'ShWvData' },
+  { id: 'similarity', name: 'Similarity' }
 ]
 const mode = ref('units')
 
 const requestTargets = [
   { id: 'CHECK', name: 'Check' },
   { id: 'TRANSLATE', name: 'Translate' },
-  { id: 'PROOF', name: 'Proof' }
+  { id: 'PROOF', name: 'Proof' },
+  { id: 'CUSTOM', name: 'Custom' }
 ]
-const requestTarget = ref<'CHECK' | 'TRANSLATE' | 'PROOF'>('CHECK')
+const requestTarget = ref<'CHECK' | 'TRANSLATE' | 'PROOF' | 'CUSTOM'>('CHECK')
 const userPrompt = ref(defaultCheckPromptText)
 const sourceLang = ref('英語')
 const targetLang = ref('日本語')
+const chunkMaxLength = ref<number>(4000)
+
+const chunkOptions = ref<ChunkOptions>({
+  src: true,
+  tgt: true,
+  note: true,
+  history: false,
+  terms: false
+})
+
+const apiTarget = computed(() => {
+  return requestTarget.value === 'CUSTOM' ? 'CHECK' : requestTarget.value
+})
 
 const defaultPrompt = computed(() => {
   return requestTarget.value === 'TRANSLATE' ? defaultTransPromptText : defaultCheckPromptText
@@ -50,6 +66,21 @@ watch(requestTarget, (newTarget, oldTarget) => {
   const oldDefault = oldTarget === 'TRANSLATE' ? defaultTransPromptText : defaultCheckPromptText
   if (!userPrompt.value || userPrompt.value.trim() === oldDefault.trim()) {
     userPrompt.value = newTarget === 'TRANSLATE' ? defaultTransPromptText : defaultCheckPromptText
+  }
+  
+  if (newTarget === 'TRANSLATE' && chunkMaxLength.value === 4000) {
+    chunkMaxLength.value = 2500
+  } else if (newTarget !== 'TRANSLATE' && chunkMaxLength.value === 2500) {
+    chunkMaxLength.value = 4000
+  }
+
+  // Update default chunk options for non-custom targets
+  if (newTarget === 'CHECK') {
+    chunkOptions.value = { src: true, tgt: true, note: true, history: false, terms: false }
+  } else if (newTarget === 'TRANSLATE') {
+    chunkOptions.value = { src: true, tgt: false, note: true, history: false, terms: false }
+  } else if (newTarget === 'PROOF') {
+    chunkOptions.value = { src: false, tgt: true, note: false, history: false, terms: false }
   }
 })
 
@@ -127,7 +158,7 @@ function parseChunkResponse(responseText: string) {
 
 async function createChunks() {
   try {
-    store.createChunks(mode.value as 'units' | 'data', 4000, requestTarget.value === 'PROOF')
+    store.createChunks(mode.value as 'units' | 'data' | 'similarity', chunkMaxLength.value, apiTarget.value, chunkOptions.value)
   } catch (e: any) {
     errorMsg.value = e.message
   }
@@ -148,7 +179,7 @@ async function processChunk(index: number) {
     if (promptToSend) {
       promptToSend = promptToSend.replace(/{source_lang}/g, sourceLang.value).replace(/{target_lang}/g, targetLang.value);
     }
-    await store.processRequests(index, requestTarget.value, promptToSend)
+    await store.processRequests(index, apiTarget.value, promptToSend)
   } catch (e: any) {
     errorMsg.value = e.message
   } finally {
@@ -396,6 +427,30 @@ function getStatusColor(status: string) {
                   {{ t.name }}
                 </button>
               </div>
+
+              <!-- Accordion for Custom keys selection -->
+              <transition name="expand">
+                <div v-if="requestTarget === 'CUSTOM'" class="custom-keys-selector">
+                  <div class="config-sub-label">出力キーの選択 <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(idxは常に出力されます)</span></div>
+                  <div class="checkbox-row">
+                    <label class="checkbox-label">
+                      <input type="checkbox" v-model="chunkOptions.src" /> src
+                    </label>
+                    <label class="checkbox-label">
+                      <input type="checkbox" v-model="chunkOptions.tgt" /> tgt
+                    </label>
+                    <label class="checkbox-label">
+                      <input type="checkbox" v-model="chunkOptions.note" /> note
+                    </label>
+                    <label class="checkbox-label" :title="mode === 'units' ? 'ShWvDataからのみ抽出されます' : ''">
+                      <input type="checkbox" v-model="chunkOptions.history" :disabled="mode === 'units'" /> history
+                    </label>
+                    <label class="checkbox-label" :title="mode === 'units' ? 'ShWvDataからのみ抽出されます' : ''">
+                      <input type="checkbox" v-model="chunkOptions.terms" :disabled="mode === 'units'" /> terms
+                    </label>
+                  </div>
+                </div>
+              </transition>
             </div>
 
             <div class="config-group">
@@ -419,6 +474,11 @@ function getStatusColor(status: string) {
               </div>
 
               <textarea v-model="userPrompt" class="prompt-textarea"></textarea>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; margin-top: 12px;">
+              <label class="config-label" style="margin-bottom: 0;">チャンクサイズ上限 (文字数):</label>
+              <input type="number" v-model="chunkMaxLength" class="input-field" style="width: 100px; padding: 4px;" />
             </div>
 
             <div class="button-row">
@@ -636,6 +696,7 @@ function getStatusColor(status: string) {
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
   padding: 8px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
@@ -1121,4 +1182,48 @@ input:checked + .toggle-slider::before {
 .modal h3 { margin-top: 0; margin-bottom: 12px; }
 .confirm-list { margin: 16px 0; padding-left: 20px; color: var(--text-secondary); line-height: 1.6; font-size: 14px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+
+/* Custom Keys Selector Accordion Styles */
+.custom-keys-selector {
+  margin-top: 10px;
+  background: var(--bg-tertiary);
+  padding: 10px;
+  border-radius: var(--radius-xs);
+  border: 1px dashed var(--border);
+}
+.config-sub-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+}
+.checkbox-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+.checkbox-label input {
+  cursor: pointer;
+}
+.expand-enter-active, .expand-leave-active {
+  transition: all 0.25s ease-out;
+  max-height: 100px;
+  opacity: 1;
+  overflow: hidden;
+}
+.expand-enter-from, .expand-leave-to {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
 </style>

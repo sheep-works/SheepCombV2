@@ -14,7 +14,8 @@ import type {
   ShWvFileInfo,
   ManagedDataType,
   ProcessorOptions,
-  ProjectInfo
+  ProjectInfo,
+  ChunkOptions
 } from '@sheep-family/types'
 import { type ChunkInfo } from '@sheep-family/core'
 
@@ -261,8 +262,8 @@ export const useShuttleStore = defineStore('shuttle', () => {
   /**
    * チャンクの作成
    */
-  function createChunks(type: 'units' | 'data', maxChars?: number, targetOnly: boolean = false) {
-    shuttle.createChunks(type, maxChars, targetOnly)
+  function createChunks(type: 'units' | 'data' | 'similarity', maxChars?: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', options?: ChunkOptions) {
+    shuttle.createChunks(type, maxChars, requestTarget, options)
     syncState()
   }
 

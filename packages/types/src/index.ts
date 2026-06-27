@@ -136,3 +136,21 @@ export interface ProcessorOptions {
   toFilterDnt?: DntFilterType
   toFilterLock?: boolean
 }
+
+export interface ChunkOptions {
+  src?: boolean
+  tgt?: boolean
+  note?: boolean
+  history?: boolean
+  terms?: boolean
+}
+
+export function createChunkOptions(options?: ChunkOptions): Required<ChunkOptions> {
+  return {
+    src: options?.src ?? false,
+    tgt: options?.tgt ?? false,
+    note: options?.note ?? false,
+    history: options?.history ?? false,
+    terms: options?.terms ?? false,
+  }
+}

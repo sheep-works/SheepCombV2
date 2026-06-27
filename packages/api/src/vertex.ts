@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { CostCalculator, MODEL_PRICING } from './calculator.js';
+import { logLlmResponse } from './index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -174,6 +175,7 @@ export class VertexClient {
         }
       });
       this.logUsage(response, provider);
+      logLlmResponse(provider, response.text || '');
       return response.text || '';
     } catch (e: any) {
       throw new Error(`Vertex AI Error: ${e.message}`);
@@ -205,6 +207,7 @@ export class VertexClient {
         config: configParams
       });
       this.logUsage(response, provider);
+      logLlmResponse(provider, response.text || '');
       return response.text || '';
     } catch (e: any) {
       throw new Error(`Vertex AI User Request Error: ${e.message}`);

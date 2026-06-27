@@ -1,4 +1,5 @@
-import type { ShWvData, ShWvUnit, ShWvRefTm, ExportPair, ChunkedJsonlItem, ManagedDataType } from '@sheep-family/types'
+import type { ShWvData, ShWvUnit, ShWvRefTm, ExportPair, ChunkedJsonlItem, ManagedDataType, ChunkOptions } from '@sheep-family/types'
+import { createChunkOptions } from '@sheep-family/types'
 import type { SheepShuttle } from '../sheepShuttle.js'
 
 export class ShuttleManager {
@@ -159,25 +160,44 @@ export class ShuttleManager {
     return lines.join('\n')
   }
 
-  chunkJsonl(data: ShWvData, maxCharsPerLine: number, targetOnly: boolean = false): string {
+  chunkJsonl(data: ShWvData, maxCharsPerLine: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', options?: ChunkOptions): string {
     const lines: string[] = []
     let currentChunk: any[] = []
     let currentLen = 0
 
+    const opts = options ? createChunkOptions(options) : undefined
+
     for (const unit of data.body.units) {
       const tgtText = unit.tgt || unit.pre || ''
       const historyObj = unit.ref?.tms
-        ? unit.ref.tms.map((tm: ShWvRefTm) => ({ src: tm.src, tgt: tm.tgt }))
+        ? unit.ref.tms
+            .sort((a, b) => b.ratio - a.ratio)
+            .slice(0, 2)
+            .map((tm: ShWvRefTm) => ({ src: tm.src, tgt: tm.tgt, diff: tm.diff }))
         : []
 
-      const obj: any = targetOnly ? {
-        index: unit.idx,
-        tgt: tgtText,
-      } : {
-        index: unit.idx,
-        src: unit.src,
-        tgt: tgtText,
-        history: historyObj,
+      const termsObj = unit.ref?.tb || []
+
+      const obj: any = {}
+      obj.index = unit.idx
+      
+      if (opts) {
+        if (opts.src) obj.src = unit.src
+        if (opts.tgt) obj.tgt = tgtText
+        if (opts.note && unit.note) obj.note = unit.note
+        if (opts.history && historyObj.length > 0) obj.history = historyObj
+        if (opts.terms && termsObj.length > 0) obj.terms = termsObj
+      } else {
+        if (requestTarget === 'TRANSLATE') {
+          obj.src = unit.src
+          if (unit.note) obj.note = unit.note
+        } else if (requestTarget === 'PROOF') {
+          obj.tgt = tgtText
+        } else {
+          obj.src = unit.src
+          obj.tgt = tgtText
+          obj.history = historyObj
+        }
       }
       const strObj = JSON.stringify(obj)
       const len = strObj.length
@@ -197,6 +217,129 @@ export class ShuttleManager {
     }
 
     return lines.join('\n')
+  }
+
+  chunkJsonlBySimilarity(data: ShWvData, maxCharsPerChunk: number, options?: ChunkOptions): string {
+    const units = data.body.units
+    const unitMap = new Map<number, ShWvUnit>(units.map(u => [u.idx, u]))
+    const usedIdxs = new Set<number>()
+    const groups: any[][] = []
+
+    const opts = options ? createChunkOptions(options) : undefined
+
+    const formatUnit = (unit: ShWvUnit) => {
+      const tgtText = unit.tgt || unit.pre || ''
+      const historyObj = unit.ref?.tms
+        ? unit.ref.tms
+            .sort((a, b) => b.ratio - a.ratio)
+            .slice(0, 2)
+            .map((tm: ShWvRefTm) => ({ src: tm.src, tgt: tm.tgt, diff: tm.diff }))
+        : []
+      const termsObj = unit.ref?.tb || []
+
+      const obj: any = {}
+      obj.index = unit.idx
+      if (opts) {
+        if (opts.src) obj.src = unit.src
+        if (opts.tgt) obj.tgt = tgtText
+        if (opts.note && unit.note) obj.note = unit.note
+        if (opts.history && historyObj.length > 0) obj.history = historyObj
+        if (opts.terms && termsObj.length > 0) obj.terms = termsObj
+      } else {
+        obj.src = unit.src
+        obj.tgt = tgtText
+        obj.history = historyObj
+      }
+      return obj
+    }
+
+    for (const unit of units) {
+      if (usedIdxs.has(unit.idx)) continue
+
+      const tempChunk: any[] = []
+      
+      // 1. Add current unit
+      tempChunk.push(formatUnit(unit))
+      usedIdxs.add(unit.idx)
+
+      // 2. Add quoted100 items
+      if (unit.ref?.quoted100) {
+        for (const targetIdx of unit.ref.quoted100) {
+          if (!usedIdxs.has(targetIdx)) {
+            const targetUnit = unitMap.get(targetIdx)
+            if (targetUnit) {
+              tempChunk.push(formatUnit(targetUnit))
+              usedIdxs.add(targetIdx)
+            }
+          }
+        }
+      }
+
+      // 3. Add quoted items with ratio >= 91
+      if (unit.ref?.quoted) {
+        for (const [targetIdx, ratio] of unit.ref.quoted) {
+          if (ratio >= 91 && !usedIdxs.has(targetIdx)) {
+            const targetUnit = unitMap.get(targetIdx)
+            if (targetUnit) {
+              tempChunk.push(formatUnit(targetUnit))
+              usedIdxs.add(targetIdx)
+            }
+          }
+        }
+      }
+
+      groups.push(tempChunk)
+    }
+
+    const chunks: string[] = []
+    let currentChunk: any[] = []
+    let currentLen = 0
+
+    for (const group of groups) {
+      if (group.length === 0) continue
+      
+      const groupStr = JSON.stringify(group)
+      const groupLen = groupStr.length
+
+      if (groupLen > maxCharsPerChunk) {
+        if (currentChunk.length > 0) {
+          chunks.push(JSON.stringify(currentChunk))
+          currentChunk = []
+          currentLen = 0
+        }
+        
+        let subChunk: any[] = []
+        let subLen = 0
+        for (const item of group) {
+          const itemStr = JSON.stringify(item)
+          const itemLen = itemStr.length
+          if (subLen + itemLen > maxCharsPerChunk && subChunk.length > 0) {
+            chunks.push(JSON.stringify(subChunk))
+            subChunk = []
+            subLen = 0
+          }
+          subChunk.push(item)
+          subLen += itemLen
+        }
+        if (subChunk.length > 0) {
+          chunks.push(JSON.stringify(subChunk))
+        }
+      } else {
+        if (currentLen + groupLen > maxCharsPerChunk && currentChunk.length > 0) {
+          chunks.push(JSON.stringify(currentChunk))
+          currentChunk = []
+          currentLen = 0
+        }
+        currentChunk.push(...group)
+        currentLen += groupLen
+      }
+    }
+
+    if (currentChunk.length > 0) {
+      chunks.push(JSON.stringify(currentChunk))
+    }
+
+    return chunks.join('\n')
   }
 
   updateFromJsonl(data: ShWvData, content: string): ShWvUnit[] {
@@ -226,7 +369,7 @@ export class ShuttleManager {
   }
 
   // Wrappers
-  public getManagedData(type: ManagedDataType, data: ShWvData, maxCharsPerChunk: number = 4000, targetOnly: boolean = false): string {
+  public getManagedData(type: ManagedDataType, data: ShWvData, maxCharsPerChunk: number = 4000, targetOnly: boolean = false, options?: ChunkOptions): string {
     switch (type) {
       case 'UNITS':
       case 'TMS':
@@ -236,7 +379,7 @@ export class ShuttleManager {
       case 'JSONL':
         return this.getJsonlContent(data.body.units)
       case 'JSONL_CHUNKED':
-        return this.chunkJsonl(data, maxCharsPerChunk, targetOnly)
+        return this.chunkJsonl(data, maxCharsPerChunk, 'CHECK', options) // Default fallback, but unused outside manager tests without param
       case 'CSV':
         return this.formatCsv(this.getPairs(data.body.units))
       case 'SPLIT_BY_FILE':

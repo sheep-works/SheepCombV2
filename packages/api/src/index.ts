@@ -232,6 +232,8 @@ async function processChunkWithSdk(
       maxRetries: 1
     });
 
+    logLlmResponse(provider, text || '');
+
     if (usage) {
       const res = localCalculator.calculate(
         usage.inputTokens ?? 0,
@@ -247,6 +249,22 @@ async function processChunkWithSdk(
   } catch (e: any) {
     console.error(`[API Local LLM Error]`, e);
     throw e;
+  }
+}
+
+export function logLlmResponse(provider: string, result: string) {
+  try {
+    const userDataPath = process.env.USER_DATA_PATH;
+    const logDir = userDataPath ? path.join(userDataPath, 'logs') : path.join(__dirname, '../../../logs');
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+    const logFile = path.join(logDir, 'llm_responses.log');
+    const timestamp = new Date().toISOString();
+    const logEntry = `\n[${timestamp}] Provider: ${provider}\nRaw Response:\n${result}\n----------------------------------------\n`;
+    fs.appendFileSync(logFile, logEntry, 'utf-8');
+  } catch (e) {
+    console.error('[API Error] Failed to write LLM log', e);
   }
 }
 

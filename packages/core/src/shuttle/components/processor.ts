@@ -1,4 +1,5 @@
-import type { TranslationPair, TranslationPairWithFile, ProcessorOptions, DntFilterType } from '@sheep-family/types'
+import type { TranslationPair, TranslationPairWithFile, ProcessorOptions, DntFilterType, ChunkOptions } from '@sheep-family/types'
+import { createChunkOptions } from '@sheep-family/types'
 import type { SheepShuttle } from '../sheepShuttle.js'
 
 export interface SamplingTranslationPair extends TranslationPairWithFile {
@@ -96,20 +97,32 @@ export class ShuttleProcessor {
   /**
    * Split translation pairs into JSONL chunks.
    */
-  public chunkUnits(units: TranslationPair[], maxChars: number, targetOnly: boolean = false): string[] {
+  public chunkUnits(units: TranslationPair[], maxChars: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', options?: ChunkOptions): string[] {
     const chunks: string[] = []
     let currentChunk: string[] = []
     let currentLen = 0
 
+    const opts = options ? createChunkOptions(options) : undefined
+
     for (const unit of units) {
-      const obj = targetOnly ? {
-        idx: unit.idx,
-        tgt: unit.tgt
-      } : {
-        idx: unit.idx,
-        src: unit.src,
-        tgt: unit.tgt,
-        notes: unit.note || ''
+      const obj: any = {}
+      obj.idx = unit.idx
+      
+      if (opts) {
+        if (opts.src) obj.src = unit.src
+        if (opts.tgt) obj.tgt = unit.tgt
+        if (opts.note && unit.note) obj.note = unit.note
+      } else {
+        if (requestTarget === 'TRANSLATE') {
+          obj.src = unit.src
+          if (unit.note) obj.note = unit.note
+        } else if (requestTarget === 'PROOF') {
+          obj.tgt = unit.tgt
+        } else {
+          obj.src = unit.src
+          obj.tgt = unit.tgt
+          obj.notes = unit.note || ''
+        }
       }
       const str = JSON.stringify(obj)
       const len = str.length + 1 // +1 for newline

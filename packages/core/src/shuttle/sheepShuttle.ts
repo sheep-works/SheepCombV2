@@ -1,4 +1,4 @@
-import type { ShWvData, TranslationPair, TranslationPairWithFile, ShWvFileInfo, ManagedDataType, ProcessorOptions, ProjectInfo } from '@sheep-family/types'
+import type { ShWvData, TranslationPair, TranslationPairWithFile, ShWvFileInfo, ManagedDataType, ProcessorOptions, ProjectInfo, ChunkOptions } from '@sheep-family/types'
 
 import { ShuttleParser } from './components/parser.js'
 import { ShuttleProcessor } from './components/processor.js'
@@ -211,11 +211,11 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   /**
    * Create chunks for API processing and store them in this.chunks.
    */
-  public createChunks(type: 'units' | 'data', maxCharsPerChunk: number = 4000, targetOnly: boolean = false): void {
+  public createChunks(type: 'units' | 'data' | 'similarity', maxCharsPerChunk: number = 4000, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', options?: ChunkOptions): void {
     this.chunks = []
 
     if (type === 'units') {
-      const chunkStrings = this.processor.chunkUnits(this.units, maxCharsPerChunk, targetOnly)
+      const chunkStrings = this.processor.chunkUnits(this.units, maxCharsPerChunk, requestTarget, options)
       this.chunks = chunkStrings.map((s, i) => ({
         chunkId: i,
         data: s,
@@ -227,7 +227,19 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
         throw new Error('No data available')
       }
       // manager.getManagedData('JSONL_CHUNKED', ...) returns newline-separated chunk strings
-      const rawData = this.manager.getManagedData('JSONL_CHUNKED', this.data, maxCharsPerChunk, targetOnly)
+      const rawData = this.manager.getManagedData('JSONL_CHUNKED', this.data, maxCharsPerChunk, false, options)
+      const chunkStrings = rawData.split('\n').filter(s => s.trim().length > 0)
+      this.chunks = chunkStrings.map((s, i) => ({
+        chunkId: i,
+        data: s,
+        status: 'pending',
+        response: ''
+      }))
+    } else if (type === 'similarity') {
+      if (!this.data) {
+        throw new Error('No data available')
+      }
+      const rawData = this.manager.chunkJsonlBySimilarity(this.data, maxCharsPerChunk, options)
       const chunkStrings = rawData.split('\n').filter(s => s.trim().length > 0)
       this.chunks = chunkStrings.map((s, i) => ({
         chunkId: i,
