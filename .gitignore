@@ -40,3 +40,4 @@ yarn-error.log
 test_data/
 test_data/*
 instructions/
+manual_base/
