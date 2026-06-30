@@ -7,7 +7,7 @@ import { ShuttleAnalyzer } from './components/analyzer.js'
 import { ShuttleManager } from './components/manager.js'
 import { ShuttleBuilder } from './components/builder.js'
 import { ShuttleSearch } from './components/search.js'
-import { ShuttleRequests, type ShuttleOptions, type TaskResponse, type UserRequest } from './components/requests.js'
+import { ShuttleRequests, type ShuttleOptions, type TaskResponse, type UserRequest, type ResultResponse } from './components/requests.js'
 
 export interface ChunkInfo {
   chunkId: number

@@ -17,7 +17,7 @@ export interface TranslationPairWithFile extends TranslationPair {
 
 export interface ShWvDefine {
   name: 'SHWV_DATA'
-  version: '1.1' | '1.0'
+  version: '1.2' | '1.1' | '1.0'
 }
 
 export interface ShWvFileInfo {
@@ -48,6 +48,7 @@ export interface ShWvUnit {
   note?: string
   isSub?: boolean
   status?: number
+  isPeRef?: boolean
   ref: ShWvRef
   placeholders?: Record<number, string>
 }
