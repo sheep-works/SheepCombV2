@@ -393,9 +393,9 @@ function getStatusColor(status: string) {
                     <RefreshCw :size="12" />
                   </button>
                 </div>
-                <NuxtLink to="/shuttle/api-tips" class="manual-link">
+                <a href="https://lambuage.com/sheep-bobbin" target="_blank" rel="noopener noreferrer" class="manual-link">
                   {{ $t('shuttle.api.lnk_manual') }}
-                </NuxtLink>
+                </a>
               </div>
             </div>
           </div>

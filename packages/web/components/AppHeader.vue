@@ -124,7 +124,7 @@ const handleLocaleChange = (event: Event) => {
 
         <!-- Manual Link -->
         <div class="nav-item">
-          <a href="https://lambuage.com" target="_blank" rel="noopener noreferrer" class="nav-link">
+          <a href="https://lambuage.com/sheep-comb" target="_blank" rel="noopener noreferrer" class="nav-link">
             <BookOpen :size="16" class="nav-icon" />
             <span>{{ $t('header.nav.manual') }}</span>
           </a>
