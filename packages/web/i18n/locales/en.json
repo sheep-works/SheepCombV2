@@ -18,12 +18,16 @@
       "analyzer_desc": "TM/TB matching",
       "manage": "Manage",
       "manage_desc": "Merge and split data",
+      "builder": "Build",
+      "builder_desc": "Restore bilingual files",
       "api": "API",
       "api_desc": "LLM configuration",
       "batch": "Batch Diff",
       "batch_desc": "Text comparison tool",
       "concordance": "Concordance",
-      "concordance_desc": "Fast exact search"
+      "concordance_desc": "Fast exact search",
+      "check_percentage": "Check Percentage",
+      "check_percentage_desc": "Verify probability sums to 100%"
     }
   },
   "index": {
@@ -171,7 +175,35 @@
       "ph_password": "Enter Connection Password",
       "lnk_manual": "View Manual",
       "btn_export_csv": "Export CSV",
-      "lbl_target_only": "Output Target Only"
+      "lbl_target_only": "Output Target Only",
+      "btn_reflect": "Reflect to Targets",
+      "reflect_confirm_title": "Reflect Translations",
+      "reflect_confirm_body": "Reflect {count} parsed translation results into active translation targets (tgt). This will overwrite existing translations. Are you sure?"
+    },
+    "builder": {
+      "title": "Build (Restore)",
+      "subtitle": "Overwrite translation target (tgt) in the original XLIFF/MXLIFF file using ShWvData",
+      "upload_xliff": "Bilingual Files (XLIFF)",
+      "upload_xliff_desc": "Drop target .xlf, .xliff, .mxliff, .mqxliff, .sdlxliff files here",
+      "upload_shwv": "Structured Data (ShWvData)",
+      "upload_shwv_desc": "Drop ShWvData JSON file here",
+      "lbl_use_active_data": "Use existing data (active project data)",
+      "btn_build": "Run Build",
+      "btn_download_all": "Save All as ZIP",
+      "msg_loading": "Processing...",
+      "msg_success": "Build completed successfully!",
+      "msg_error": "Error: {message}",
+      "file_list_title": "Target Files",
+      "status_pending": "Pending",
+      "status_success": "Success",
+      "status_error": "Error",
+      "match_auto": "Auto Matched: {name}",
+      "match_manual": "Manual Match",
+      "match_none": "No Match (will be skipped)",
+      "lbl_override": "Data Block:",
+      "option_no_match": "Do not match",
+      "empty_files": "Please upload bilingual files",
+      "desc_units": "{count} units"
     }
   },
   "testPage": {

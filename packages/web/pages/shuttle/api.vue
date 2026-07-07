@@ -9,7 +9,7 @@ definePageMeta({
 })
 
 import { ref, computed, watch, onMounted } from 'vue'
-import { Send, Cloud, Loader2, AlertCircle, RefreshCw, Trash2, Download, Upload, RotateCcw } from 'lucide-vue-next'
+import { Send, Cloud, Loader2, AlertCircle, RefreshCw, Trash2, Download, Upload, RotateCcw, Check } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
 import { useShuttleStore } from '../../stores/shuttleStore'
 import { useI18n } from 'vue-i18n'
@@ -333,6 +333,96 @@ function exportJSON() {
   document.body.removeChild(link);
 }
 
+const showReflectConfirmDialog = ref(false)
+const reflectTargetCount = ref(0)
+const extractedTranslations = ref<Map<number, string>>(new Map())
+
+function extractTranslationsFromChunks() {
+  const translations = new Map<number, string>()
+
+  for (const chunk of store.chunks) {
+    if (chunk.status !== 'success' || !chunk.response) continue
+
+    const lines = chunk.response.split('\n')
+    
+    // First, let's detect if the chunk response is purely JSONL.
+    let jsonLinesCount = 0
+    let nonEmptyLinesCount = 0
+    const jsonParsedObjs: any[] = []
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed) continue
+      nonEmptyLinesCount++
+      try {
+        const obj = JSON.parse(trimmed)
+        jsonParsedObjs.push(obj)
+        jsonLinesCount++
+      } catch (e) {
+        jsonParsedObjs.push(null)
+      }
+    }
+
+    if (jsonLinesCount > 0 && jsonLinesCount >= nonEmptyLinesCount * 0.5) {
+      for (const obj of jsonParsedObjs) {
+        if (!obj) continue
+        const idx = obj.idx ?? obj.Index ?? obj.id
+        const tgt = obj.tgt ?? obj.Target ?? obj.tgt_text ?? obj.result ?? obj.detail
+        if (idx !== undefined && idx !== null && tgt !== undefined && tgt !== null) {
+          translations.set(Number(idx), String(tgt))
+        }
+      }
+      continue
+    }
+
+    let currentIdx: number | null = null
+    let currentTextLines: string[] = []
+
+    for (const line of lines) {
+      const match = line.match(/^(?:(?:Line|行)\s*\[?(\d+)\]?|\[(\d+)\])[\s:]/i)
+      if (match) {
+        if (currentIdx !== null) {
+          translations.set(currentIdx, currentTextLines.join('\n').trim())
+        }
+        const idxStr = match[1] || match[2]
+        currentIdx = Number(idxStr)
+        const restOfLine = line.substring(match[0].length).trim()
+        currentTextLines = [restOfLine]
+      } else if (currentIdx !== null) {
+        if (line.trim() === '---') continue
+        currentTextLines.push(line)
+      }
+    }
+
+    if (currentIdx !== null) {
+      translations.set(currentIdx, currentTextLines.join('\n').trim())
+    }
+  }
+
+  return translations
+}
+
+function confirmReflect() {
+  const translations = extractTranslationsFromChunks()
+  extractedTranslations.value = translations
+  reflectTargetCount.value = translations.size
+  showReflectConfirmDialog.value = true
+}
+
+function executeReflect() {
+  showReflectConfirmDialog.value = false
+  if (extractedTranslations.value.size > 0) {
+    store.updateTargets(extractedTranslations.value)
+    store.setStatus(t('shuttle.builder.msg_success') || 'Reflected successfully!', 'success')
+  }
+  extractedTranslations.value = new Map()
+}
+
+function cancelReflect() {
+  showReflectConfirmDialog.value = false
+  extractedTranslations.value = new Map()
+}
+
 function getStatusColor(status: string) {
   switch (status) {
     case 'success': return 'var(--success-glow)'
@@ -358,6 +448,20 @@ function getStatusColor(status: string) {
         <div class="modal-actions">
           <button class="btn-outline" @click="cancelConfirmedAction">キャンセル</button>
           <button class="btn-action primary" @click="executeConfirmedAction">実行する</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reflect Confirmation Dialog -->
+    <div v-if="showReflectConfirmDialog" class="modal-overlay">
+      <div class="modal">
+        <h3>{{ $t('shuttle.api.reflect_confirm_title') }}</h3>
+        <p style="margin-bottom: 12px; font-size: 14px;">
+          {{ $t('shuttle.api.reflect_confirm_body', { count: reflectTargetCount }) }}
+        </p>
+        <div class="modal-actions">
+          <button class="btn-outline" @click="cancelReflect">キャンセル</button>
+          <button class="btn-action primary" @click="executeReflect" style="background-color: var(--error); border-color: var(--error);">反映する</button>
         </div>
       </div>
     </div>
@@ -517,6 +621,9 @@ function getStatusColor(status: string) {
           <div class="card-header space-between">
             <h2>{{ $t('shuttle.api.title_list') }}</h2>
             <div style="display: flex; gap: 8px;">
+              <button class="btn-outline" @click="confirmReflect" v-if="store.hasChunks && store.chunks.some(c => c.status === 'success')" style="border-color: var(--accent); color: var(--accent);">
+                <Check :size="14" /> {{ $t('shuttle.api.btn_reflect') }}
+              </button>
               <button class="btn-outline" @click="exportJSON" v-if="store.hasChunks">
                 <Download :size="14" /> Export JSON
               </button>

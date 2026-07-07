@@ -313,6 +313,30 @@ export const useShuttleStore = defineStore('shuttle', () => {
     statusMsg.value = { text, type }
   }
 
+  /**
+   * Update translation targets (tgt) in units and data using a map of idx -> tgt
+   */
+  function updateTargets(translations: Map<number, string>) {
+    // 1. Update units
+    shuttle.units.forEach(unit => {
+      if (translations.has(unit.idx)) {
+        unit.tgt = translations.get(unit.idx)!
+      }
+    })
+
+    // 2. Update data if available
+    if (shuttle.data) {
+      shuttle.data.body.units.forEach(unit => {
+        if (translations.has(unit.idx)) {
+          unit.tgt = translations.get(unit.idx)!
+        }
+      })
+    }
+
+    // 3. Sync refs with shuttle state
+    syncState()
+  }
+
   // --- Rehydration (永続化データからの復元) ---
   // localStorage からデータが復元された直後に、内部の shuttle インスタンスにも同期させる
   const rehydrate = () => {
@@ -407,6 +431,7 @@ export const useShuttleStore = defineStore('shuttle', () => {
     searchConcordance,
     exportSearchData,
     importSearchData,
+    updateTargets,
     // インスタンスへの直接アクセスが必要な場合用
     shuttle
   }

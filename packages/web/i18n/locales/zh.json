@@ -18,12 +18,16 @@
       "analyzer_desc": "TM/TB匹配",
       "manage": "管理",
       "manage_desc": "合并和拆分数据",
+      "builder": "构建",
+      "builder_desc": "还原双语文件",
       "api": "API",
       "api_desc": "LLM配置",
       "batch": "批量差异",
       "batch_desc": "文本比较工具",
       "concordance": "语境搜索",
-      "concordance_desc": "快速精确搜索"
+      "concordance_desc": "快速精确搜索",
+      "check_percentage": "概率检查",
+      "check_percentage_desc": "验证概率之和是否为 100%"
     }
   },
   "index": {
@@ -171,7 +175,35 @@
       "lbl_password": "连接密码",
       "ph_password": "请输入连接密码",
       "lnk_manual": "查看手册",
-      "btn_export_csv": "导出 CSV"
+      "btn_export_csv": "导出 CSV",
+      "btn_reflect": "反映到译文",
+      "reflect_confirm_title": "反映译文",
+      "reflect_confirm_body": "将 {count} 条解析出的翻译结果反映到当前数据的译文 (tgt) 中。此操作将覆盖现有译文。是否确认？"
+    },
+    "builder": {
+      "title": "构建 (还原)",
+      "subtitle": "使用 ShWvData 的译文 (tgt) 覆盖原始 XLIFF/MXLIFF 文件中的 translation target",
+      "upload_xliff": "双语文件 (XLIFF)",
+      "upload_xliff_desc": "将目标 .xlf, .xliff, .mxliff, .mqxliff, .sdlxliff 文件拖放到此处",
+      "upload_shwv": "结构化数据 (ShWvData)",
+      "upload_shwv_desc": "将 ShWvData JSON 文件拖放到此处",
+      "lbl_use_active_data": "使用现有数据（活动项目数据）",
+      "btn_build": "开始构建",
+      "btn_download_all": "全部保存为 ZIP",
+      "msg_loading": "处理中...",
+      "msg_success": "构建成功完成！",
+      "msg_error": "错误: {message}",
+      "file_list_title": "目标文件列表",
+      "status_pending": "等待中",
+      "status_success": "成功",
+      "status_error": "错误",
+      "match_auto": "自动匹配: {name}",
+      "match_manual": "手动匹配",
+      "match_none": "无匹配 (将跳过)",
+      "lbl_override": "对应数据块:",
+      "option_no_match": "不匹配",
+      "empty_files": "请上传双语文件",
+      "desc_units": "{count} 个单元"
     }
   },
   "testPage": {

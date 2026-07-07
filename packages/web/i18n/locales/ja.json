@@ -18,12 +18,16 @@
       "analyzer_desc": "TM/TBマッチング",
       "manage": "管理",
       "manage_desc": "データの結合・分割",
+      "builder": "ビルド",
+      "builder_desc": "対訳ファイルの復元",
       "api": "API",
       "api_desc": "LLM処理",
       "batch": "差分",
       "batch_desc": "テキスト比較ツール",
       "concordance": "コンコーダンス",
-      "concordance_desc": "高速な一致検索"
+      "concordance_desc": "高速な一致検索",
+      "check_percentage": "確率チェック",
+      "check_percentage_desc": "確率の合計が100%になるか検証"
     }
   },
   "index": {
@@ -170,7 +174,35 @@
       "ph_password": "接続用パスワードを入力",
       "lnk_manual": "マニュアルを見る",
       "btn_export_csv": "CSVエクスポート",
-      "lbl_target_only": "訳文だけ出力"
+      "lbl_target_only": "訳文だけ出力",
+      "btn_reflect": "訳文に反映",
+      "reflect_confirm_title": "訳文の反映",
+      "reflect_confirm_body": "パース結果 ({count} 件) を対訳データの訳文 (tgt) に反映します。この操作を行うと、既存の訳文が上書きされます。よろしいですか？"
+    },
+    "builder": {
+      "title": "ビルド (Build)",
+      "subtitle": "ShWvDataの訳文(tgt)で、オリジナルのXLIFF/MXLIFF等のファイルを上書きします",
+      "upload_xliff": "バイリンガルファイル (XLIFF)",
+      "upload_xliff_desc": "上書き対象の .xlf, .xliff, .mxliff, .mqxliff, .sdlxliff をドロップ",
+      "upload_shwv": "構造化データ (ShWvData)",
+      "upload_shwv_desc": "訳文が入った ShWvData (.json) をドロップ",
+      "lbl_use_active_data": "既存のデータ（アクティブデータ）を使用する",
+      "btn_build": "ビルドを実行",
+      "btn_download_all": "すべて ZIP で保存",
+      "msg_loading": "処理中...",
+      "msg_success": "ビルドが正常に完了しました！",
+      "msg_error": "エラー: {message}",
+      "file_list_title": "対象ファイル",
+      "status_pending": "待機中",
+      "status_success": "成功",
+      "status_error": "エラー",
+      "match_auto": "自動マッチング: {name}",
+      "match_manual": "手動マッチング",
+      "match_none": "マッチングなし (スキップされます)",
+      "lbl_override": "対応データ:",
+      "option_no_match": "マッチングしない",
+      "empty_files": "ファイルをアップロードしてください",
+      "desc_units": "{count} ユニット"
     }
   },
   "testPage": {
