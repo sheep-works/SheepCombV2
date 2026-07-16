@@ -17,7 +17,7 @@ export interface TranslationPairWithFile extends TranslationPair {
 
 export interface ShWvDefine {
   name: 'SHWV_DATA'
-  version: '1.2' | '1.1' | '1.0'
+  version: '1.3' | '1.2' | '1.1' | '1.0'
 }
 
 export interface ShWvFileInfo {
@@ -33,6 +33,7 @@ export interface ShWvMeta {
   targetLang: string
   tmFiles?: string[]
   tbFiles?: string[]
+  workflow?: { index: number; role: string; name: string }
 }
 
 export interface ShWvBody {

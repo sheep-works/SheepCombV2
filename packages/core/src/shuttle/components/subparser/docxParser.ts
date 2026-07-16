@@ -18,7 +18,8 @@ export async function parseDocx(content: ArrayBuffer | Buffer, startIdx: number)
       xmlStr = xmlStr.substring(1)
     }
 
-    const parser = typeof DOMParser !== 'undefined' ? new DOMParser() : new XMLDOMParser()
+    const parserOpts = { onError: (level: string, msg: string) => console.warn(`[DOMParser ${level}]`, msg) }
+    const parser = typeof DOMParser !== 'undefined' ? new (DOMParser as any)(parserOpts) : new XMLDOMParser(parserOpts)
     const doc = parser.parseFromString(xmlStr, 'application/xml')
     const tables = doc.getElementsByTagName('w:tbl')
     const numTables = tables.length

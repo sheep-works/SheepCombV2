@@ -5,7 +5,8 @@ import { DOMParser as XMLDOMParser } from '@xmldom/xmldom'
  * XLIFF (and siblings) to TranslationPair parser.
  */
 export async function parseXliff(content: string, startIdx: number, splitByNewline: boolean = true): Promise<TranslationPair[]> {
-  const parser = typeof DOMParser !== 'undefined' ? new DOMParser() : new XMLDOMParser()
+  const parserOpts = { onError: (level: string, msg: string) => console.warn(`[DOMParser ${level}]`, msg) }
+  const parser = typeof DOMParser !== 'undefined' ? new (DOMParser as any)(parserOpts) : new XMLDOMParser(parserOpts)
   const doc = parser.parseFromString(content, 'text/xml')
   const units: TranslationPair[] = []
   let currentIdx = startIdx
