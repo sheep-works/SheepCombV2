@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Database, Layers, Zap, Code2, Cloud, Split, ArrowRight, Search } from 'lucide-vue-next'
+import { Database, Layers, Zap, Code2, Cloud, Split, ArrowRight, Search, Box, Percent } from 'lucide-vue-next'
 
 definePageMeta({
   title: 'Home',
@@ -15,12 +15,14 @@ const shuttleLinks = computed(() => [
   { to: '/shuttle/constructor', label: t('header.nav.constructor'), desc: t('index.constructor_desc'), icon: Layers },
   { to: '/shuttle/analyzer', label: t('header.nav.analyzer'), desc: t('index.analyzer_desc'), icon: Zap },
   { to: '/shuttle/manage', label: t('header.nav.manage'), desc: t('index.manage_desc'), icon: Code2 },
+  { to: '/shuttle/builder', label: t('header.nav.builder'), desc: t('header.nav.builder_desc'), icon: Box },
   { to: '/shuttle/api', label: t('header.nav.api'), desc: t('index.api_desc'), icon: Cloud },
 ])
 
 const toolLinks = computed(() => [
   { to: '/tools/batch', label: t('header.nav.batch'), desc: t('index.batch_desc'), icon: Split },
   { to: '/tools/concordance', label: t('header.nav.concordance'), desc: t('index.concordance_desc'), icon: Search },
+  { to: '/tools/check-percentage', label: t('header.nav.check_percentage'), desc: t('header.nav.check_percentage_desc'), icon: Percent },
 ])
 </script>
 

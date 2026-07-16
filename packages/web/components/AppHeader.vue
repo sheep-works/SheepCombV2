@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Trash2, ChevronDown, Database, Layers, Zap, Code2, Cloud, Split, Search, BookOpen } from 'lucide-vue-next'
+import { Trash2, ChevronDown, Database, Layers, Zap, Code2, Cloud, Split, Search, BookOpen, Hammer } from 'lucide-vue-next'
 import { useShuttleStore } from '../stores/shuttleStore'
 import { useI18n } from 'vue-i18n'
 
@@ -84,6 +84,13 @@ const handleLocaleChange = (event: Event) => {
               <div class="item-text">
                 <span class="label">{{ $t('header.nav.manage') }}</span>
                 <span class="desc">{{ $t('header.nav.manage_desc') }}</span>
+              </div>
+            </NuxtLink>
+            <NuxtLink to="/shuttle/builder" class="dropdown-item" active-class="active">
+              <Hammer :size="14" />
+              <div class="item-text">
+                <span class="label">{{ $t('header.nav.builder') }}</span>
+                <span class="desc">{{ $t('header.nav.builder_desc') }}</span>
               </div>
             </NuxtLink>
             <div class="dropdown-divider"></div>
