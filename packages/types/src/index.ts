@@ -33,7 +33,7 @@ export interface ShWvMeta {
   targetLang: string
   tmFiles?: string[]
   tbFiles?: string[]
-  workflow?: { index: number; role: string; name: string }
+  workflow?: { index: number; role: string; name: string; segmentation?: string }
 }
 
 export interface ShWvBody {
