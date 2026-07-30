@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Trash2, ChevronDown, Database, Layers, Zap, Code2, Cloud, Split, Search, BookOpen, Hammer } from 'lucide-vue-next'
+import { Trash2, ChevronDown, Database, Layers, Zap, Code2, Cloud, Split, Search, BookOpen, Hammer, Percent, Scissors } from 'lucide-vue-next'
 import { useShuttleStore } from '../stores/shuttleStore'
 import { useI18n } from 'vue-i18n'
 
@@ -124,6 +124,20 @@ const handleLocaleChange = (event: Event) => {
               <div class="item-text">
                 <span class="label">{{ $t('header.nav.concordance') }}</span>
                 <span class="desc">{{ $t('header.nav.concordance_desc') }}</span>
+              </div>
+            </NuxtLink>
+            <NuxtLink to="/tools/check-percentage" class="dropdown-item" active-class="active">
+              <Percent :size="14" />
+              <div class="item-text">
+                <span class="label">{{ $t('header.nav.check_percentage') }}</span>
+                <span class="desc">{{ $t('header.nav.check_percentage_desc') }}</span>
+              </div>
+            </NuxtLink>
+            <NuxtLink to="/tools/chunk" class="dropdown-item" active-class="active">
+              <Scissors :size="14" />
+              <div class="item-text">
+                <span class="label">{{ $t('header.nav.chunk', 'テキストチャンク') }}</span>
+                <span class="desc">{{ $t('header.nav.chunk_desc', 'テキストを指定サイズで分割') }}</span>
               </div>
             </NuxtLink>
           </div>

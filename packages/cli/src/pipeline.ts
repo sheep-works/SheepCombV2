@@ -27,7 +27,11 @@ function getFileContent(filePath: string): string | Buffer {
   if (binaryExts.includes(ext)) {
     return fs.readFileSync(filePath)
   }
-  return fs.readFileSync(filePath, 'utf-8')
+  const buf = fs.readFileSync(filePath)
+  if (buf.length >= 2 && buf[0] === 0xFF && buf[1] === 0xFE) {
+    return buf.toString('utf16le')
+  }
+  return buf.toString('utf-8')
 }
 
 /**
@@ -64,11 +68,9 @@ export async function runPipeline(options: PipelineOptions): Promise<SheepShuttl
       .filter(f => supportedExts.includes(f.split('.').pop()?.toLowerCase() || ''))
       .map(f => {
         const filePath = path.join(dirPath, f)
-        const ext = f.split('.').pop()?.toLowerCase() || ''
-        const isBinary = ['xlsx', 'docx'].includes(ext)
         return {
           name: f,
-          content: isBinary ? fs.readFileSync(filePath) : fs.readFileSync(filePath, 'utf-8')
+          content: getFileContent(filePath)
         }
       })
   }

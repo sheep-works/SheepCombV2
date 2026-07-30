@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Database, Layers, Zap, Code2, Cloud, Split, ArrowRight, Search, Box, Percent } from 'lucide-vue-next'
+import { Database, Layers, Zap, Code2, Cloud, Split, ArrowRight, Search, Box, Percent, Scissors } from 'lucide-vue-next'
 
 definePageMeta({
   title: 'Home',
@@ -23,6 +23,7 @@ const toolLinks = computed(() => [
   { to: '/tools/batch', label: t('header.nav.batch'), desc: t('index.batch_desc'), icon: Split },
   { to: '/tools/concordance', label: t('header.nav.concordance'), desc: t('index.concordance_desc'), icon: Search },
   { to: '/tools/check-percentage', label: t('header.nav.check_percentage'), desc: t('header.nav.check_percentage_desc'), icon: Percent },
+  { to: '/tools/chunk', label: t('header.nav.chunk', 'テキストチャンク'), desc: t('index.chunk_desc', 'テキストを指定サイズで分割'), icon: Scissors },
 ])
 </script>
 
