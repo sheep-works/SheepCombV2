@@ -31,6 +31,7 @@ export interface ShWvMeta {
   files: ShWvFileInfo[]
   sourceLang: string
   targetLang: string
+  projectName?: string
   tmFiles?: string[]
   tbFiles?: string[]
   workflow?: { index: number; role: string; name: string; segmentation?: string }

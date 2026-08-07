@@ -24,8 +24,8 @@ export async function parseXliff(content: string, startIdx: number, splitByNewli
     let tgt = targetNode ? (targetNode.innerHTML || targetNode.textContent || '') : ''
     let note = noteNode ? (noteNode.textContent || '') : ''
 
-    // Protect mqxliff line-break tags from being split by replacing the literal newline with <br/> (restored in builder.ts)
-    const mqChRegex = /(<mq:ch val=["'])([^"']*)(["']\s*\/?>)/gi
+    // Protect mqxliff line-break tags (both raw <mq:ch> and escaped &lt;mq:ch...&gt; / <ph> wrapped) from being split by replacing literal newline with <br/> (restored in builder.ts)
+    const mqChRegex = /((?:<ph[^>]*>)?(?:&lt;|<)mq:ch\s+val=["'])([^"']*?)(["']\s*\/(?:&gt;|>)(?:<\/ph>)?)/gi
     src = src.replace(mqChRegex, (match, p1, p2, p3) => p1 + p2.replace(/\r?\n/g, '<br/>') + p3)
     tgt = tgt.replace(mqChRegex, (match, p1, p2, p3) => p1 + p2.replace(/\r?\n/g, '<br/>') + p3)
 

@@ -2,7 +2,6 @@
   "name": "@sheep-family/core",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./wasm": "./src/wasm.ts",

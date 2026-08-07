@@ -17,16 +17,21 @@ export class ShuttleConverter {
 
     for (const p of units) {
       let placeholders: Record<number, string> = {}
+      const tagMap = new Map<string, number>()
       let counter = 0
 
-      // Protect tags function
+      // Protect tags function (reuses placeholder index for identical tags within the unit)
       const protectTags = (text: string) => {
         if (!text) return ''
         return text.replace(/(<(?:"[^"]*"|'[^']*'|[^'">])+>|&lt;[\s\S]*?&gt;)/g, (tagMatch: string) => {
-          placeholders[counter] = tagMatch
-          const replaceString = `{@${counter}}`
-          counter++
-          return replaceString
+          let idx = tagMap.get(tagMatch)
+          if (idx === undefined) {
+            idx = counter
+            tagMap.set(tagMatch, idx)
+            placeholders[idx] = tagMatch
+            counter++
+          }
+          return `{@${idx}}`
         })
       }
 
