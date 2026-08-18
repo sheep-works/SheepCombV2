@@ -44,27 +44,59 @@ export async function setLogToAirtableMock(res: any): Promise<void> {
 export class VertexClient {
   private aiUser: GoogleGenAI | null = null;
   private aiSheep: GoogleGenAI | null = null;
-  private modelName = 'gemini-3.1-flash-lite-preview';
+  private modelName = 'gemini-3.1-pro-preview';
   public cachedContentName: string | null = null;
   private calculator = new CostCalculator(150);
 
   constructor() {}
 
+  async listModels(provider = 'vertex'): Promise<string[]> {
+    try {
+      const ai = this.getAiClient(provider);
+      const pager = await ai.models.list();
+      const models: string[] = [];
+      for await (const model of pager) {
+        if (model.name) {
+          models.push(model.name.replace(/^publishers\/google\/models\//, '').replace(/^models\//, ''));
+        }
+      }
+      return models;
+    } catch (e: any) {
+      console.warn(`[Vertex AI] Failed to list models: ${e.message}`);
+      return [];
+    }
+  }
+
+  private currentProjectSheep: string | null = null;
+  private currentProjectUser: string | null = null;
+
   private getAiClient(provider: string): GoogleGenAI {
+    const defaultSheepProject = 'project-5c3c5988-edd9-4109-907';
+    
     if (provider === 'vertex-sheep') {
-      if (!this.aiSheep) {
+      const projectId = (process.env.PROJECT_ID_SHEEP || process.env.PROJECT_ID || defaultSheepProject).trim();
+      if (!projectId) {
+        throw new Error('GCP Project ID is not configured. Please enter GCP Project ID in SheepBobbin Settings.');
+      }
+      if (!this.aiSheep || this.currentProjectSheep !== projectId) {
+        this.currentProjectSheep = projectId;
         this.aiSheep = new GoogleGenAI({
           enterprise: true,
-          project: process.env.PROJECT_ID_SHEEP || process.env.PROJECT_ID,
+          project: projectId,
           location: 'global' // Global Vertex AI location
         });
       }
       return this.aiSheep;
     } else {
-      if (!this.aiUser) {
+      const projectId = (process.env.PROJECT_ID || '').trim();
+      if (!projectId) {
+        throw new Error('GCP Project ID is not configured. Please enter GCP Project ID in SheepBobbin Settings.');
+      }
+      if (!this.aiUser || this.currentProjectUser !== projectId) {
+        this.currentProjectUser = projectId;
         this.aiUser = new GoogleGenAI({
           enterprise: true,
-          project: process.env.PROJECT_ID,
+          project: projectId,
           location: 'global' // Global Vertex AI location
         });
       }

@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld('apiConsole', {
   greet: () => {
     return ipcRenderer.invoke('run-greet');
   },
+  getAppVersion: () => {
+    return ipcRenderer.invoke('get-app-version');
+  },
   getSettings: () => {
     return ipcRenderer.invoke('get-settings');
   },

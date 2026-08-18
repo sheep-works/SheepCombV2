@@ -38,6 +38,34 @@
       overflow: hidden;
     }
 
+    footer {
+      background-color: var(--card-bg);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 6px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .footer-version {
+      font-family: 'Fira Code', monospace;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: var(--text-color);
+      font-weight: 500;
+    }
+
     header {
       background-color: var(--card-bg);
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -539,6 +567,14 @@
             </div>
             <span class="form-help">Access key (X-API-KEY) for authorizing connections from Nuxt Web UI.</span>
           </div>
+
+          <div class="form-group" style="margin-top: 8px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+            <label class="form-label" style="display: flex; align-items: center; cursor: pointer; gap: 10px;">
+              <input type="checkbox" id="debug-log-checkbox" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;">
+              <span>Enable Request Debug Logs</span>
+            </label>
+            <span class="form-help">Outputs detailed inspection logs for incoming API requests (HTTP Method, Path, Masked Headers, Payload Body, Status Code, Latency) in Console and server.log.</span>
+          </div>
         </div>
         
         <div style="display: flex; justify-content: flex-end;">
@@ -579,7 +615,27 @@
     </div>
   </main>
 
+  <footer>
+    <div class="footer-left">
+      <span>SheepBobbin Desktop Agent</span>
+      <span style="opacity: 0.3;">|</span>
+      <span id="footer-status-summary">Ready</span>
+    </div>
+    <div>
+      <span id="app-version-tag" class="footer-version">v1.0.0</span>
+    </div>
+  </footer>
+
   <script>
+    const appVersionTag = document.getElementById('app-version-tag');
+    if (window.apiConsole && window.apiConsole.getAppVersion) {
+      window.apiConsole.getAppVersion().then(ver => {
+        if (ver) {
+          appVersionTag.textContent = 'v' + ver;
+        }
+      }).catch(err => console.error('Failed to get app version:', err));
+    }
+
     const terminalBody = document.getElementById('terminal-body');
     const statusDot = document.getElementById('status-dot');
     const statusText = document.getElementById('status-text');
@@ -739,6 +795,7 @@
     const providerSelect = document.getElementById('provider-select');
     const projectIdInput = document.getElementById('project-id-input');
     const apiKeyInput = document.getElementById('api-key-input');
+    const debugLogCheckbox = document.getElementById('debug-log-checkbox');
     
     // Gemini
     const geminiKeyInput = document.getElementById('gemini-key-input');
@@ -953,6 +1010,7 @@
         ollamaModelInput.value = settings.OLLAMA_MODEL || 'gemma4:e2b';
         lmstudioUrlInput.value = settings.LMSTUDIO_URL || 'http://127.0.0.1:1234';
         lmstudioModelInput.value = settings.LMSTUDIO_MODEL || 'local-model';
+        debugLogCheckbox.checked = !!settings.DEBUG_LOG;
 
         updateProviderUi(providerSelect.value);
       } catch (err) {
@@ -992,7 +1050,8 @@
         OLLAMA_URL: ollamaUrlInput.value.trim(),
         OLLAMA_MODEL: ollamaModelInput.value.trim(),
         LMSTUDIO_URL: lmstudioUrlInput.value.trim(),
-        LMSTUDIO_MODEL: lmstudioModelInput.value.trim()
+        LMSTUDIO_MODEL: lmstudioModelInput.value.trim(),
+        DEBUG_LOG: debugLogCheckbox.checked
       };
 
       try {

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Menu } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { spawn, fork, ChildProcess } from 'child_process';
@@ -73,7 +73,8 @@ function startHonoServer(win: BrowserWindow) {
     env: { 
       ...process.env, 
       PORT: '8000',
-      USER_DATA_PATH: app.getPath('userData')
+      USER_DATA_PATH: app.getPath('userData'),
+      DEBUG_LOG: String(process.env.DEBUG_LOG || 'false')
     },
     stdio: 'pipe'
   });
@@ -134,21 +135,23 @@ function loadConfig() {
       if (config.PROJECT_ID) process.env.PROJECT_ID = config.PROJECT_ID;
       if (config.API_KEY_SHEEP) process.env.API_KEY_SHEEP = config.API_KEY_SHEEP;
       if (config.AI_STUDIO_FREE) process.env.AI_STUDIO_FREE = config.AI_STUDIO_FREE;
+      if (config.DEBUG_LOG !== undefined) process.env.DEBUG_LOG = String(config.DEBUG_LOG);
       console.log('Loaded config from:', configPath);
     } catch (err) {
       console.error('Failed to read config.json:', err);
     }
   } else {
     const defaultConfig = {
-      ACTIVE_PROVIDER: 'gemini',
-      PROJECT_ID: process.env.PROJECT_ID || '',
+      ACTIVE_PROVIDER: 'vertex-sheep',
+      PROJECT_ID: process.env.PROJECT_ID || 'project-5c3c5988-edd9-4109-907',
       API_KEY_SHEEP: process.env.API_KEY_SHEEP || '71TMRzhzwQSvITAd01PKWVlRfI4zSLa21cdpj_RWu4c',
       OLLAMA_URL: 'http://localhost:11434',
       OLLAMA_MODEL: 'gemma4:e2b',
       LMSTUDIO_URL: 'http://127.0.0.1:1234',
       LMSTUDIO_MODEL: 'local-model',
       AI_STUDIO_FREE: process.env.AI_STUDIO_FREE || '',
-      GEMINI_MODEL: 'gemini-1.5-flash'
+      GEMINI_MODEL: 'gemini-1.5-flash',
+      DEBUG_LOG: false
     };
     try {
       fs.mkdirSync(path.dirname(configPath), { recursive: true });
@@ -157,6 +160,7 @@ function loadConfig() {
       process.env.PROJECT_ID = defaultConfig.PROJECT_ID;
       process.env.API_KEY_SHEEP = defaultConfig.API_KEY_SHEEP;
       process.env.AI_STUDIO_FREE = defaultConfig.AI_STUDIO_FREE;
+      process.env.DEBUG_LOG = String(defaultConfig.DEBUG_LOG);
     } catch (err) {
       console.error('Failed to create default config.json:', err);
     }
@@ -164,6 +168,7 @@ function loadConfig() {
 }
 
 function createWindow() {
+  Menu.setApplicationMenu(null);
   mainWindow = new BrowserWindow({
     width: 900,
     height: 650,
@@ -189,6 +194,10 @@ function createWindow() {
 }
 
 // IPC Handlers
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
+});
+
 ipcMain.on('open-web-ui', () => {
   shell.openExternal('https://sheepcomb.netlify.app');
 });
@@ -231,6 +240,7 @@ ipcMain.handle('save-settings', async (_event, settings: any) => {
     if (settings.PROJECT_ID) process.env.PROJECT_ID = settings.PROJECT_ID;
     if (settings.API_KEY_SHEEP) process.env.API_KEY_SHEEP = settings.API_KEY_SHEEP;
     if (settings.AI_STUDIO_FREE) process.env.AI_STUDIO_FREE = settings.AI_STUDIO_FREE;
+    if (settings.DEBUG_LOG !== undefined) process.env.DEBUG_LOG = String(settings.DEBUG_LOG);
 
     if (mainWindow) {
       stopHonoServer(mainWindow);

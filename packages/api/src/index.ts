@@ -63,11 +63,14 @@ function loadServerConfig() {
         console.log('[API Info] Loaded configuration from Electron config.json:', serverConfig);
         
         // Copy keys to process.env so existing auth & vertexClient code works out-of-the-box
-        if (serverConfig.API_KEY_SHEEP) {
-          process.env.API_KEY_SHEEP = serverConfig.API_KEY_SHEEP;
+        if (serverConfig.API_KEY_SHEEP && serverConfig.API_KEY_SHEEP.trim()) {
+          process.env.API_KEY_SHEEP = serverConfig.API_KEY_SHEEP.trim();
         }
-        if (serverConfig.PROJECT_ID) {
-          process.env.PROJECT_ID = serverConfig.PROJECT_ID;
+        if (serverConfig.PROJECT_ID && serverConfig.PROJECT_ID.trim()) {
+          process.env.PROJECT_ID = serverConfig.PROJECT_ID.trim();
+        }
+        if (serverConfig.DEBUG_LOG !== undefined) {
+          process.env.DEBUG_LOG = String(serverConfig.DEBUG_LOG);
         }
       } catch (err) {
         console.error('[API Error] Failed to read config.json:', err);
@@ -82,18 +85,84 @@ function loadServerConfig() {
       LMSTUDIO_URL: process.env.LMSTUDIO_URL || 'http://127.0.0.1:1234',
       LMSTUDIO_MODEL: process.env.LMSTUDIO_MODEL || 'local-model',
       PROJECT_ID: process.env.PROJECT_ID || '',
-      API_KEY_SHEEP: process.env.API_KEY_SHEEP || ''
+      API_KEY_SHEEP: process.env.API_KEY_SHEEP || '',
+      DEBUG_LOG: process.env.DEBUG_LOG === 'true'
     };
   }
 }
 loadServerConfig();
 
+let _vertexClient: VertexClient | null = null;
+function getVertexClient(): VertexClient {
+  if (!_vertexClient) {
+    _vertexClient = new VertexClient();
+  }
+  return _vertexClient;
+}
 const app = new OpenAPIHono();
-const vertexClient = new VertexClient();
 const localCalculator = new CostCalculator(150);
 
 // In-memory task store
 const tasks = new Map<string, { status: string; result: string | null; error: string | null }>();
+
+// Request Debug Logging Middleware
+app.use('*', async (c, next) => {
+  const isDebugEnabled = process.env.DEBUG_LOG === 'true' || serverConfig.DEBUG_LOG === true;
+  if (!isDebugEnabled) {
+    await next();
+    return;
+  }
+
+  const startTime = Date.now();
+  const reqId = crypto.randomUUID().slice(0, 8);
+  const method = c.req.method;
+  const path = c.req.path;
+  const query = c.req.query();
+  const rawHeaders = c.req.header();
+
+  const maskedHeaders: Record<string, string> = {};
+  for (const [key, value] of Object.entries(rawHeaders)) {
+    const lowerKey = key.toLowerCase();
+    if (lowerKey === 'x-api-key' || lowerKey === 'authorization') {
+      maskedHeaders[key] = value ? `${value.slice(0, 4)}...${value.slice(-4)} (len: ${value.length})` : 'undefined';
+    } else {
+      maskedHeaders[key] = value;
+    }
+  }
+
+  let bodyData: any = null;
+  const contentType = c.req.header('content-type') || '';
+  if (['POST', 'PUT', 'PATCH'].includes(method)) {
+    try {
+      if (contentType.includes('application/json')) {
+        const clonedReq = c.req.raw.clone();
+        bodyData = await clonedReq.json();
+      } else if (contentType.includes('text/')) {
+        const clonedReq = c.req.raw.clone();
+        const text = await clonedReq.text();
+        bodyData = text.length > 500 ? text.slice(0, 500) + '... (truncated)' : text;
+      }
+    } catch {
+      bodyData = '(Could not parse request body)';
+    }
+  }
+
+  console.log(`[DEBUG Request #${reqId}] ${method} ${path}`);
+  if (Object.keys(query).length > 0) {
+    console.log(`  Query:`, JSON.stringify(query));
+  }
+  console.log(`  Headers:`, JSON.stringify(maskedHeaders));
+  if (bodyData !== null) {
+    const bodyStr = typeof bodyData === 'object' ? JSON.stringify(bodyData, null, 2) : bodyData;
+    console.log(`  Body:\n${bodyStr}`);
+  }
+
+  await next();
+
+  const duration = Date.now() - startTime;
+  const status = c.res.status;
+  console.log(`[DEBUG Response #${reqId}] ${method} ${path} -> Status ${status} (${duration}ms)`);
+});
 
 // CORS middleware
 app.use('*', cors({
@@ -209,6 +278,8 @@ async function fetchLlmModels(provider: string, url?: string): Promise<string[]>
     } catch (e) {
       return [];
     }
+  } else if (provider === 'vertex' || provider === 'vertex-sheep') {
+    return await getVertexClient().listModels(provider);
   }
   return [];
 }
@@ -407,7 +478,7 @@ genRouter.openapi(greetRoute, async (c) => {
       const models = await fetchLlmModels(provider, url);
       return c.json({ status: 'success', model_info: `${provider === 'gemini' ? 'Google AI Studio' : provider === 'ollama' ? 'Ollama' : 'LM Studio'} Models: ${models.join(', ')}` }, 200);
     }
-    const modelInfo = await vertexClient.greet(provider);
+    const modelInfo = await getVertexClient().greet(provider);
     return c.json({ status: 'success', model_info: modelInfo }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -510,7 +581,7 @@ genRouter.openapi(initPromptRoute, async (c) => {
     if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
       return c.json({ status: 'success', result: `${provider}-dummy-cache` }, 200);
     }
-    const cacheId = await vertexClient.setupCache(body.system_instruction, body.display_name, provider);
+    const cacheId = await getVertexClient().setupCache(body.system_instruction, body.display_name, provider);
     return c.json({ status: 'success', result: cacheId }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -552,7 +623,7 @@ genRouter.openapi(deleteCacheRoute, async (c) => {
     if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
       return c.json({ status: 'success' }, 200);
     }
-    await vertexClient.deleteCache(body.cache_name, provider);
+    await getVertexClient().deleteCache(body.cache_name, provider);
     return c.json({ status: 'success', result: 'Cache deleted successfully' }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -577,7 +648,7 @@ async function runUserTaskBackground(
       tasks.set(taskId, { status: 'success', result, error: null });
       return;
     }
-    const result = await vertexClient.processWithUserParams(chunk, prompt, cacheId, provider || undefined);
+    const result = await getVertexClient().processWithUserParams(chunk, prompt, cacheId, provider || undefined);
     tasks.set(taskId, { status: 'success', result, error: null });
   } catch (e: any) {
     tasks.set(taskId, { status: 'error', result: null, error: e.message });
@@ -658,7 +729,7 @@ genRouter.openapi(checkUserSyncRoute, async (c) => {
       const result = await processChunkWithSdk(provider, modelName || '', url || undefined, body.chunk, systemPrompt);
       return c.json({ status: 'success', result }, 200);
     }
-    const result = await vertexClient.processWithUserParams(body.chunk, body.prompt, body.cache_id, provider);
+    const result = await getVertexClient().processWithUserParams(body.chunk, body.prompt, body.cache_id, provider);
     return c.json({ status: 'success', result }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -739,7 +810,7 @@ genRouter.openapi(transUserSyncRoute, async (c) => {
       const result = await processChunkWithSdk(provider, modelName || '', url || undefined, body.chunk, systemPrompt);
       return c.json({ status: 'success', result }, 200);
     }
-    const result = await vertexClient.processWithUserParams(body.chunk, body.prompt, body.cache_id, provider);
+    const result = await getVertexClient().processWithUserParams(body.chunk, body.prompt, body.cache_id, provider);
     return c.json({ status: 'success', result }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -762,7 +833,7 @@ async function runTaskBackground(
       tasks.set(taskId, { status: 'success', result, error: null });
       return;
     }
-    const result = await vertexClient.processChunk(prompt, chunk, provider || undefined);
+    const result = await getVertexClient().processChunk(prompt, chunk, provider || undefined);
     tasks.set(taskId, { status: 'success', result, error: null });
   } catch (e: any) {
     tasks.set(taskId, { status: 'error', result: null, error: e.message });
@@ -877,7 +948,7 @@ if (fs.existsSync(promptsDir)) {
             const result = await processChunkWithSdk(provider, modelName || '', url || undefined, body.chunk, promptContent);
             return c.json({ status: 'success', result }, 200);
           }
-          const result = await vertexClient.processChunk(promptContent, body.chunk, provider);
+          const result = await getVertexClient().processChunk(promptContent, body.chunk, provider);
           return c.json({ status: 'success', result }, 200);
         } catch (e: any) {
           return c.json({ status: 'error', error: e.message }, 200);
