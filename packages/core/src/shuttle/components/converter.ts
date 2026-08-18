@@ -21,9 +21,11 @@ export class ShuttleConverter {
       let counter = 0
 
       // Protect tags function (reuses placeholder index for identical tags within the unit)
+      // Note: MXLIFF / Phrase (Memsource) custom markers like {1>, <1}, {1} are matched FIRST.
+      // This prevents greedy matching from <1} to {2> in text like "{1>foo<1}bar{2>baz<2}" which would otherwise swallow middle text ("bar").
       const protectTags = (text: string) => {
         if (!text) return ''
-        return text.replace(/(<(?:"[^"]*"|'[^']*'|[^'">])+>|&lt;[\s\S]*?&gt;)/g, (tagMatch: string) => {
+        return text.replace(/(\{\d+>|<\d+\}|\{\d+\}|<\d+>|<(?:"[^"]*"|'[^']*'|[^'">])+>|&lt;[\s\S]*?&gt;)/g, (tagMatch: string) => {
           let idx = tagMap.get(tagMatch)
           if (idx === undefined) {
             idx = counter
