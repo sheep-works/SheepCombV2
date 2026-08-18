@@ -25,7 +25,7 @@ export class ShuttleConverter {
       // This prevents greedy matching from <1} to {2> in text like "{1>foo<1}bar{2>baz<2}" which would otherwise swallow middle text ("bar").
       const protectTags = (text: string) => {
         if (!text) return ''
-        return text.replace(/(\{\d+>|<\d+\}|\{\d+\}|<\d+>|<(?:"[^"]*"|'[^']*'|[^'">])+>|&lt;[\s\S]*?&gt;)/g, (tagMatch: string) => {
+        return text.replace(/(\{\d+(?:>|&gt;)|(?:<|&lt;)\d+\}|\{\d+\}|(?:<|&lt;)\d+(?:>|&gt;)|<(?:"[^"]*"|'[^']*'|[^'">])+>|&lt;[\s\S]*?&gt;)/g, (tagMatch: string) => {
           let idx = tagMap.get(tagMatch)
           if (idx === undefined) {
             idx = counter
