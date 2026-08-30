@@ -49,7 +49,8 @@ export default defineNuxtConfig({
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || '/api',
       apiPort: process.env.NUXT_PUBLIC_API_PORT || '',
       apiKey: process.env.NUXT_PUBLIC_API_KEY,  // 追加
-      apiDev: process.env.NUXT_PUBLIC_API_DEV
+      apiDev: process.env.NUXT_PUBLIC_API_DEV,
+      gaMeasurementId: process.env.NUXT_PUBLIC_GA_MEASUREMENT_ID || 'G-YC7B6J9KQW'
     }
   },
   devServer: {
