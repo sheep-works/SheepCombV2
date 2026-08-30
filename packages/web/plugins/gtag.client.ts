@@ -4,15 +4,6 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   if (!measurementId) return
 
-  // Google Analytics (gtag.js) スクリプトの読み込み
-  useHead({
-    script: [
-      {
-        src: `https://www.googletagmanager.com/gtag/js?id=${measurementId}`,
-        async: true,
-      },
-    ],
-  })
 
   // window.dataLayer と gtag 関数の初期化
   if (typeof window !== 'undefined') {

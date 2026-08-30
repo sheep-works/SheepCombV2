@@ -8,6 +8,16 @@ export default defineNuxtConfig({
     head: {
       link: [
         { rel: 'canonical', href: 'https://comb.lambuage.com' }
+      ],
+      script: [
+        ...(process.env.NUXT_PUBLIC_GA_MEASUREMENT_ID || 'G-YC7B6J9KQW'
+          ? [
+              {
+                src: `https://www.googletagmanager.com/gtag/js?id=${process.env.NUXT_PUBLIC_GA_MEASUREMENT_ID || 'G-YC7B6J9KQW'}`,
+                async: true
+              }
+            ]
+          : [])
       ]
     }
   },
