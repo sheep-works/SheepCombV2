@@ -368,6 +368,38 @@ export class ShuttleManager {
     return updatedUnits
   }
 
+  /**
+   * Advances the workflow step in ShWvData:
+   * 1. Moves tgt to pre (if tgt exists).
+   * 2. Clears tgt and resets status to 0 for all units.
+   * 3. Increments workflow.index by 1.
+   * @param data ShWvData
+   * @returns previous workflow index
+   */
+  public advanceWorkflow(data: ShWvData): number {
+    const currentIdx = data.meta.workflow?.index ?? 1
+
+    for (const unit of data.body.units) {
+      if (unit.tgt && unit.tgt.trim() !== '') {
+        unit.pre = unit.tgt
+      }
+      unit.tgt = ''
+      unit.status = 0
+    }
+
+    if (!data.meta.workflow) {
+      data.meta.workflow = {
+        index: 1,
+        role: 'Translation',
+        name: 'Sheep',
+        segmentation: 'line',
+      }
+    }
+    data.meta.workflow.index = currentIdx + 1
+
+    return currentIdx
+  }
+
   // Wrappers
   public getManagedData(type: ManagedDataType, data: ShWvData, maxCharsPerChunk: number = 4000, targetOnly: boolean = false, options?: ChunkOptions): string {
     switch (type) {

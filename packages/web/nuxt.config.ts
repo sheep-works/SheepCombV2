@@ -4,6 +4,13 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
 
   devtools: { enabled: false },
+  app: {
+    head: {
+      link: [
+        { rel: 'canonical', href: 'https://comb.lambuage.com' }
+      ]
+    }
+  },
   modules: [
     '@pinia/nuxt',
     '@pinia-plugin-persistedstate/nuxt',
