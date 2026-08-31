@@ -20,7 +20,7 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
 
   // SPA ページ遷移時の page_view イベント送信
-  // 初回ロード時は gtag('config', '...') により自動送信されるため、2回目以降の遷移で送信
+  // 初回ロード時は HTML 内の gtag('config', '...') により自動送信されるため、2回目以降の遷移で送信
   const router = useRouter()
   let isFirstLoad = true
 
