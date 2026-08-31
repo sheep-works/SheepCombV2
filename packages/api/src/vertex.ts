@@ -44,11 +44,21 @@ export async function setLogToAirtableMock(res: any): Promise<void> {
 export class VertexClient {
   private aiUser: GoogleGenAI | null = null;
   private aiSheep: GoogleGenAI | null = null;
-  private modelName = 'gemini-3.1-pro-preview';
+  private modelName = process.env.VERTEX_MODEL || 'gemini-3.1-pro-preview';
   public cachedContentName: string | null = null;
   private calculator = new CostCalculator(150);
 
   constructor() {}
+
+  public setModelName(name?: string) {
+    if (name && name.trim()) {
+      this.modelName = name.trim();
+    }
+  }
+
+  public getModelName(): string {
+    return this.modelName;
+  }
 
   async listModels(provider = 'vertex'): Promise<string[]> {
     try {

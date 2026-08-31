@@ -8,6 +8,15 @@ export default defineNuxtConfig({
     head: {
       link: [
         { rel: 'canonical', href: 'https://comb.lambuage.com' }
+      ],
+      script: [
+        {
+          src: 'https://www.googletagmanager.com/gtag/js?id=G-YC7B6J9KQW',
+          async: true
+        },
+        {
+          innerHTML: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-YC7B6J9KQW');`
+        }
       ]
     }
   },

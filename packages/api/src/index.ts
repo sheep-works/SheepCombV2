@@ -69,6 +69,9 @@ function loadServerConfig() {
         if (serverConfig.PROJECT_ID && serverConfig.PROJECT_ID.trim()) {
           process.env.PROJECT_ID = serverConfig.PROJECT_ID.trim();
         }
+        if (serverConfig.VERTEX_MODEL && serverConfig.VERTEX_MODEL.trim()) {
+          process.env.VERTEX_MODEL = serverConfig.VERTEX_MODEL.trim();
+        }
         if (serverConfig.DEBUG_LOG !== undefined) {
           process.env.DEBUG_LOG = String(serverConfig.DEBUG_LOG);
         }
@@ -80,6 +83,7 @@ function loadServerConfig() {
     // Standalone dev mode: use environment variables or defaults
     serverConfig = {
       ACTIVE_PROVIDER: process.env.ACTIVE_PROVIDER || 'vertex-sheep',
+      VERTEX_MODEL: process.env.VERTEX_MODEL || 'gemini-3.1-pro-preview',
       OLLAMA_URL: process.env.OLLAMA_URL || 'http://localhost:11434',
       OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'gemma4:e2b',
       LMSTUDIO_URL: process.env.LMSTUDIO_URL || 'http://127.0.0.1:1234',
@@ -207,7 +211,8 @@ function getLlmProviderAndModel(c: any) {
   const modelName = c.req.header('X-LLM-Model') || (
     provider === 'ollama' ? serverConfig.OLLAMA_MODEL : 
     provider === 'lmstudio' ? serverConfig.LMSTUDIO_MODEL :
-    provider === 'gemini' ? serverConfig.GEMINI_MODEL : undefined
+    provider === 'gemini' ? serverConfig.GEMINI_MODEL :
+    (provider === 'vertex' || provider === 'vertex-sheep') ? (serverConfig.VERTEX_MODEL || process.env.VERTEX_MODEL || 'gemini-3.1-pro-preview') : undefined
   );
   const url = c.req.header('X-LLM-URL') || (
     provider === 'ollama' ? serverConfig.OLLAMA_URL : 
@@ -473,12 +478,14 @@ const greetRoute = createRoute({
 
 genRouter.openapi(greetRoute, async (c) => {
   try {
-    const { provider, url } = getLlmProviderAndModel(c);
+    const { provider, modelName, url } = getLlmProviderAndModel(c);
     if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
       const models = await fetchLlmModels(provider, url);
       return c.json({ status: 'success', model_info: `${provider === 'gemini' ? 'Google AI Studio' : provider === 'ollama' ? 'Ollama' : 'LM Studio'} Models: ${models.join(', ')}` }, 200);
     }
-    const modelInfo = await getVertexClient().greet(provider);
+    const client = getVertexClient();
+    if (modelName) client.setModelName(modelName);
+    const modelInfo = await client.greet(provider);
     return c.json({ status: 'success', model_info: modelInfo }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -489,7 +496,7 @@ genRouter.openapi(greetRoute, async (c) => {
 genRouter.get('/models', async (c) => {
   try {
     const { provider, url } = getLlmProviderAndModel(c);
-    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini' || provider === 'vertex' || provider === 'vertex-sheep') {
       const models = await fetchLlmModels(provider, url);
       return c.json(models, 200);
     }
@@ -577,11 +584,13 @@ const initPromptRoute = createRoute({
 genRouter.openapi(initPromptRoute, async (c) => {
   const body = c.req.valid('json');
   try {
-    const { provider } = getLlmProviderAndModel(c);
+    const { provider, modelName } = getLlmProviderAndModel(c);
     if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
       return c.json({ status: 'success', result: `${provider}-dummy-cache` }, 200);
     }
-    const cacheId = await getVertexClient().setupCache(body.system_instruction, body.display_name, provider);
+    const client = getVertexClient();
+    if (modelName) client.setModelName(modelName);
+    const cacheId = await client.setupCache(body.system_instruction, body.display_name, provider);
     return c.json({ status: 'success', result: cacheId }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -648,7 +657,9 @@ async function runUserTaskBackground(
       tasks.set(taskId, { status: 'success', result, error: null });
       return;
     }
-    const result = await getVertexClient().processWithUserParams(chunk, prompt, cacheId, provider || undefined);
+    const client = getVertexClient();
+    if (modelName) client.setModelName(modelName);
+    const result = await client.processWithUserParams(chunk, prompt, cacheId, provider || undefined);
     tasks.set(taskId, { status: 'success', result, error: null });
   } catch (e: any) {
     tasks.set(taskId, { status: 'error', result: null, error: e.message });
@@ -729,7 +740,9 @@ genRouter.openapi(checkUserSyncRoute, async (c) => {
       const result = await processChunkWithSdk(provider, modelName || '', url || undefined, body.chunk, systemPrompt);
       return c.json({ status: 'success', result }, 200);
     }
-    const result = await getVertexClient().processWithUserParams(body.chunk, body.prompt, body.cache_id, provider);
+    const client = getVertexClient();
+    if (modelName) client.setModelName(modelName);
+    const result = await client.processWithUserParams(body.chunk, body.prompt, body.cache_id, provider);
     return c.json({ status: 'success', result }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -810,7 +823,9 @@ genRouter.openapi(transUserSyncRoute, async (c) => {
       const result = await processChunkWithSdk(provider, modelName || '', url || undefined, body.chunk, systemPrompt);
       return c.json({ status: 'success', result }, 200);
     }
-    const result = await getVertexClient().processWithUserParams(body.chunk, body.prompt, body.cache_id, provider);
+    const client = getVertexClient();
+    if (modelName) client.setModelName(modelName);
+    const result = await client.processWithUserParams(body.chunk, body.prompt, body.cache_id, provider);
     return c.json({ status: 'success', result }, 200);
   } catch (e: any) {
     return c.json({ status: 'error', error: e.message }, 200);
@@ -833,7 +848,9 @@ async function runTaskBackground(
       tasks.set(taskId, { status: 'success', result, error: null });
       return;
     }
-    const result = await getVertexClient().processChunk(prompt, chunk, provider || undefined);
+    const client = getVertexClient();
+    if (modelName) client.setModelName(modelName);
+    const result = await client.processChunk(prompt, chunk, provider || undefined);
     tasks.set(taskId, { status: 'success', result, error: null });
   } catch (e: any) {
     tasks.set(taskId, { status: 'error', result: null, error: e.message });

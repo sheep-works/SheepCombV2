@@ -1,7 +1,7 @@
 {
   "name": "@sheep-family/desktop",
   "productName": "SheepBobbin Local",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "main": "dist/main.js",
   "type": "commonjs",

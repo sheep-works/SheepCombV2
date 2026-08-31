@@ -35,12 +35,16 @@ contextBridge.exposeInMainWorld('apiConsole', {
   },
   saveSettings: (settings: {
     ACTIVE_PROVIDER: string;
-    PROJECT_ID: string;
-    API_KEY_SHEEP: string;
-    OLLAMA_URL: string;
-    OLLAMA_MODEL: string;
-    LMSTUDIO_URL: string;
-    LMSTUDIO_MODEL: string;
+    PROJECT_ID?: string;
+    VERTEX_MODEL?: string;
+    API_KEY_SHEEP?: string;
+    AI_STUDIO_FREE?: string;
+    GEMINI_MODEL?: string;
+    OLLAMA_URL?: string;
+    OLLAMA_MODEL?: string;
+    LMSTUDIO_URL?: string;
+    LMSTUDIO_MODEL?: string;
+    DEBUG_LOG?: boolean;
   }) => {
     return ipcRenderer.invoke('save-settings', settings);
   },

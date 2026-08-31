@@ -133,6 +133,7 @@ function loadConfig() {
       const data = fs.readFileSync(configPath, 'utf-8');
       const config = JSON.parse(data);
       if (config.PROJECT_ID) process.env.PROJECT_ID = config.PROJECT_ID;
+      if (config.VERTEX_MODEL) process.env.VERTEX_MODEL = config.VERTEX_MODEL;
       if (config.API_KEY_SHEEP) process.env.API_KEY_SHEEP = config.API_KEY_SHEEP;
       if (config.AI_STUDIO_FREE) process.env.AI_STUDIO_FREE = config.AI_STUDIO_FREE;
       if (config.DEBUG_LOG !== undefined) process.env.DEBUG_LOG = String(config.DEBUG_LOG);
@@ -144,6 +145,7 @@ function loadConfig() {
     const defaultConfig = {
       ACTIVE_PROVIDER: 'vertex-sheep',
       PROJECT_ID: process.env.PROJECT_ID || 'project-5c3c5988-edd9-4109-907',
+      VERTEX_MODEL: 'gemini-3.1-pro-preview',
       API_KEY_SHEEP: process.env.API_KEY_SHEEP || '71TMRzhzwQSvITAd01PKWVlRfI4zSLa21cdpj_RWu4c',
       OLLAMA_URL: 'http://localhost:11434',
       OLLAMA_MODEL: 'gemma4:e2b',
@@ -158,6 +160,7 @@ function loadConfig() {
       fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2), 'utf-8');
       console.log('Created default config.json at:', configPath);
       process.env.PROJECT_ID = defaultConfig.PROJECT_ID;
+      process.env.VERTEX_MODEL = defaultConfig.VERTEX_MODEL;
       process.env.API_KEY_SHEEP = defaultConfig.API_KEY_SHEEP;
       process.env.AI_STUDIO_FREE = defaultConfig.AI_STUDIO_FREE;
       process.env.DEBUG_LOG = String(defaultConfig.DEBUG_LOG);
@@ -238,6 +241,7 @@ ipcMain.handle('save-settings', async (_event, settings: any) => {
     console.log('Saved settings to:', configPath);
 
     if (settings.PROJECT_ID) process.env.PROJECT_ID = settings.PROJECT_ID;
+    if (settings.VERTEX_MODEL) process.env.VERTEX_MODEL = settings.VERTEX_MODEL;
     if (settings.API_KEY_SHEEP) process.env.API_KEY_SHEEP = settings.API_KEY_SHEEP;
     if (settings.AI_STUDIO_FREE) process.env.AI_STUDIO_FREE = settings.AI_STUDIO_FREE;
     if (settings.DEBUG_LOG !== undefined) process.env.DEBUG_LOG = String(settings.DEBUG_LOG);

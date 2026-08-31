@@ -474,10 +474,25 @@
           </div>
 
           <div id="vertex-settings" class="provider-settings-group">
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 12px;">
               <label for="project-id-input" class="form-label">GCP Project ID</label>
               <input type="text" id="project-id-input" class="form-input" placeholder="e.g. my-gcp-project-123">
               <span class="form-help">Your Google Cloud Platform Project ID used by Vertex AI.</span>
+            </div>
+            <div class="form-group">
+              <label for="vertex-model-select" class="form-label">Vertex Model</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <select id="vertex-model-select" class="form-input" style="flex: 1;"></select>
+                <input type="text" id="vertex-model-input" class="form-input" placeholder="e.g. gemini-3.1-pro-preview" style="display: none; flex: 1;">
+                <button type="button" id="refresh-vertex-btn" class="action-btn secondary" style="padding: 0 16px; white-space: nowrap; height: 38px; display: flex; align-items: center; gap: 4px;" title="Fetch models from Vertex AI">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg>
+                  Fetch
+                </button>
+              </div>
+              <div style="margin-top: 4px; text-align: right;">
+                <a href="#" id="toggle-vertex-manual-btn" style="font-size: 0.8rem; color: var(--accent-color); text-decoration: none;">Enter model name manually</a>
+              </div>
+              <span class="form-help">Select the model from Vertex AI (Global), or input it manually.</span>
             </div>
           </div>
 
@@ -797,6 +812,13 @@
     const apiKeyInput = document.getElementById('api-key-input');
     const debugLogCheckbox = document.getElementById('debug-log-checkbox');
     
+    // Vertex
+    const vertexModelInput = document.getElementById('vertex-model-input');
+    const vertexModelSelect = document.getElementById('vertex-model-select');
+    const refreshVertexBtn = document.getElementById('refresh-vertex-btn');
+    const toggleVertexManualBtn = document.getElementById('toggle-vertex-manual-btn');
+    let vertexManualMode = false;
+
     // Gemini
     const geminiKeyInput = document.getElementById('gemini-key-input');
     const geminiModelInput = document.getElementById('gemini-model-input');
@@ -820,6 +842,19 @@
     const refreshLmstudioBtn = document.getElementById('refresh-lmstudio-btn');
     const toggleLmstudioManualBtn = document.getElementById('toggle-lmstudio-manual-btn');
     let lmstudioManualMode = false;
+
+    function toggleVertexMode(manual) {
+      vertexManualMode = manual;
+      if (manual) {
+        vertexModelSelect.style.display = 'none';
+        vertexModelInput.style.display = 'block';
+        toggleVertexManualBtn.textContent = 'Select from list';
+      } else {
+        vertexModelSelect.style.display = 'block';
+        vertexModelInput.style.display = 'none';
+        toggleVertexManualBtn.textContent = 'Enter model name manually';
+      }
+    }
 
     function toggleGeminiMode(manual) {
       geminiManualMode = manual;
@@ -860,6 +895,11 @@
       }
     }
 
+    toggleVertexManualBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleVertexMode(!vertexManualMode);
+    });
+
     toggleGeminiManualBtn.addEventListener('click', (e) => {
       e.preventDefault();
       toggleGeminiMode(!geminiManualMode);
@@ -873,6 +913,10 @@
     toggleLmstudioManualBtn.addEventListener('click', (e) => {
       e.preventDefault();
       toggleLmstudioMode(!lmstudioManualMode);
+    });
+
+    vertexModelSelect.addEventListener('change', () => {
+      vertexModelInput.value = vertexModelSelect.value;
     });
 
     geminiModelSelect.addEventListener('change', () => {
@@ -928,6 +972,15 @@
       }
     }
 
+    refreshVertexBtn.addEventListener('click', async () => {
+      refreshVertexBtn.disabled = true;
+      refreshVertexBtn.textContent = 'Fetching...';
+      const provider = providerSelect.value.startsWith('vertex') ? providerSelect.value : 'vertex';
+      await fetchAndPopulateModels(provider, '', vertexModelSelect, vertexModelInput, toggleVertexMode);
+      refreshVertexBtn.disabled = false;
+      refreshVertexBtn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg> Fetch`;
+    });
+
     refreshGeminiBtn.addEventListener('click', async () => {
       refreshGeminiBtn.disabled = true;
       refreshGeminiBtn.textContent = 'Fetching...';
@@ -981,7 +1034,7 @@
       ollamaSettings.classList.remove('active');
       lmstudioSettings.classList.remove('active');
 
-      if (activeProvider === 'vertex') {
+      if (activeProvider === 'vertex' || activeProvider === 'vertex-sheep') {
         vertexSettings.classList.add('active');
       } else if (activeProvider === 'gemini') {
         geminiSettings.classList.add('active');
@@ -1003,6 +1056,7 @@
         
         providerSelect.value = settings.ACTIVE_PROVIDER || 'vertex-sheep';
         projectIdInput.value = settings.PROJECT_ID || '';
+        vertexModelInput.value = settings.VERTEX_MODEL || 'gemini-3.1-pro-preview';
         apiKeyInput.value = settings.API_KEY_SHEEP || '';
         geminiKeyInput.value = settings.AI_STUDIO_FREE || '';
         geminiModelInput.value = settings.GEMINI_MODEL || 'gemini-1.5-flash';
@@ -1027,6 +1081,7 @@
       if (status === 'RUNNING' && !hasFetchedModelsOnStart) {
         hasFetchedModelsOnStart = true;
         // Try populating model selectors now that Hono is running
+        fetchAndPopulateModels(providerSelect.value.startsWith('vertex') ? providerSelect.value : 'vertex', '', vertexModelSelect, vertexModelInput, toggleVertexMode, true);
         if (ollamaUrlInput.value.trim()) {
           fetchAndPopulateModels('ollama', ollamaUrlInput.value.trim(), ollamaModelSelect, ollamaModelInput, toggleOllamaMode, true);
         }
@@ -1044,6 +1099,7 @@
       const payload = {
         ACTIVE_PROVIDER: providerSelect.value,
         PROJECT_ID: projectIdInput.value.trim(),
+        VERTEX_MODEL: vertexModelInput.value.trim(),
         API_KEY_SHEEP: apiKeyInput.value.trim(),
         AI_STUDIO_FREE: geminiKeyInput.value.trim(),
         GEMINI_MODEL: geminiModelInput.value.trim(),
