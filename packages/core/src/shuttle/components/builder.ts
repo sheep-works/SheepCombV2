@@ -61,10 +61,17 @@ export class ShuttleBuilder {
     // Serialize back to string
     try {
       const serializer = new (globalThis as any).XMLSerializer()
-      return serializer.serializeToString(doc)
+      let resultXml = serializer.serializeToString(doc)
+      resultXml = resultXml.replace(/&lt;[\s\S]*?&gt;/g, (tagMatch) => {
+        return tagMatch.replace(/"/g, '&quot;')
+      })
+      return resultXml
     } catch (e) {
       // If shim is missing, fallback to basic toString if available or error
-      return (doc as any).toString() || ''
+      let resultXml = (doc as any).toString() || ''
+      return resultXml.replace(/&lt;[\s\S]*?&gt;/g, (tagMatch) => {
+        return tagMatch.replace(/"/g, '&quot;')
+      })
     }
   }
 }
