@@ -40,6 +40,12 @@ contextBridge.exposeInMainWorld('apiConsole', {
     API_KEY_SHEEP?: string;
     AI_STUDIO_FREE?: string;
     GEMINI_MODEL?: string;
+    OPENAI_API_KEY?: string;
+    OPENAI_MODEL?: string;
+    CLAUDE_API_KEY?: string;
+    CLAUDE_MODEL?: string;
+    DEEPSEEK_API_KEY?: string;
+    DEEPSEEK_MODEL?: string;
     OLLAMA_URL?: string;
     OLLAMA_MODEL?: string;
     LMSTUDIO_URL?: string;
@@ -48,7 +54,25 @@ contextBridge.exposeInMainWorld('apiConsole', {
   }) => {
     return ipcRenderer.invoke('save-settings', settings);
   },
-  fetchModels: (provider: string, url: string) => {
-    return ipcRenderer.invoke('fetch-models', provider, url);
+  fetchModels: (provider: string, url: string, apiKey?: string) => {
+    return ipcRenderer.invoke('fetch-models', provider, url, apiKey);
+  },
+  openTokensFolder: () => {
+    ipcRenderer.send('open-tokens-folder');
+  },
+  openResponsesFolder: () => {
+    ipcRenderer.send('open-responses-folder');
+  },
+  getTokenFiles: () => {
+    return ipcRenderer.invoke('get-token-files');
+  },
+  readTokenFile: (filename: string) => {
+    return ipcRenderer.invoke('read-token-file', filename);
+  },
+  checkUpdate: () => {
+    return ipcRenderer.invoke('check-update');
+  },
+  openExternal: (url: string) => {
+    ipcRenderer.send('open-external', url);
   }
 });

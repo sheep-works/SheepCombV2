@@ -1,17 +1,21 @@
 {
   "name": "@sheep-family/desktop",
   "productName": "SheepBobbin Local",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "main": "dist/main.js",
   "type": "commonjs",
   "scripts": {
-    "build": "tsc && node -e \"require('fs').copyFileSync('src/index.html', 'dist/index.html')\"",
+    "build": "tsc && node -e \"require('fs').copyFileSync('src/index.html', 'dist/index.html'); require('fs').copyFileSync('bobbin.ico', 'dist/bobbin.ico')\"",
     "dev": "pnpm run build && electron .",
-    "package": "pnpm run build && electron-builder"
+    "package": "pnpm run build && electron-builder && node -e \"if(require('fs').existsSync('VersionLogs.md')) require('fs').copyFileSync('VersionLogs.md', 'release/VersionLogs.md')\""
   },
   "build": {
     "appId": "com.sheepfamily.desktop",
+    "icon": "bobbin.ico",
+    "win": {
+      "icon": "bobbin.ico"
+    },
     "directories": {
       "output": "release"
     },

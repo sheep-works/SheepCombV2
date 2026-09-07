@@ -27,7 +27,10 @@
       "concordance": "语境搜索",
       "concordance_desc": "快速精确搜索",
       "check_percentage": "概率检查",
-      "check_percentage_desc": "验证概率之和是否为 100%"
+      "check_percentage_desc": "验证概率之和是否为 100%",
+      "play": "探索与实践",
+      "edit_distance": "编辑距离",
+      "edit_distance_desc": "莱文斯坦距离可视化"
     }
   },
   "index": {
@@ -35,13 +38,15 @@
     "hero_subtitle_2": "自由解析、结构化并通过AI增强多语言资产。",
     "category_shuttle": "Shuttle 工作流",
     "category_tools": "实用工具",
+    "category_play": "探索与实践 (Play)",
     "parser_desc": "从原始文件中提取句段",
     "constructor_desc": "将单元转换为ShWv数据",
     "analyzer_desc": "使用TM/TB进行匹配处理",
     "manage_desc": "数据拆分、合并及管理",
     "api_desc": "LLM请求与缓存设置",
     "batch_desc": "左右文本的快速批量比较",
-    "concordance_desc": "基于FlexSearch的高速一致性搜索"
+    "concordance_desc": "基于FlexSearch的高速一致性搜索",
+    "edit_distance_desc": "可视化两个字符串之间的编辑距离与转换步骤"
   },
   "shuttle": {
     "constructor": {
@@ -259,6 +264,48 @@
       "empty_not_found": "未找到与“{query}”匹配的数据",
       "empty_input": "请输入搜索查询",
       "empty_subtext": "从已加载的 {count} 条数据中进行搜索"
+    }
+  },
+  "play": {
+    "edit_distance": {
+      "title": "编辑距离可视化（动态规划 DP）",
+      "subtitle": "通过逐步动画探索莱文斯坦距离计算过程、单元格转移与CAT工具匹配率",
+      "mode_label": "比较单位:",
+      "mode_char": "字符",
+      "mode_space": "单词",
+      "mode_segmenter": "分词",
+      "str1_label": "字符串 A (Source)",
+      "str2_label": "字符串 B (Target)",
+      "str1_placeholder_char": "输入字符串 A (最多20字符)...",
+      "str2_placeholder_char": "输入字符串 B (最多20字符)...",
+      "str1_placeholder_space": "输入文本 A (以空格分隔，最多15个单词)...",
+      "str2_placeholder_space": "输入文本 B (以空格分隔，最多15个单词)...",
+      "str1_placeholder_segmenter": "输入文本 A (中/日/英等，最多15个词)...",
+      "str2_placeholder_segmenter": "输入文本 B (中/日/英等，最多15个词)...",
+      "swap": "交换",
+      "clear": "清除",
+      "sample": "预设示例",
+      "btn_run": "开始计算",
+      "btn_pause": "暂停",
+      "btn_resume": "继续",
+      "btn_step": "单步执行",
+      "btn_reset": "重置",
+      "btn_skip": "直接跳到完成",
+      "speed_slow": "慢速",
+      "speed_normal": "标准",
+      "speed_fast": "快速",
+      "speed_instant": "即时",
+      "distance": "编辑距离 (Edit Distance)",
+      "similarity": "CAT 匹配率 (Match Rate)",
+      "matrix_title": "动态规划（DP）矩阵",
+      "matrix_desc": "在 len(a)+2 × len(b)+2 表格中计算最小成本变化",
+      "operations_title": "最优转换步骤",
+      "operations_desc": "从 A 转换到 B 的最短操作步骤",
+      "cat_title": "CAT 工具匹配率与计算公式",
+      "cat_desc": "常用于计算机辅助翻译工具（Trados、memoQ、Phrase等）的模糊匹配率（估算）",
+      "formula_label": "计算公式:",
+      "alignment_title": "序列对齐",
+      "live_commentary": "计算解析"
     }
   }
 }

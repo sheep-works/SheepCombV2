@@ -27,7 +27,10 @@
       "concordance": "Concordance",
       "concordance_desc": "Fast exact search",
       "check_percentage": "Check Percentage",
-      "check_percentage_desc": "Verify probability sums to 100%"
+      "check_percentage_desc": "Verify probability sums to 100%",
+      "play": "Play",
+      "edit_distance": "Edit Distance",
+      "edit_distance_desc": "Levenshtein distance visualization"
     }
   },
   "index": {
@@ -35,13 +38,15 @@
     "hero_subtitle_2": "Parse, structure, and enhance multilingual assets with AI effortlessly.",
     "category_shuttle": "Shuttle Workflow",
     "category_tools": "Utilities",
+    "category_play": "Playground & Learning",
     "parser_desc": "Extract segments from raw files",
     "constructor_desc": "Convert units to ShWv data",
     "analyzer_desc": "Matching process using TM/TB",
     "manage_desc": "Data split, merge, and management",
     "api_desc": "LLM requests and cache settings",
     "batch_desc": "Fast batch comparison of left/right text",
-    "concordance_desc": "High-speed exact search with FlexSearch"
+    "concordance_desc": "High-speed exact search with FlexSearch",
+    "edit_distance_desc": "Visualize edit distance and transformation steps between strings"
   },
   "shuttle": {
     "constructor": {
@@ -259,6 +264,48 @@
       "empty_not_found": "No matches found for \"{query}\"",
       "empty_input": "Enter a search query",
       "empty_subtext": "Searching from {count} loaded segments"
+    }
+  },
+  "play": {
+    "edit_distance": {
+      "title": "Edit Distance Visualization (Dynamic Programming)",
+      "subtitle": "Explore Levenshtein Distance step-by-step with DP transitions and CAT tool match rate",
+      "mode_label": "Unit:",
+      "mode_char": "Character",
+      "mode_space": "Word",
+      "mode_segmenter": "Token",
+      "str1_label": "String A (Source)",
+      "str2_label": "String B (Target)",
+      "str1_placeholder_char": "Enter string A (max 20 chars)...",
+      "str2_placeholder_char": "Enter string B (max 20 chars)...",
+      "str1_placeholder_space": "Enter text A (space-delimited, max 15 words)...",
+      "str2_placeholder_space": "Enter text B (space-delimited, max 15 words)...",
+      "str1_placeholder_segmenter": "Enter text A (JA/ZH/EN, max 15 words)...",
+      "str2_placeholder_segmenter": "Enter text B (JA/ZH/EN, max 15 words)...",
+      "swap": "Swap",
+      "clear": "Clear",
+      "sample": "Presets",
+      "btn_run": "Start Calculation",
+      "btn_pause": "Pause",
+      "btn_resume": "Resume",
+      "btn_step": "Step Next",
+      "btn_reset": "Reset",
+      "btn_skip": "Skip to End",
+      "speed_slow": "Slow",
+      "speed_normal": "Normal",
+      "speed_fast": "Fast",
+      "speed_instant": "Instant",
+      "distance": "Edit Distance",
+      "similarity": "CAT Match Rate",
+      "matrix_title": "Dynamic Programming (DP) Matrix",
+      "matrix_desc": "Computing minimum edit cost transition on a len(a)+2 × len(b)+2 table",
+      "operations_title": "Optimal Transformation Steps",
+      "operations_desc": "Shortest transformation sequence from A to B",
+      "cat_title": "CAT Tool Fuzzy Match & Formula",
+      "cat_desc": "Fuzzy match estimation commonly used in CAT tools (Trados, memoQ, Phrase, etc.)",
+      "formula_label": "Formula:",
+      "alignment_title": "Sequence Alignment",
+      "live_commentary": "Live Explanation"
     }
   }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Database, Layers, Zap, Code2, Cloud, Split, ArrowRight, Search, Box, Percent, Scissors } from 'lucide-vue-next'
+import { Database, Layers, Zap, Code2, Cloud, Split, ArrowRight, Search, Box, Percent, Scissors, Gamepad2, Sparkles } from 'lucide-vue-next'
 
 definePageMeta({
   title: 'Home',
@@ -24,6 +24,10 @@ const toolLinks = computed(() => [
   { to: '/tools/concordance', label: t('header.nav.concordance'), desc: t('index.concordance_desc'), icon: Search },
   { to: '/tools/check-percentage', label: t('header.nav.check_percentage'), desc: t('header.nav.check_percentage_desc'), icon: Percent },
   { to: '/tools/chunk', label: t('header.nav.chunk', 'テキストチャンク'), desc: t('index.chunk_desc', 'テキストを指定サイズで分割'), icon: Scissors },
+])
+
+const playLinks = computed(() => [
+  { to: '/play/edit-distance', label: t('header.nav.edit_distance'), desc: t('index.edit_distance_desc'), icon: Sparkles },
 ])
 </script>
 
@@ -70,6 +74,25 @@ const toolLinks = computed(() => [
         </h2>
         <div class="nav-grid">
           <NuxtLink v-for="link in toolLinks" :key="link.to" :to="link.to" class="nav-card tool-card">
+            <div class="card-icon">
+              <component :is="link.icon" :size="24" />
+            </div>
+            <div class="card-body">
+              <h3>{{ link.label }}</h3>
+              <p>{{ link.desc }}</p>
+            </div>
+            <ArrowRight class="arrow" :size="16" />
+          </NuxtLink>
+        </div>
+      </div>
+
+      <div class="category-section">
+        <h2 class="category-title">
+          <Gamepad2 :size="20" />
+          {{ $t('index.category_play') }}
+        </h2>
+        <div class="nav-grid">
+          <NuxtLink v-for="link in playLinks" :key="link.to" :to="link.to" class="nav-card play-card">
             <div class="card-icon">
               <component :is="link.icon" :size="24" />
             </div>

@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { CostCalculator, MODEL_PRICING } from './calculator.js';
-import { logLlmResponse } from './index.js';
+import { logLlmResponse, logTokensTsv, logResponseJsonl } from './index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -127,6 +127,8 @@ export class VertexClient {
       console.log(`[API Vertex AI] Model: ${this.modelName} (Provider: ${provider})`);
       console.log(this.calculator.formatLog(res));
       console.log(this.calculator.formatTotalLog());
+      
+      logTokensTsv(provider, this.modelName, promptTokens, completionTokens);
 
       if (provider === 'vertex-sheep') {
         setLogToAirtableMock(res).catch(err => {
@@ -218,8 +220,10 @@ export class VertexClient {
       });
       this.logUsage(response, provider);
       logLlmResponse(provider, response.text || '');
+      logResponseJsonl(provider, this.modelName, response.text || '', null, chunk, prompt);
       return response.text || '';
     } catch (e: any) {
+      logResponseJsonl(provider, this.modelName, null, e.message || String(e), chunk, prompt);
       throw new Error(`Vertex AI Error: ${e.message}`);
     }
   }
@@ -250,8 +254,10 @@ export class VertexClient {
       });
       this.logUsage(response, provider);
       logLlmResponse(provider, response.text || '');
+      logResponseJsonl(provider, this.modelName, response.text || '', null, chunk, prompt || null);
       return response.text || '';
     } catch (e: any) {
+      logResponseJsonl(provider, this.modelName, null, e.message || String(e), chunk, prompt || null);
       throw new Error(`Vertex AI User Request Error: ${e.message}`);
     }
   }

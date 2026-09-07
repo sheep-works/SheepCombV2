@@ -424,6 +424,54 @@
       flex-direction: column;
       gap: 16px;
     }
+
+    .tokens-file-item {
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: background 0.15s;
+      border-left: 3px solid transparent;
+    }
+    .tokens-file-item:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    .tokens-file-item.active {
+      background-color: rgba(16, 185, 129, 0.15);
+      border-left-color: var(--primary);
+    }
+    .tokens-file-item .file-size {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .tsv-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      text-align: left;
+    }
+    .tsv-table th {
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      position: sticky;
+      top: 0;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .tsv-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      font-family: var(--font-mono);
+      white-space: nowrap;
+    }
+    .tsv-table tr:hover td {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
   </style>
 </head>
 <body>
@@ -436,11 +484,15 @@
     <div class="tab-navigation">
       <button id="tab-settings" class="tab-btn active">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        Gateway Settings
+        Settings
       </button>
       <button id="tab-console" class="tab-btn">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        Console (Dev)
+        Console
+      </button>
+      <button id="tab-tokens" class="tab-btn">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Tokens
       </button>
     </div>
 
@@ -456,6 +508,20 @@
     </div>
   </header>
 
+  <!-- Update Banner -->
+  <div id="update-banner" style="display: none; background: linear-gradient(90deg, #10b981, #059669); color: #ffffff; padding: 8px 16px; font-size: 0.85rem; font-weight: 600; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 1.1rem;">🎉</span>
+      <span id="update-banner-text">A new version is available!</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button id="update-download-btn" class="action-btn" style="background-color: #ffffff; color: #047857; padding: 4px 12px; font-size: 0.8rem; height: 28px; line-height: 1; border: none;">
+        Download Update
+      </button>
+      <button id="update-dismiss-btn" style="background: none; border: none; color: white; cursor: pointer; opacity: 0.8; font-size: 1.1rem; padding: 0 4px; line-height: 1;" title="Dismiss">✕</button>
+    </div>
+  </div>
+
   <main>
     <!-- Settings Tab (Active by Default) -->
     <div id="content-settings" class="tab-content active" style="overflow-y: auto;">
@@ -467,6 +533,9 @@
               <option value="vertex-sheep">Vertex AI (Sheep)</option>
               <option value="vertex">Vertex AI (User Account)</option>
               <option value="gemini">Google AI Studio (Gemini)</option>
+              <option value="openai">ChatGPT (OpenAI)</option>
+              <option value="claude">Claude (Anthropic)</option>
+              <option value="deepseek">DeepSeek</option>
               <option value="ollama">Ollama (Local)</option>
               <option value="lmstudio">LM Studio (Local)</option>
             </select>
@@ -516,6 +585,75 @@
                 <a href="#" id="toggle-gemini-manual-btn" style="font-size: 0.8rem; color: var(--accent-color); text-decoration: none;">Enter model name manually</a>
               </div>
               <span class="form-help">Select the model from AI Studio, or input it manually.</span>
+            </div>
+          </div>
+
+          <div id="openai-settings" class="provider-settings-group">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="openai-key-input" class="form-label">OpenAI API Key</label>
+              <input type="password" id="openai-key-input" class="form-input" placeholder="Enter OpenAI API Key (sk-...)">
+              <span class="form-help">OpenAI Platform API Key. Can also be set in .env.</span>
+            </div>
+            <div class="form-group">
+              <label for="openai-model-select" class="form-label">OpenAI Model</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <select id="openai-model-select" class="form-input" style="flex: 1;"></select>
+                <input type="text" id="openai-model-input" class="form-input" placeholder="e.g. gpt-4o-mini" style="display: none; flex: 1;">
+                <button type="button" id="refresh-openai-btn" class="action-btn secondary" style="padding: 0 16px; white-space: nowrap; height: 38px; display: flex; align-items: center; gap: 4px;" title="Fetch models from OpenAI">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg>
+                  Fetch
+                </button>
+              </div>
+              <div style="margin-top: 4px; text-align: right;">
+                <a href="#" id="toggle-openai-manual-btn" style="font-size: 0.8rem; color: var(--accent-color); text-decoration: none;">Enter model name manually</a>
+              </div>
+              <span class="form-help">Select the model from OpenAI, or input it manually.</span>
+            </div>
+          </div>
+
+          <div id="claude-settings" class="provider-settings-group">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="claude-key-input" class="form-label">Claude API Key</label>
+              <input type="password" id="claude-key-input" class="form-input" placeholder="Enter Anthropic API Key (sk-ant-...)">
+              <span class="form-help">Anthropic Console API Key. Can also be set in .env.</span>
+            </div>
+            <div class="form-group">
+              <label for="claude-model-select" class="form-label">Claude Model</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <select id="claude-model-select" class="form-input" style="flex: 1;"></select>
+                <input type="text" id="claude-model-input" class="form-input" placeholder="e.g. claude-haiku-4-5-20251001" style="display: none; flex: 1;">
+                <button type="button" id="refresh-claude-btn" class="action-btn secondary" style="padding: 0 16px; white-space: nowrap; height: 38px; display: flex; align-items: center; gap: 4px;" title="Fetch models from Anthropic">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg>
+                  Fetch
+                </button>
+              </div>
+              <div style="margin-top: 4px; text-align: right;">
+                <a href="#" id="toggle-claude-manual-btn" style="font-size: 0.8rem; color: var(--accent-color); text-decoration: none;">Enter model name manually</a>
+              </div>
+              <span class="form-help">Select the model from Anthropic, or input it manually.</span>
+            </div>
+          </div>
+
+          <div id="deepseek-settings" class="provider-settings-group">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label for="deepseek-key-input" class="form-label">DeepSeek API Key</label>
+              <input type="password" id="deepseek-key-input" class="form-input" placeholder="Enter DeepSeek API Key (sk-...)">
+              <span class="form-help">DeepSeek Platform API Key. Can also be set in .env.</span>
+            </div>
+            <div class="form-group">
+              <label for="deepseek-model-select" class="form-label">DeepSeek Model</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <select id="deepseek-model-select" class="form-input" style="flex: 1;"></select>
+                <input type="text" id="deepseek-model-input" class="form-input" placeholder="e.g. deepseek-chat" style="display: none; flex: 1;">
+                <button type="button" id="refresh-deepseek-btn" class="action-btn secondary" style="padding: 0 16px; white-space: nowrap; height: 38px; display: flex; align-items: center; gap: 4px;" title="Fetch models from DeepSeek">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg>
+                  Fetch
+                </button>
+              </div>
+              <div style="margin-top: 4px; text-align: right;">
+                <a href="#" id="toggle-deepseek-manual-btn" style="font-size: 0.8rem; color: var(--accent-color); text-decoration: none;">Enter model name manually</a>
+              </div>
+              <span class="form-help">Select the model from DeepSeek, or input it manually.</span>
             </div>
           </div>
 
@@ -617,6 +755,10 @@
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
             Open Logs
           </button>
+          <button id="open-responses-btn" class="action-btn secondary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+            Open Responses
+          </button>
         </div>
       </div>
 
@@ -626,6 +768,54 @@
           <span id="log-count">0 lines</span>
         </div>
         <div id="terminal-body" class="terminal-body"></div>
+      </div>
+    </div>
+
+    <!-- Tokens Tab -->
+    <div id="content-tokens" class="tab-content" style="flex-direction: column;">
+      <div class="toolbar">
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button id="open-tokens-folder-btn" class="action-btn secondary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+            Open Tokens Folder
+          </button>
+          <button id="refresh-tokens-list-btn" class="action-btn secondary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg>
+            Refresh List
+          </button>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          Daily Token Log Files (.tsv)
+        </div>
+      </div>
+
+      <div class="tokens-container" style="display: flex; gap: 16px; flex: 1; min-height: 0;">
+        <!-- Left: File List -->
+        <div class="tokens-file-list-card" style="width: 260px; background-color: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            Select Log File
+          </div>
+          <div id="tokens-file-list" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;">
+            <div style="color: var(--text-muted); font-size: 0.85rem; padding: 8px; text-align: center;">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Right: Log Preview Area -->
+        <div class="tokens-preview-card" style="flex: 1; background-color: var(--terminal-bg); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+          <div class="tokens-preview-header" style="background-color: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="preview-filename-text" style="font-weight: 600; color: var(--text-color); font-size: 0.9rem;">(No file selected)</span>
+            </div>
+            <div id="preview-stats-summary" style="font-size: 0.8rem; color: var(--accent-color); font-weight: 600;">
+              Total Input: 0 | Total Output: 0
+            </div>
+          </div>
+          <div id="tokens-table-container" style="flex: 1; overflow: auto; padding: 12px;">
+            <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin-top: 30px;">
+              Select a .tsv file on the left to preview usage details.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -650,6 +840,33 @@
         }
       }).catch(err => console.error('Failed to get app version:', err));
     }
+
+    // Auto Update Check on Startup
+    let updateDownloadUrl = 'https://storage.lambuage.com/bobbins/';
+    const updateBanner = document.getElementById('update-banner');
+    const updateBannerText = document.getElementById('update-banner-text');
+    const updateDownloadBtn = document.getElementById('update-download-btn');
+    const updateDismissBtn = document.getElementById('update-dismiss-btn');
+
+    if (window.apiConsole && window.apiConsole.checkUpdate) {
+      window.apiConsole.checkUpdate().then((info) => {
+        if (info && info.hasUpdate) {
+          updateBannerText.textContent = `A new version (v${info.latestVersion}) is available! (Current: v${info.currentVersion})`;
+          updateDownloadUrl = info.downloadUrl || 'https://storage.lambuage.com/bobbins/';
+          updateBanner.style.display = 'flex';
+        }
+      }).catch((err) => console.log('Update check error:', err));
+    }
+
+    updateDownloadBtn.addEventListener('click', () => {
+      if (window.apiConsole && window.apiConsole.openExternal) {
+        window.apiConsole.openExternal(updateDownloadUrl);
+      }
+    });
+
+    updateDismissBtn.addEventListener('click', () => {
+      updateBanner.style.display = 'none';
+    });
 
     const terminalBody = document.getElementById('terminal-body');
     const statusDot = document.getElementById('status-dot');
@@ -745,6 +962,15 @@
       window.apiConsole.openLogsFolder();
     });
 
+    const openResponsesBtn = document.getElementById('open-responses-btn');
+    if (openResponsesBtn) {
+      openResponsesBtn.addEventListener('click', () => {
+        if (window.apiConsole && window.apiConsole.openResponsesFolder) {
+          window.apiConsole.openResponsesFolder();
+        }
+      });
+    }
+
     restartBtn.addEventListener('click', () => {
       terminalBody.innerHTML = '';
       allLogs = [];
@@ -783,26 +1009,176 @@
     // Tabs Navigation Logic
     const tabSettingsBtn = document.getElementById('tab-settings');
     const tabConsoleBtn = document.getElementById('tab-console');
+    const tabTokensBtn = document.getElementById('tab-tokens');
     const contentSettings = document.getElementById('content-settings');
     const contentConsole = document.getElementById('content-console');
+    const contentTokens = document.getElementById('content-tokens');
 
     function switchTab(activeTab) {
       tabSettingsBtn.classList.remove('active');
       tabConsoleBtn.classList.remove('active');
+      tabTokensBtn.classList.remove('active');
       contentSettings.classList.remove('active');
       contentConsole.classList.remove('active');
+      contentTokens.classList.remove('active');
 
       if (activeTab === 'settings') {
         tabSettingsBtn.classList.add('active');
         contentSettings.classList.add('active');
-      } else {
+      } else if (activeTab === 'console') {
         tabConsoleBtn.classList.add('active');
         contentConsole.classList.add('active');
+      } else if (activeTab === 'tokens') {
+        tabTokensBtn.classList.add('active');
+        contentTokens.classList.add('active');
+        loadTokenFilesList();
       }
     }
 
     tabSettingsBtn.addEventListener('click', () => switchTab('settings'));
     tabConsoleBtn.addEventListener('click', () => switchTab('console'));
+    tabTokensBtn.addEventListener('click', () => switchTab('tokens'));
+
+    // Tokens Tab Logic
+    const openTokensFolderBtn = document.getElementById('open-tokens-folder-btn');
+    const refreshTokensListBtn = document.getElementById('refresh-tokens-list-btn');
+    const tokensFileListEl = document.getElementById('tokens-file-list');
+    const previewFilenameText = document.getElementById('preview-filename-text');
+    const previewStatsSummary = document.getElementById('preview-stats-summary');
+    const tokensTableContainer = document.getElementById('tokens-table-container');
+
+    let currentSelectedTokenFile = null;
+
+    openTokensFolderBtn.addEventListener('click', () => {
+      if (window.apiConsole && window.apiConsole.openTokensFolder) {
+        window.apiConsole.openTokensFolder();
+      }
+    });
+
+    refreshTokensListBtn.addEventListener('click', () => {
+      loadTokenFilesList();
+    });
+
+    async function loadTokenFilesList() {
+      try {
+        if (!window.apiConsole || !window.apiConsole.getTokenFiles) return;
+        const files = await window.apiConsole.getTokenFiles();
+        tokensFileListEl.innerHTML = '';
+
+        if (!Array.isArray(files) || files.length === 0) {
+          tokensFileListEl.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; padding: 12px; text-align: center;">No .tsv files found.</div>';
+          tokensTableContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin-top: 30px;">No token logs recorded yet.</div>';
+          previewFilenameText.textContent = '(No file selected)';
+          previewStatsSummary.textContent = 'Total Input: 0 | Total Output: 0';
+          return;
+        }
+
+        files.forEach((file) => {
+          const item = document.createElement('div');
+          item.className = 'tokens-file-item' + (currentSelectedTokenFile === file.filename ? ' active' : '');
+          
+          const sizeKb = (file.size / 1024).toFixed(1);
+          item.innerHTML = `
+            <div style="font-weight: 600;">${file.filename}</div>
+            <div class="file-size">${sizeKb} KB</div>
+          `;
+
+          item.addEventListener('click', () => {
+            document.querySelectorAll('.tokens-file-item').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+            currentSelectedTokenFile = file.filename;
+            renderTokenFilePreview(file.filename);
+          });
+
+          tokensFileListEl.appendChild(item);
+        });
+
+        if (!currentSelectedTokenFile && files.length > 0) {
+          currentSelectedTokenFile = files[0].filename;
+          if (tokensFileListEl.children[0]) {
+            tokensFileListEl.children[0].classList.add('active');
+          }
+          renderTokenFilePreview(files[0].filename);
+        } else if (currentSelectedTokenFile) {
+          renderTokenFilePreview(currentSelectedTokenFile);
+        }
+      } catch (err) {
+        tokensFileListEl.innerHTML = `<div style="color: var(--error); font-size: 0.85rem; padding: 8px;">Error loading files: ${err.message}</div>`;
+      }
+    }
+
+    async function renderTokenFilePreview(filename) {
+      previewFilenameText.textContent = filename;
+      tokensTableContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin-top: 30px;">Loading TSV content...</div>';
+      
+      try {
+        if (!window.apiConsole || !window.apiConsole.readTokenFile) return;
+        const content = await window.apiConsole.readTokenFile(filename);
+        const lines = content.trim().split('\n');
+        
+        if (lines.length <= 1) {
+          tokensTableContainer.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin-top: 30px;">File is empty or contains no records.</div>';
+          previewStatsSummary.textContent = 'Total Input: 0 | Total Output: 0';
+          return;
+        }
+
+        const headers = lines[0].split('\t');
+        let totalInput = 0;
+        let totalOutput = 0;
+
+        const table = document.createElement('table');
+        table.className = 'tsv-table';
+
+        // Header
+        const thead = document.createElement('thead');
+        const headerTr = document.createElement('tr');
+        headers.forEach(h => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          headerTr.appendChild(th);
+        });
+        thead.appendChild(headerTr);
+        table.appendChild(thead);
+
+        // Body
+        const tbody = document.createElement('tbody');
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue;
+          const cols = lines[i].split('\t');
+          const tr = document.createElement('tr');
+
+          cols.forEach((col, cIdx) => {
+            const td = document.createElement('td');
+            if (cIdx === 0 && col.includes('T')) {
+              try {
+                td.textContent = new Date(col).toLocaleTimeString('ja-JP');
+                td.title = col;
+              } catch {
+                td.textContent = col;
+              }
+            } else {
+              td.textContent = col;
+            }
+            tr.appendChild(td);
+          });
+
+          const inputTok = parseInt(cols[3] || '0', 10);
+          const outputTok = parseInt(cols[4] || '0', 10);
+          if (!isNaN(inputTok)) totalInput += inputTok;
+          if (!isNaN(outputTok)) totalOutput += outputTok;
+
+          tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+
+        tokensTableContainer.innerHTML = '';
+        tokensTableContainer.appendChild(table);
+
+        previewStatsSummary.textContent = `Total Input: ${totalInput.toLocaleString()} | Total Output: ${totalOutput.toLocaleString()} (${(totalInput + totalOutput).toLocaleString()} total)`;
+      } catch (err) {
+        tokensTableContainer.innerHTML = `<div style="color: var(--error); font-size: 0.85rem; text-align: center; margin-top: 30px;">Failed to read file: ${err.message}</div>`;
+      }
+    }
 
     // Settings Logic
     const saveSettingsBtn = document.getElementById('save-settings-btn');
@@ -826,6 +1202,30 @@
     const refreshGeminiBtn = document.getElementById('refresh-gemini-btn');
     const toggleGeminiManualBtn = document.getElementById('toggle-gemini-manual-btn');
     let geminiManualMode = false;
+
+    // OpenAI
+    const openaiKeyInput = document.getElementById('openai-key-input');
+    const openaiModelInput = document.getElementById('openai-model-input');
+    const openaiModelSelect = document.getElementById('openai-model-select');
+    const refreshOpenaiBtn = document.getElementById('refresh-openai-btn');
+    const toggleOpenaiManualBtn = document.getElementById('toggle-openai-manual-btn');
+    let openaiManualMode = false;
+
+    // Claude
+    const claudeKeyInput = document.getElementById('claude-key-input');
+    const claudeModelInput = document.getElementById('claude-model-input');
+    const claudeModelSelect = document.getElementById('claude-model-select');
+    const refreshClaudeBtn = document.getElementById('refresh-claude-btn');
+    const toggleClaudeManualBtn = document.getElementById('toggle-claude-manual-btn');
+    let claudeManualMode = false;
+
+    // DeepSeek
+    const deepseekKeyInput = document.getElementById('deepseek-key-input');
+    const deepseekModelInput = document.getElementById('deepseek-model-input');
+    const deepseekModelSelect = document.getElementById('deepseek-model-select');
+    const refreshDeepseekBtn = document.getElementById('refresh-deepseek-btn');
+    const toggleDeepseekManualBtn = document.getElementById('toggle-deepseek-manual-btn');
+    let deepseekManualMode = false;
 
     // Ollama
     const ollamaUrlInput = document.getElementById('ollama-url-input');
@@ -869,6 +1269,45 @@
       }
     }
 
+    function toggleOpenaiMode(manual) {
+      openaiManualMode = manual;
+      if (manual) {
+        openaiModelSelect.style.display = 'none';
+        openaiModelInput.style.display = 'block';
+        toggleOpenaiManualBtn.textContent = 'Select from list';
+      } else {
+        openaiModelSelect.style.display = 'block';
+        openaiModelInput.style.display = 'none';
+        toggleOpenaiManualBtn.textContent = 'Enter model name manually';
+      }
+    }
+
+    function toggleClaudeMode(manual) {
+      claudeManualMode = manual;
+      if (manual) {
+        claudeModelSelect.style.display = 'none';
+        claudeModelInput.style.display = 'block';
+        toggleClaudeManualBtn.textContent = 'Select from list';
+      } else {
+        claudeModelSelect.style.display = 'block';
+        claudeModelInput.style.display = 'none';
+        toggleClaudeManualBtn.textContent = 'Enter model name manually';
+      }
+    }
+
+    function toggleDeepseekMode(manual) {
+      deepseekManualMode = manual;
+      if (manual) {
+        deepseekModelSelect.style.display = 'none';
+        deepseekModelInput.style.display = 'block';
+        toggleDeepseekManualBtn.textContent = 'Select from list';
+      } else {
+        deepseekModelSelect.style.display = 'block';
+        deepseekModelInput.style.display = 'none';
+        toggleDeepseekManualBtn.textContent = 'Enter model name manually';
+      }
+    }
+
     function toggleOllamaMode(manual) {
       ollamaManualMode = manual;
       if (manual) {
@@ -905,6 +1344,21 @@
       toggleGeminiMode(!geminiManualMode);
     });
 
+    toggleOpenaiManualBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleOpenaiMode(!openaiManualMode);
+    });
+
+    toggleClaudeManualBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleClaudeMode(!claudeManualMode);
+    });
+
+    toggleDeepseekManualBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleDeepseekMode(!deepseekManualMode);
+    });
+
     toggleOllamaManualBtn.addEventListener('click', (e) => {
       e.preventDefault();
       toggleOllamaMode(!ollamaManualMode);
@@ -923,6 +1377,18 @@
       geminiModelInput.value = geminiModelSelect.value;
     });
 
+    openaiModelSelect.addEventListener('change', () => {
+      openaiModelInput.value = openaiModelSelect.value;
+    });
+
+    claudeModelSelect.addEventListener('change', () => {
+      claudeModelInput.value = claudeModelSelect.value;
+    });
+
+    deepseekModelSelect.addEventListener('change', () => {
+      deepseekModelInput.value = deepseekModelSelect.value;
+    });
+
     ollamaModelSelect.addEventListener('change', () => {
       ollamaModelInput.value = ollamaModelSelect.value;
     });
@@ -931,9 +1397,9 @@
       lmstudioModelInput.value = lmstudioModelSelect.value;
     });
 
-    async function fetchAndPopulateModels(provider, url, selectEl, inputEl, toggleModeFn, isStartup = false) {
+    async function fetchAndPopulateModels(provider, url, selectEl, inputEl, toggleModeFn, isStartup = false, customApiKey = '') {
       try {
-        const models = await window.apiConsole.fetchModels(provider, url);
+        const models = await window.apiConsole.fetchModels(provider, url, customApiKey);
         if (Array.isArray(models) && models.length > 0) {
           selectEl.innerHTML = '';
           models.forEach(model => {
@@ -956,7 +1422,7 @@
           return true;
         } else {
           if (!isStartup) {
-            alert(`No models found on ${provider} server. Make sure the server is online and has models.`);
+            alert(`No models found on ${provider} server. Make sure the server is online, API key is entered, and has models.`);
           }
           selectEl.innerHTML = '<option value="">(No models loaded)</option>';
           toggleModeFn(true);
@@ -964,7 +1430,7 @@
         }
       } catch (err) {
         if (!isStartup) {
-          alert(`Failed to connect to ${provider} server at ${url}: ${err.message}`);
+          alert(`Failed to connect to ${provider} server: ${err.message}`);
         }
         selectEl.innerHTML = '<option value="">(Error loading models)</option>';
         toggleModeFn(true);
@@ -982,25 +1448,85 @@
     });
 
     refreshGeminiBtn.addEventListener('click', async () => {
+      const key = geminiKeyInput.value.trim();
+      if (!key) {
+        alert('Please enter your Google AI Studio API Key before fetching models.');
+        geminiKeyInput.focus();
+        return;
+      }
       refreshGeminiBtn.disabled = true;
       refreshGeminiBtn.textContent = 'Fetching...';
-      await fetchAndPopulateModels('gemini', '', geminiModelSelect, geminiModelInput, toggleGeminiMode);
+      await fetchAndPopulateModels('gemini', '', geminiModelSelect, geminiModelInput, toggleGeminiMode, false, key);
       refreshGeminiBtn.disabled = false;
       refreshGeminiBtn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg> Fetch`;
     });
 
+    refreshOpenaiBtn.addEventListener('click', async () => {
+      const key = openaiKeyInput.value.trim();
+      if (!key) {
+        alert('Please enter your OpenAI API Key before fetching models.');
+        openaiKeyInput.focus();
+        return;
+      }
+      refreshOpenaiBtn.disabled = true;
+      refreshOpenaiBtn.textContent = 'Fetching...';
+      await fetchAndPopulateModels('openai', '', openaiModelSelect, openaiModelInput, toggleOpenaiMode, false, key);
+      refreshOpenaiBtn.disabled = false;
+      refreshOpenaiBtn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg> Fetch`;
+    });
+
+    refreshClaudeBtn.addEventListener('click', async () => {
+      const key = claudeKeyInput.value.trim();
+      if (!key) {
+        alert('Please enter your Claude API Key before fetching models.');
+        claudeKeyInput.focus();
+        return;
+      }
+      refreshClaudeBtn.disabled = true;
+      refreshClaudeBtn.textContent = 'Fetching...';
+      await fetchAndPopulateModels('claude', '', claudeModelSelect, claudeModelInput, toggleClaudeMode, false, key);
+      refreshClaudeBtn.disabled = false;
+      refreshClaudeBtn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg> Fetch`;
+    });
+
+    refreshDeepseekBtn.addEventListener('click', async () => {
+      const key = deepseekKeyInput.value.trim();
+      if (!key) {
+        alert('Please enter your DeepSeek API Key before fetching models.');
+        deepseekKeyInput.focus();
+        return;
+      }
+      refreshDeepseekBtn.disabled = true;
+      refreshDeepseekBtn.textContent = 'Fetching...';
+      await fetchAndPopulateModels('deepseek', '', deepseekModelSelect, deepseekModelInput, toggleDeepseekMode, false, key);
+      refreshDeepseekBtn.disabled = false;
+      refreshDeepseekBtn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg> Fetch`;
+    });
+
     refreshOllamaBtn.addEventListener('click', async () => {
+      const url = ollamaUrlInput.value.trim();
+      if (!url) {
+        alert('Please enter your Ollama Server URL before fetching models.');
+        ollamaUrlInput.focus();
+        return;
+      }
       refreshOllamaBtn.disabled = true;
       refreshOllamaBtn.textContent = 'Fetching...';
-      await fetchAndPopulateModels('ollama', ollamaUrlInput.value.trim(), ollamaModelSelect, ollamaModelInput, toggleOllamaMode);
+      await fetchAndPopulateModels('ollama', url, ollamaModelSelect, ollamaModelInput, toggleOllamaMode);
       refreshOllamaBtn.disabled = false;
       refreshOllamaBtn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg> Fetch`;
     });
 
     refreshLmstudioBtn.addEventListener('click', async () => {
+      const url = lmstudioUrlInput.value.trim();
+      if (!url) {
+        alert('Please enter your LM Studio Server URL before fetching models.');
+        lmstudioUrlInput.focus();
+        return;
+      }
       refreshLmstudioBtn.disabled = true;
       refreshLmstudioBtn.textContent = 'Fetching...';
-      await fetchAndPopulateModels('lmstudio', lmstudioUrlInput.value.trim(), lmstudioModelSelect, lmstudioModelInput, toggleLmstudioMode);
+      await fetchAndPopulateModels('lmstudio', url, lmstudioModelSelect, lmstudioModelInput, toggleLmstudioMode);
       refreshLmstudioBtn.disabled = false;
       refreshLmstudioBtn.innerHTML = `<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M21 3v5h-5.28"/></svg> Fetch`;
     });
@@ -1024,6 +1550,9 @@
 
     const vertexSettings = document.getElementById('vertex-settings');
     const geminiSettings = document.getElementById('gemini-settings');
+    const openaiSettings = document.getElementById('openai-settings');
+    const claudeSettings = document.getElementById('claude-settings');
+    const deepseekSettings = document.getElementById('deepseek-settings');
     const ollamaSettings = document.getElementById('ollama-settings');
     const lmstudioSettings = document.getElementById('lmstudio-settings');
 
@@ -1031,6 +1560,9 @@
     function updateProviderUi(activeProvider) {
       vertexSettings.classList.remove('active');
       geminiSettings.classList.remove('active');
+      openaiSettings.classList.remove('active');
+      claudeSettings.classList.remove('active');
+      deepseekSettings.classList.remove('active');
       ollamaSettings.classList.remove('active');
       lmstudioSettings.classList.remove('active');
 
@@ -1038,6 +1570,12 @@
         vertexSettings.classList.add('active');
       } else if (activeProvider === 'gemini') {
         geminiSettings.classList.add('active');
+      } else if (activeProvider === 'openai') {
+        openaiSettings.classList.add('active');
+      } else if (activeProvider === 'claude') {
+        claudeSettings.classList.add('active');
+      } else if (activeProvider === 'deepseek') {
+        deepseekSettings.classList.add('active');
       } else if (activeProvider === 'ollama') {
         ollamaSettings.classList.add('active');
       } else if (activeProvider === 'lmstudio') {
@@ -1060,6 +1598,12 @@
         apiKeyInput.value = settings.API_KEY_SHEEP || '';
         geminiKeyInput.value = settings.AI_STUDIO_FREE || '';
         geminiModelInput.value = settings.GEMINI_MODEL || 'gemini-1.5-flash';
+        openaiKeyInput.value = settings.OPENAI_API_KEY || '';
+        openaiModelInput.value = settings.OPENAI_MODEL || 'gpt-4o-mini';
+        claudeKeyInput.value = settings.CLAUDE_API_KEY || '';
+        claudeModelInput.value = settings.CLAUDE_MODEL || 'claude-haiku-4-5-20251001';
+        deepseekKeyInput.value = settings.DEEPSEEK_API_KEY || '';
+        deepseekModelInput.value = settings.DEEPSEEK_MODEL || 'deepseek-chat';
         ollamaUrlInput.value = settings.OLLAMA_URL || 'http://localhost:11434';
         ollamaModelInput.value = settings.OLLAMA_MODEL || 'gemma4:e2b';
         lmstudioUrlInput.value = settings.LMSTUDIO_URL || 'http://127.0.0.1:1234';
@@ -1082,13 +1626,24 @@
         hasFetchedModelsOnStart = true;
         // Try populating model selectors now that Hono is running
         fetchAndPopulateModels(providerSelect.value.startsWith('vertex') ? providerSelect.value : 'vertex', '', vertexModelSelect, vertexModelInput, toggleVertexMode, true);
+        if (geminiKeyInput.value.trim()) {
+          fetchAndPopulateModels('gemini', '', geminiModelSelect, geminiModelInput, toggleGeminiMode, true, geminiKeyInput.value.trim());
+        }
+        if (openaiKeyInput.value.trim()) {
+          fetchAndPopulateModels('openai', '', openaiModelSelect, openaiModelInput, toggleOpenaiMode, true, openaiKeyInput.value.trim());
+        }
+        if (claudeKeyInput.value.trim()) {
+          fetchAndPopulateModels('claude', '', claudeModelSelect, claudeModelInput, toggleClaudeMode, true, claudeKeyInput.value.trim());
+        }
+        if (deepseekKeyInput.value.trim()) {
+          fetchAndPopulateModels('deepseek', '', deepseekModelSelect, deepseekModelInput, toggleDeepseekMode, true, deepseekKeyInput.value.trim());
+        }
         if (ollamaUrlInput.value.trim()) {
           fetchAndPopulateModels('ollama', ollamaUrlInput.value.trim(), ollamaModelSelect, ollamaModelInput, toggleOllamaMode, true);
         }
         if (lmstudioUrlInput.value.trim()) {
           fetchAndPopulateModels('lmstudio', lmstudioUrlInput.value.trim(), lmstudioModelSelect, lmstudioModelInput, toggleLmstudioMode, true);
         }
-        fetchAndPopulateModels('gemini', '', geminiModelSelect, geminiModelInput, toggleGeminiMode, true);
       }
     });
 
@@ -1103,6 +1658,12 @@
         API_KEY_SHEEP: apiKeyInput.value.trim(),
         AI_STUDIO_FREE: geminiKeyInput.value.trim(),
         GEMINI_MODEL: geminiModelInput.value.trim(),
+        OPENAI_API_KEY: openaiKeyInput.value.trim(),
+        OPENAI_MODEL: openaiModelInput.value.trim(),
+        CLAUDE_API_KEY: claudeKeyInput.value.trim(),
+        CLAUDE_MODEL: claudeModelInput.value.trim(),
+        DEEPSEEK_API_KEY: deepseekKeyInput.value.trim(),
+        DEEPSEEK_MODEL: deepseekModelInput.value.trim(),
         OLLAMA_URL: ollamaUrlInput.value.trim(),
         OLLAMA_MODEL: ollamaModelInput.value.trim(),
         LMSTUDIO_URL: lmstudioUrlInput.value.trim(),

@@ -44,11 +44,29 @@ function emitLog(win: BrowserWindow | null, msg: string) {
   }
 }
 
+function killExistingPortProcess(port: number) {
+  try {
+    const execSync = require('child_process').execSync;
+    if (process.platform === 'win32') {
+      const cmd = `cmd /c "for /f \\"tokens=5\\" %a in ('netstat -aon ^| findstr :${port} ^| findstr LISTENING') do taskkill /f /pid %a"`;
+      execSync(cmd, { stdio: 'ignore' });
+    } else {
+      const cmd = `lsof -ti:${port} | xargs kill -9`;
+      execSync(cmd, { stdio: 'ignore' });
+    }
+  } catch (err) {
+    // Ignore error if no process was listening on the port
+  }
+}
+
 function startHonoServer(win: BrowserWindow) {
   if (apiProcess) {
     emitLog(win, '[Desktop Info] Hono API server is already running.');
     return;
   }
+
+  // Clear any zombie process that might still hold port 8000
+  killExistingPortProcess(8000);
 
   let apiScript = '';
   if (app.isPackaged) {
@@ -121,6 +139,7 @@ function stopHonoServer(win: BrowserWindow) {
     apiProcess.kill();
     apiProcess = null;
   }
+  killExistingPortProcess(8000);
 }
 function getConfigPath() {
   return path.join(app.getPath('userData'), 'config.json');
@@ -136,6 +155,12 @@ function loadConfig() {
       if (config.VERTEX_MODEL) process.env.VERTEX_MODEL = config.VERTEX_MODEL;
       if (config.API_KEY_SHEEP) process.env.API_KEY_SHEEP = config.API_KEY_SHEEP;
       if (config.AI_STUDIO_FREE) process.env.AI_STUDIO_FREE = config.AI_STUDIO_FREE;
+      if (config.OPENAI_API_KEY) process.env.OPENAI_API_KEY = config.OPENAI_API_KEY;
+      if (config.OPENAI_MODEL) process.env.OPENAI_MODEL = config.OPENAI_MODEL;
+      if (config.CLAUDE_API_KEY) process.env.CLAUDE_API_KEY = config.CLAUDE_API_KEY;
+      if (config.CLAUDE_MODEL) process.env.CLAUDE_MODEL = config.CLAUDE_MODEL;
+      if (config.DEEPSEEK_API_KEY) process.env.DEEPSEEK_API_KEY = config.DEEPSEEK_API_KEY;
+      if (config.DEEPSEEK_MODEL) process.env.DEEPSEEK_MODEL = config.DEEPSEEK_MODEL;
       if (config.DEBUG_LOG !== undefined) process.env.DEBUG_LOG = String(config.DEBUG_LOG);
       console.log('Loaded config from:', configPath);
     } catch (err) {
@@ -153,6 +178,12 @@ function loadConfig() {
       LMSTUDIO_MODEL: 'local-model',
       AI_STUDIO_FREE: process.env.AI_STUDIO_FREE || '',
       GEMINI_MODEL: 'gemini-1.5-flash',
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+      OPENAI_MODEL: 'gpt-4o-mini',
+      CLAUDE_API_KEY: process.env.CLAUDE_API_KEY || '',
+      CLAUDE_MODEL: 'claude-haiku-4-5-20251001',
+      DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_FREE || '',
+      DEEPSEEK_MODEL: 'deepseek-chat',
       DEBUG_LOG: false
     };
     try {
@@ -163,6 +194,12 @@ function loadConfig() {
       process.env.VERTEX_MODEL = defaultConfig.VERTEX_MODEL;
       process.env.API_KEY_SHEEP = defaultConfig.API_KEY_SHEEP;
       process.env.AI_STUDIO_FREE = defaultConfig.AI_STUDIO_FREE;
+      process.env.OPENAI_API_KEY = defaultConfig.OPENAI_API_KEY;
+      process.env.OPENAI_MODEL = defaultConfig.OPENAI_MODEL;
+      process.env.CLAUDE_API_KEY = defaultConfig.CLAUDE_API_KEY;
+      process.env.CLAUDE_MODEL = defaultConfig.CLAUDE_MODEL;
+      process.env.DEEPSEEK_API_KEY = defaultConfig.DEEPSEEK_API_KEY;
+      process.env.DEEPSEEK_MODEL = defaultConfig.DEEPSEEK_MODEL;
       process.env.DEBUG_LOG = String(defaultConfig.DEBUG_LOG);
     } catch (err) {
       console.error('Failed to create default config.json:', err);
@@ -172,12 +209,19 @@ function loadConfig() {
 
 function createWindow() {
   Menu.setApplicationMenu(null);
+
+  let iconPath = path.join(__dirname, 'bobbin.ico');
+  if (!fs.existsSync(iconPath)) {
+    iconPath = path.resolve(__dirname, '../bobbin.ico');
+  }
+
   mainWindow = new BrowserWindow({
     width: 900,
     height: 650,
     minWidth: 700,
     minHeight: 500,
     title: 'SheepBobbin Local',
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -196,18 +240,104 @@ function createWindow() {
   });
 }
 
+function isNewerVersion(current: string, latest: string): boolean {
+  const parse = (v: string) => v.replace(/^v/i, '').split('.').map(n => parseInt(n, 10) || 0);
+  const c = parse(current);
+  const l = parse(latest);
+  for (let i = 0; i < Math.max(c.length, l.length); i++) {
+    const cv = c[i] || 0;
+    const lv = l[i] || 0;
+    if (lv > cv) return true;
+    if (lv < cv) return false;
+  }
+  return false;
+}
+
 // IPC Handlers
 ipcMain.handle('get-app-version', () => {
   return app.getVersion();
 });
 
+ipcMain.handle('check-update', async () => {
+  const currentVersion = app.getVersion();
+  try {
+    const res = await fetch('https://storage.lambuage.com/bobbins/latest.json', {
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    if (!res.ok) {
+      return { hasUpdate: false, currentVersion };
+    }
+    const data: any = await res.json();
+    const latestVersion = data.version || data.ver || '';
+    const hasUpdate = isNewerVersion(currentVersion, latestVersion);
+    return {
+      hasUpdate,
+      currentVersion,
+      latestVersion,
+      downloadUrl: data.downloadUrl || data.url || 'https://storage.lambuage.com/bobbins/',
+      notes: data.notes || ''
+    };
+  } catch (err: any) {
+    console.log('[Desktop Info] Update check skipped:', err.message);
+    return { hasUpdate: false, currentVersion };
+  }
+});
+
+ipcMain.on('open-external', (_event, url: string) => {
+  if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+    shell.openExternal(url);
+  }
+});
+
 ipcMain.on('open-web-ui', () => {
-  shell.openExternal('https://sheepcomb.netlify.app');
+  shell.openExternal('https://comb.lambuage.com');
 });
 
 ipcMain.on('open-logs-folder', () => {
   const logFilePath = path.join(app.getPath('userData'), 'server.log');
   shell.showItemInFolder(logFilePath);
+});
+
+ipcMain.on('open-tokens-folder', () => {
+  const tokensDir = path.join(app.getPath('userData'), 'Tokens');
+  if (!fs.existsSync(tokensDir)) {
+    fs.mkdirSync(tokensDir, { recursive: true });
+  }
+  shell.openPath(tokensDir);
+});
+
+ipcMain.on('open-responses-folder', () => {
+  const responsesDir = path.join(app.getPath('userData'), 'responses');
+  if (!fs.existsSync(responsesDir)) {
+    fs.mkdirSync(responsesDir, { recursive: true });
+  }
+  shell.openPath(responsesDir);
+});
+
+ipcMain.handle('get-token-files', async () => {
+  const tokensDir = path.join(app.getPath('userData'), 'Tokens');
+  if (!fs.existsSync(tokensDir)) {
+    return [];
+  }
+  const files = fs.readdirSync(tokensDir).filter(f => f.endsWith('.tsv'));
+  return files.map(filename => {
+    const filePath = path.join(tokensDir, filename);
+    const stats = fs.statSync(filePath);
+    return {
+      filename,
+      size: stats.size,
+      mtime: stats.mtime.toISOString()
+    };
+  }).sort((a, b) => b.filename.localeCompare(a.filename));
+});
+
+ipcMain.handle('read-token-file', async (_event, filename: string) => {
+  const safeFilename = path.basename(filename);
+  const filePath = path.join(app.getPath('userData'), 'Tokens', safeFilename);
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Token file ${safeFilename} not found.`);
+  }
+  return fs.readFileSync(filePath, 'utf-8');
 });
 
 ipcMain.on('restart-server', () => {
@@ -244,6 +374,12 @@ ipcMain.handle('save-settings', async (_event, settings: any) => {
     if (settings.VERTEX_MODEL) process.env.VERTEX_MODEL = settings.VERTEX_MODEL;
     if (settings.API_KEY_SHEEP) process.env.API_KEY_SHEEP = settings.API_KEY_SHEEP;
     if (settings.AI_STUDIO_FREE) process.env.AI_STUDIO_FREE = settings.AI_STUDIO_FREE;
+    if (settings.OPENAI_API_KEY) process.env.OPENAI_API_KEY = settings.OPENAI_API_KEY;
+    if (settings.OPENAI_MODEL) process.env.OPENAI_MODEL = settings.OPENAI_MODEL;
+    if (settings.CLAUDE_API_KEY) process.env.CLAUDE_API_KEY = settings.CLAUDE_API_KEY;
+    if (settings.CLAUDE_MODEL) process.env.CLAUDE_MODEL = settings.CLAUDE_MODEL;
+    if (settings.DEEPSEEK_API_KEY) process.env.DEEPSEEK_API_KEY = settings.DEEPSEEK_API_KEY;
+    if (settings.DEEPSEEK_MODEL) process.env.DEEPSEEK_MODEL = settings.DEEPSEEK_MODEL;
     if (settings.DEBUG_LOG !== undefined) process.env.DEBUG_LOG = String(settings.DEBUG_LOG);
 
     if (mainWindow) {
@@ -280,19 +416,24 @@ ipcMain.handle('run-greet', async () => {
   }
 });
 
-ipcMain.handle('fetch-models', async (_event, provider: string, url: string) => {
+ipcMain.handle('fetch-models', async (_event, provider: string, url: string, customApiKey?: string) => {
   const apiKey = process.env.API_KEY_SHEEP || '';
   const maxRetries = 5;
   const retryDelay = 300; // ms
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
+      const headers: Record<string, string> = {
+        'X-API-KEY': apiKey,
+        'X-LLM-Provider': provider,
+        'X-LLM-URL': url || ''
+      };
+      if (customApiKey && customApiKey.trim()) {
+        headers['X-LLM-Key'] = customApiKey.trim();
+      }
+
       const res = await fetch('http://localhost:8000/gen/models', {
-        headers: {
-          'X-API-KEY': apiKey,
-          'X-LLM-Provider': provider,
-          'X-LLM-URL': url
-        }
+        headers
       });
       if (!res.ok) {
         console.warn(`[Desktop Warning] Failed to fetch models: Hono returned HTTP ${res.status}`);
@@ -318,8 +459,30 @@ ipcMain.handle('fetch-models', async (_event, provider: string, url: string) => 
   return [];
 });
 
+function rotateLogsIfNeeded() {
+  try {
+    const logFilePath = path.join(app.getPath('userData'), 'server.log');
+    const backupLogPath = path.join(app.getPath('userData'), 'server.bak.log');
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+    if (fs.existsSync(logFilePath)) {
+      const stats = fs.statSync(logFilePath);
+      if (stats.size > MAX_SIZE) {
+        if (fs.existsSync(backupLogPath)) {
+          fs.unlinkSync(backupLogPath);
+        }
+        fs.renameSync(logFilePath, backupLogPath);
+        console.log(`[Desktop Info] Rotated log file because it exceeded 5MB.`);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to rotate logs:', err);
+  }
+}
+
 // App lifecycle
 app.whenReady().then(() => {
+  rotateLogsIfNeeded();
   loadConfig();
   createWindow();
 

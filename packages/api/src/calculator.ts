@@ -88,8 +88,7 @@ export class CostCalculator {
       `--- 実行詳細 (${nowStr}) ---`,
       `  Total Tokens: ${res.total_tokens}`,
       `  Input Tokens: ${input_token_str}`,
-      `  Output Tokens: ${res.output_tokens}`,
-      `  概算コスト: ${res.cost_jpy.toFixed(4)} 円 (USD: ${res.cost_usd.toFixed(4)})`
+      `  Output Tokens: ${res.output_tokens}`
     ];
     return logLines.join('\n');
   }
@@ -103,8 +102,7 @@ export class CostCalculator {
       `=== セッション合計 (${this.total_requests} リクエスト) ===`,
       `  Total Tokens: ${this.total_input_tokens + this.total_output_tokens}`,
       `  Input Tokens: ${this.total_input_tokens}${cached_str}`,
-      `  Output Tokens: ${this.total_output_tokens}`,
-      `  合計概算コスト: ${this.total_cost_jpy.toFixed(4)} 円 (USD: ${this.total_cost_usd.toFixed(4)})`
+      `  Output Tokens: ${this.total_output_tokens}`
     ];
     return logLines.join('\n');
   }

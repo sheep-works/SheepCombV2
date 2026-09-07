@@ -4,10 +4,21 @@ import { swaggerUI } from '@hono/swagger-ui';
 import { cors } from 'hono/cors';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { VertexClient } from './vertex.js';
+
+function getSafeBaseDir(): string {
+  if (process.env.USER_DATA_PATH) {
+    return process.env.USER_DATA_PATH;
+  }
+  if (__dirname.includes('.asar')) {
+    return path.join(os.tmpdir(), 'sheepbobbin');
+  }
+  return path.resolve(__dirname, '../../..');
+}
 import { CostCalculator } from './calculator.js';
 import {
   RequestBodySchema,
@@ -23,6 +34,7 @@ import {
 import { generateText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createAnthropic } from '@ai-sdk/anthropic';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -72,6 +84,24 @@ function loadServerConfig() {
         if (serverConfig.VERTEX_MODEL && serverConfig.VERTEX_MODEL.trim()) {
           process.env.VERTEX_MODEL = serverConfig.VERTEX_MODEL.trim();
         }
+        if (serverConfig.OPENAI_API_KEY && serverConfig.OPENAI_API_KEY.trim()) {
+          process.env.OPENAI_API_KEY = serverConfig.OPENAI_API_KEY.trim();
+        }
+        if (serverConfig.OPENAI_MODEL && serverConfig.OPENAI_MODEL.trim()) {
+          process.env.OPENAI_MODEL = serverConfig.OPENAI_MODEL.trim();
+        }
+        if (serverConfig.CLAUDE_API_KEY && serverConfig.CLAUDE_API_KEY.trim()) {
+          process.env.CLAUDE_API_KEY = serverConfig.CLAUDE_API_KEY.trim();
+        }
+        if (serverConfig.CLAUDE_MODEL && serverConfig.CLAUDE_MODEL.trim()) {
+          process.env.CLAUDE_MODEL = serverConfig.CLAUDE_MODEL.trim();
+        }
+        if (serverConfig.DEEPSEEK_API_KEY && serverConfig.DEEPSEEK_API_KEY.trim()) {
+          process.env.DEEPSEEK_API_KEY = serverConfig.DEEPSEEK_API_KEY.trim();
+        }
+        if (serverConfig.DEEPSEEK_MODEL && serverConfig.DEEPSEEK_MODEL.trim()) {
+          process.env.DEEPSEEK_MODEL = serverConfig.DEEPSEEK_MODEL.trim();
+        }
         if (serverConfig.DEBUG_LOG !== undefined) {
           process.env.DEBUG_LOG = String(serverConfig.DEBUG_LOG);
         }
@@ -88,6 +118,12 @@ function loadServerConfig() {
       OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'gemma4:e2b',
       LMSTUDIO_URL: process.env.LMSTUDIO_URL || 'http://127.0.0.1:1234',
       LMSTUDIO_MODEL: process.env.LMSTUDIO_MODEL || 'local-model',
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+      OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      CLAUDE_API_KEY: process.env.CLAUDE_API_KEY || '',
+      CLAUDE_MODEL: process.env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001',
+      DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_FREE || '',
+      DEEPSEEK_MODEL: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
       PROJECT_ID: process.env.PROJECT_ID || '',
       API_KEY_SHEEP: process.env.API_KEY_SHEEP || '',
       DEBUG_LOG: process.env.DEBUG_LOG === 'true'
@@ -165,7 +201,26 @@ app.use('*', async (c, next) => {
 
   const duration = Date.now() - startTime;
   const status = c.res.status;
+  
+  let resBodyStr = '';
+  try {
+    const clonedRes = c.res.clone();
+    const resText = await clonedRes.text();
+    if (resText) {
+      if (resText.length > 1000) {
+        resBodyStr = resText.slice(0, 1000) + '... (truncated)';
+      } else {
+        resBodyStr = resText;
+      }
+    }
+  } catch {
+    resBodyStr = '(Could not parse response body)';
+  }
+  
   console.log(`[DEBUG Response #${reqId}] ${method} ${path} -> Status ${status} (${duration}ms)`);
+  if (resBodyStr) {
+    console.log(`  Response Body:\n${resBodyStr}`);
+  }
 });
 
 // CORS middleware
@@ -206,22 +261,30 @@ app.use('/verify_connection', authMiddleware);
 app.use('/tasks/*', authMiddleware);
 
 // Vercel AI SDK Helpers
+function isSdkProvider(provider: string): boolean {
+  return ['ollama', 'lmstudio', 'gemini', 'openai', 'claude', 'deepseek'].includes(provider);
+}
+
 function getLlmProviderAndModel(c: any) {
   const provider = c.req.header('X-LLM-Provider') || serverConfig.ACTIVE_PROVIDER || 'vertex';
+  const customKey = c.req.header('X-LLM-Key') || c.req.header('X-LLM-API-Key') || undefined;
   const modelName = c.req.header('X-LLM-Model') || (
     provider === 'ollama' ? serverConfig.OLLAMA_MODEL : 
     provider === 'lmstudio' ? serverConfig.LMSTUDIO_MODEL :
     provider === 'gemini' ? serverConfig.GEMINI_MODEL :
+    provider === 'openai' ? (serverConfig.OPENAI_MODEL || process.env.OPENAI_MODEL || 'gpt-4o-mini') :
+    provider === 'claude' ? (serverConfig.CLAUDE_MODEL || process.env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001') :
+    provider === 'deepseek' ? (serverConfig.DEEPSEEK_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-chat') :
     (provider === 'vertex' || provider === 'vertex-sheep') ? (serverConfig.VERTEX_MODEL || process.env.VERTEX_MODEL || 'gemini-3.1-pro-preview') : undefined
   );
   const url = c.req.header('X-LLM-URL') || (
     provider === 'ollama' ? serverConfig.OLLAMA_URL : 
     provider === 'lmstudio' ? serverConfig.LMSTUDIO_URL : undefined
   );
-  return { provider, modelName, url };
+  return { provider, modelName, url, customKey };
 }
 
-function getLlmModel(provider: string, modelName: string, url?: string) {
+function getLlmModel(provider: string, modelName: string, url?: string, customKey?: string) {
   if (provider === 'lmstudio') {
     const baseUrl = (url || 'http://127.0.0.1:1234').replace(/\/$/, '') + '/v1';
     const lmstudio = createOpenAI({
@@ -237,16 +300,35 @@ function getLlmModel(provider: string, modelName: string, url?: string) {
     });
     return ollama(modelName || 'gemma4:e2b');
   } else if (provider === 'gemini') {
-    const apiKey = serverConfig.AI_STUDIO_FREE || process.env.AI_STUDIO_FREE || '';
+    const apiKey = customKey || serverConfig.AI_STUDIO_FREE || process.env.AI_STUDIO_FREE || '';
     const google = createGoogleGenerativeAI({
       apiKey,
     });
     return google(modelName || 'gemini-1.5-flash');
+  } else if (provider === 'openai') {
+    const apiKey = customKey || serverConfig.OPENAI_API_KEY || process.env.OPENAI_API_KEY || '';
+    const openai = createOpenAI({
+      apiKey,
+    });
+    return openai(modelName || 'gpt-4o-mini');
+  } else if (provider === 'claude') {
+    const apiKey = customKey || serverConfig.CLAUDE_API_KEY || process.env.CLAUDE_API_KEY || '';
+    const anthropic = createAnthropic({
+      apiKey,
+    });
+    return anthropic(modelName || 'claude-haiku-4-5-20251001');
+  } else if (provider === 'deepseek') {
+    const apiKey = customKey || serverConfig.DEEPSEEK_API_KEY || serverConfig.DEEPSEEK_API_FREE || process.env.DEEPSEEK_API_FREE || process.env.DEEPSEEK_API_KEY || '';
+    const deepseek = createOpenAI({
+      baseURL: 'https://api.deepseek.com/v1',
+      apiKey,
+    });
+    return deepseek(modelName || 'deepseek-chat');
   }
   throw new Error(`Unsupported provider: ${provider}`);
 }
 
-async function fetchLlmModels(provider: string, url?: string): Promise<string[]> {
+async function fetchLlmModels(provider: string, url?: string, customKey?: string): Promise<string[]> {
   if (provider === 'ollama') {
     try {
       const targetUrl = (url || 'http://localhost:11434').replace(/\/$/, '');
@@ -254,7 +336,8 @@ async function fetchLlmModels(provider: string, url?: string): Promise<string[]>
       if (!response.ok) return [];
       const data = await response.json();
       return data.models ? data.models.map((m: any) => m.name) : [];
-    } catch (e) {
+    } catch (e: any) {
+      console.warn(`[API Warning] Failed to fetch Ollama models:`, e.message);
       return [];
     }
   } else if (provider === 'lmstudio') {
@@ -264,15 +347,22 @@ async function fetchLlmModels(provider: string, url?: string): Promise<string[]>
       if (!response.ok) return [];
       const data = await response.json();
       return data.data ? data.data.map((m: any) => m.id) : [];
-    } catch (e) {
+    } catch (e: any) {
+      console.warn(`[API Warning] Failed to fetch LM Studio models:`, e.message);
       return [];
     }
   } else if (provider === 'gemini') {
     try {
-      const apiKey = serverConfig.AI_STUDIO_FREE || process.env.AI_STUDIO_FREE || '';
-      if (!apiKey) return [];
+      const apiKey = customKey || serverConfig.AI_STUDIO_FREE || process.env.AI_STUDIO_FREE || '';
+      if (!apiKey) {
+        console.warn('[API Warning] No Gemini API key provided for model fetch.');
+        return [];
+      }
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-      if (!response.ok) return [];
+      if (!response.ok) {
+        console.warn(`[API Warning] Gemini model fetch failed with HTTP ${response.status}`);
+        return [];
+      }
       const data = await response.json();
       if (data.models) {
         return data.models
@@ -280,7 +370,76 @@ async function fetchLlmModels(provider: string, url?: string): Promise<string[]>
           .map((m: any) => m.name.replace(/^models\//, ''));
       }
       return [];
-    } catch (e) {
+    } catch (e: any) {
+      console.warn(`[API Warning] Failed to fetch Gemini models:`, e.message);
+      return [];
+    }
+  } else if (provider === 'openai') {
+    try {
+      const apiKey = customKey || serverConfig.OPENAI_API_KEY || process.env.OPENAI_API_KEY || '';
+      if (!apiKey) {
+        console.warn('[API Warning] No OpenAI API key provided for model fetch.');
+        return [];
+      }
+      const response = await fetch('https://api.openai.com/v1/models', {
+        headers: { Authorization: `Bearer ${apiKey}` }
+      });
+      if (!response.ok) {
+        console.warn(`[API Warning] OpenAI model fetch failed with HTTP ${response.status}`);
+        return [];
+      }
+      const data = await response.json();
+      if (!data.data) return [];
+      const filterPrefixes = ['gpt-', 'chatgpt-', 'o1', 'o3'];
+      return data.data
+        .map((m: any) => m.id)
+        .filter((id: string) => filterPrefixes.some(p => id.startsWith(p)) && !id.includes('instruct') && !id.includes('realtime') && !id.includes('audio') && !id.includes('search') && !id.includes('transcribe'))
+        .sort();
+    } catch (e: any) {
+      console.warn(`[API Warning] Failed to fetch OpenAI models:`, e.message);
+      return [];
+    }
+  } else if (provider === 'claude') {
+    try {
+      const apiKey = customKey || serverConfig.CLAUDE_API_KEY || process.env.CLAUDE_API_KEY || '';
+      if (!apiKey) {
+        console.warn('[API Warning] No Claude API key provided for model fetch.');
+        return [];
+      }
+      const response = await fetch('https://api.anthropic.com/v1/models', {
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
+        }
+      });
+      if (!response.ok) {
+        console.warn(`[API Warning] Claude model fetch failed with HTTP ${response.status}`);
+        return [];
+      }
+      const data = await response.json();
+      return data.data ? data.data.map((m: any) => m.id) : [];
+    } catch (e: any) {
+      console.warn(`[API Warning] Failed to fetch Claude models:`, e.message);
+      return [];
+    }
+  } else if (provider === 'deepseek') {
+    try {
+      const apiKey = customKey || serverConfig.DEEPSEEK_API_KEY || serverConfig.DEEPSEEK_API_FREE || process.env.DEEPSEEK_API_FREE || process.env.DEEPSEEK_API_KEY || '';
+      if (!apiKey) {
+        console.warn('[API Warning] No DeepSeek API key provided for model fetch.');
+        return [];
+      }
+      const response = await fetch('https://api.deepseek.com/models', {
+        headers: { Authorization: `Bearer ${apiKey}` }
+      });
+      if (!response.ok) {
+        console.warn(`[API Warning] DeepSeek model fetch failed with HTTP ${response.status}`);
+        return [];
+      }
+      const data = await response.json();
+      return data.data ? data.data.map((m: any) => m.id) : [];
+    } catch (e: any) {
+      console.warn(`[API Warning] Failed to fetch DeepSeek models:`, e.message);
       return [];
     }
   } else if (provider === 'vertex' || provider === 'vertex-sheep') {
@@ -294,14 +453,15 @@ async function processChunkWithSdk(
   modelName: string,
   url: string | undefined,
   chunkText: string,
-  systemPrompt: string
+  systemPrompt: string,
+  customKey?: string
 ): Promise<string> {
-  const model = getLlmModel(provider, modelName, url);
+  const model = getLlmModel(provider, modelName, url, customKey);
   const userContent = `\`\`\`jsonl\n${chunkText}\n\`\`\``;
 
   try {
     const { text, usage } = await generateText({
-      model,
+      model: model as any,
       system: systemPrompt,
       messages: [{ role: 'user', content: userContent }],
       temperature: 0.0,
@@ -309,6 +469,7 @@ async function processChunkWithSdk(
     });
 
     logLlmResponse(provider, text || '');
+    logResponseJsonl(provider, modelName, text || '', null, chunkText, systemPrompt);
 
     if (usage) {
       const res = localCalculator.calculate(
@@ -319,19 +480,90 @@ async function processChunkWithSdk(
       console.log(`[API Local LLM] Model: ${modelName}`);
       console.log(localCalculator.formatLog(res));
       console.log(localCalculator.formatTotalLog());
+      
+      logTokensTsv(provider, modelName, usage.inputTokens ?? 0, usage.outputTokens ?? 0);
     }
 
     return text || '';
   } catch (e: any) {
     console.error(`[API Local LLM Error]`, e);
+    logResponseJsonl(provider, modelName, null, e.message || String(e), chunkText, systemPrompt);
     throw e;
+  }
+}
+
+export function logResponseJsonl(
+  provider: string,
+  model: string,
+  result: string | null,
+  error?: string | null,
+  chunk?: string | null,
+  prompt?: string | null
+) {
+  try {
+    const baseDir = getSafeBaseDir();
+    const responsesDir = path.join(baseDir, 'responses');
+    if (!fs.existsSync(responsesDir)) {
+      fs.mkdirSync(responsesDir, { recursive: true });
+    }
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    const logFile = path.join(responsesDir, `responses_${dateStr}.jsonl`);
+
+    const record = {
+      datetime: now.toISOString(),
+      platform: provider,
+      model: model || '',
+      status: error ? 'error' : 'success',
+      result: result || null,
+      error: error || null,
+      chunk: chunk || null,
+      prompt: prompt || null
+    };
+
+    const jsonLine = JSON.stringify(record) + '\n';
+    fs.appendFileSync(logFile, jsonLine, 'utf-8');
+  } catch (e) {
+    console.error('[API Error] Failed to write response JSONL log file', e);
+  }
+}
+
+export function logTokensTsv(provider: string, model: string, inputTokens: number, outputTokens: number) {
+  try {
+    const baseDir = getSafeBaseDir();
+    const tokensDir = path.join(baseDir, 'Tokens');
+    if (!fs.existsSync(tokensDir)) {
+      fs.mkdirSync(tokensDir, { recursive: true });
+    }
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    const logFile = path.join(tokensDir, `used_${dateStr}.tsv`);
+
+    // Create header if file doesn't exist
+    if (!fs.existsSync(logFile)) {
+      fs.writeFileSync(logFile, 'datetime\tplatform\tmodel\tinput tokens\toutput tokens\n', 'utf-8');
+    }
+
+    const timestamp = now.toISOString();
+    const logEntry = `${timestamp}\t${provider}\t${model}\t${inputTokens}\t${outputTokens}\n`;
+    fs.appendFileSync(logFile, logEntry, 'utf-8');
+  } catch (e) {
+    console.error('[API Error] Failed to write token log file', e);
   }
 }
 
 export function logLlmResponse(provider: string, result: string) {
   try {
-    const userDataPath = process.env.USER_DATA_PATH;
-    const logDir = userDataPath ? path.join(userDataPath, 'logs') : path.join(__dirname, '../../../logs');
+    const baseDir = getSafeBaseDir();
+    const logDir = path.join(baseDir, 'logs');
     if (!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir, { recursive: true });
     }
@@ -377,10 +609,10 @@ const verifyConnectionRoute = createRoute({
 });
 
 app.openapi(verifyConnectionRoute, async (c) => {
-  const { provider, url } = getLlmProviderAndModel(c);
-  if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+  const { provider, url, customKey } = getLlmProviderAndModel(c);
+  if (isSdkProvider(provider)) {
     try {
-      const models = await fetchLlmModels(provider, url);
+      const models = await fetchLlmModels(provider, url, customKey);
       if (models.length > 0) {
         return c.json({ status: 'ok', message: `SheepHub Proxy to ${provider} is accessible` }, 200);
       }
@@ -478,10 +710,11 @@ const greetRoute = createRoute({
 
 genRouter.openapi(greetRoute, async (c) => {
   try {
-    const { provider, modelName, url } = getLlmProviderAndModel(c);
-    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
-      const models = await fetchLlmModels(provider, url);
-      return c.json({ status: 'success', model_info: `${provider === 'gemini' ? 'Google AI Studio' : provider === 'ollama' ? 'Ollama' : 'LM Studio'} Models: ${models.join(', ')}` }, 200);
+    const { provider, modelName, url, customKey } = getLlmProviderAndModel(c);
+    if (isSdkProvider(provider)) {
+      const models = await fetchLlmModels(provider, url, customKey);
+      const label = provider === 'gemini' ? 'Google AI Studio' : provider === 'openai' ? 'OpenAI' : provider === 'claude' ? 'Claude' : provider === 'deepseek' ? 'DeepSeek' : provider === 'ollama' ? 'Ollama' : 'LM Studio';
+      return c.json({ status: 'success', model_info: `${label} Models: ${models.join(', ')}` }, 200);
     }
     const client = getVertexClient();
     if (modelName) client.setModelName(modelName);
@@ -495,12 +728,9 @@ genRouter.openapi(greetRoute, async (c) => {
 // Models Endpoint
 genRouter.get('/models', async (c) => {
   try {
-    const { provider, url } = getLlmProviderAndModel(c);
-    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini' || provider === 'vertex' || provider === 'vertex-sheep') {
-      const models = await fetchLlmModels(provider, url);
-      return c.json(models, 200);
-    }
-    return c.json([], 200);
+    const { provider, url, customKey } = getLlmProviderAndModel(c);
+    const models = await fetchLlmModels(provider, url, customKey);
+    return c.json(models, 200);
   } catch (e) {
     return c.json([], 200);
   }
@@ -585,7 +815,7 @@ genRouter.openapi(initPromptRoute, async (c) => {
   const body = c.req.valid('json');
   try {
     const { provider, modelName } = getLlmProviderAndModel(c);
-    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+    if (isSdkProvider(provider)) {
       return c.json({ status: 'success', result: `${provider}-dummy-cache` }, 200);
     }
     const client = getVertexClient();
@@ -629,7 +859,7 @@ genRouter.openapi(deleteCacheRoute, async (c) => {
   const body = c.req.valid('json');
   try {
     const { provider } = getLlmProviderAndModel(c);
-    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+    if (isSdkProvider(provider)) {
       return c.json({ status: 'success' }, 200);
     }
     await getVertexClient().deleteCache(body.cache_name, provider);
@@ -647,13 +877,14 @@ async function runUserTaskBackground(
   cacheId?: string | null,
   provider?: string | null,
   modelName?: string | null,
-  url?: string | null
+  url?: string | null,
+  customKey?: string | null
 ) {
   tasks.set(taskId, { status: 'processing', result: null, error: null });
   try {
-    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+    if (provider && isSdkProvider(provider)) {
       const systemPrompt = prompt || "あなたは優秀な翻訳チェッカーです。渡された原文と訳文を比較し、誤訳や不自然な箇所があれば指摘してください。問題がなければ 空文字 または 'OK' を返してください。出力は必ず以下の形式のJSONで返してください：\n{ \"result\": \"指摘内容\" }";
-      const result = await processChunkWithSdk(provider, modelName || '', url || undefined, chunk, systemPrompt);
+      const result = await processChunkWithSdk(provider, modelName || '', url || undefined, chunk, systemPrompt, customKey || undefined);
       tasks.set(taskId, { status: 'success', result, error: null });
       return;
     }
@@ -698,8 +929,8 @@ genRouter.openapi(checkUserRoute, async (c) => {
   const body = c.req.valid('json');
   const taskId = crypto.randomUUID();
   tasks.set(taskId, { status: 'pending', result: null, error: null });
-  const { provider, modelName, url } = getLlmProviderAndModel(c);
-  runUserTaskBackground(taskId, body.chunk, body.prompt, body.cache_id, provider, modelName, url);
+  const { provider, modelName, url, customKey } = getLlmProviderAndModel(c);
+  runUserTaskBackground(taskId, body.chunk, body.prompt, body.cache_id, provider, modelName, url, customKey);
   return c.json({ task_id: taskId, status: 'pending' }, 200);
 });
 
@@ -734,10 +965,10 @@ const checkUserSyncRoute = createRoute({
 genRouter.openapi(checkUserSyncRoute, async (c) => {
   const body = c.req.valid('json');
   try {
-    const { provider, modelName, url } = getLlmProviderAndModel(c);
-    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+    const { provider, modelName, url, customKey } = getLlmProviderAndModel(c);
+    if (isSdkProvider(provider)) {
       const systemPrompt = body.prompt || "あなたは優秀な翻訳チェッカーです。渡された原文と訳文を比較し、誤訳や不自然な箇所があれば指摘してください。問題がなければ 空文字 または 'OK' を返してください。出力は必ず以下の形式のJSONで返してください：\n{ \"result\": \"指摘内容\" }";
-      const result = await processChunkWithSdk(provider, modelName || '', url || undefined, body.chunk, systemPrompt);
+      const result = await processChunkWithSdk(provider, modelName || '', url || undefined, body.chunk, systemPrompt, customKey);
       return c.json({ status: 'success', result }, 200);
     }
     const client = getVertexClient();
@@ -781,8 +1012,8 @@ genRouter.openapi(transUserRoute, async (c) => {
   const body = c.req.valid('json');
   const taskId = crypto.randomUUID();
   tasks.set(taskId, { status: 'pending', result: null, error: null });
-  const { provider, modelName, url } = getLlmProviderAndModel(c);
-  runUserTaskBackground(taskId, body.chunk, body.prompt, body.cache_id, provider, modelName, url);
+  const { provider, modelName, url, customKey } = getLlmProviderAndModel(c);
+  runUserTaskBackground(taskId, body.chunk, body.prompt, body.cache_id, provider, modelName, url, customKey);
   return c.json({ task_id: taskId, status: 'pending' }, 200);
 });
 
@@ -817,10 +1048,10 @@ const transUserSyncRoute = createRoute({
 genRouter.openapi(transUserSyncRoute, async (c) => {
   const body = c.req.valid('json');
   try {
-    const { provider, modelName, url } = getLlmProviderAndModel(c);
-    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
+    const { provider, modelName, url, customKey } = getLlmProviderAndModel(c);
+    if (isSdkProvider(provider)) {
       const systemPrompt = body.prompt || "あなたは優秀な翻訳家です。渡された原文を翻訳してください。出力は必ず以下の形式のJSONで返してください：\n{ \"result\": \"翻訳文\" }";
-      const result = await processChunkWithSdk(provider, modelName || '', url || undefined, body.chunk, systemPrompt);
+      const result = await processChunkWithSdk(provider, modelName || '', url || undefined, body.chunk, systemPrompt, customKey);
       return c.json({ status: 'success', result }, 200);
     }
     const client = getVertexClient();
@@ -839,12 +1070,13 @@ async function runTaskBackground(
   chunk: string,
   provider?: string | null,
   modelName?: string | null,
-  url?: string | null
+  url?: string | null,
+  customKey?: string | null
 ) {
   tasks.set(taskId, { status: 'processing', result: null, error: null });
   try {
-    if (provider === 'ollama' || provider === 'lmstudio' || provider === 'gemini') {
-      const result = await processChunkWithSdk(provider, modelName || '', url || undefined, chunk, prompt);
+    if (provider && isSdkProvider(provider)) {
+      const result = await processChunkWithSdk(provider, modelName || '', url || undefined, chunk, prompt, customKey || undefined);
       tasks.set(taskId, { status: 'success', result, error: null });
       return;
     }

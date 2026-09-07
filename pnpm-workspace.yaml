@@ -9,3 +9,6 @@ allowBuilds:
   protobufjs: true
   puppeteer: false
   vue-demi: true
+minimumReleaseAgeExclude:
+  - '@ai-sdk/anthropic@3.0.115'
+  - '@ai-sdk/provider-utils@4.0.50'

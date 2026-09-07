@@ -27,7 +27,10 @@
       "concordance": "コンコーダンス",
       "concordance_desc": "高速な一致検索",
       "check_percentage": "確率チェック",
-      "check_percentage_desc": "確率の合計が100%になるか検証"
+      "check_percentage_desc": "確率の合計が100%になるか検証",
+      "play": "遊ぶ",
+      "edit_distance": "編集距離",
+      "edit_distance_desc": "レーベンシュタイン距離の可視化"
     }
   },
   "index": {
@@ -35,13 +38,15 @@
     "hero_subtitle_2": "多言語アセットを自在にパースして構造化し、AI＆LLMでの処理を可能に",
     "category_shuttle": "ワークフロー",
     "category_tools": "ツール",
+    "category_play": "遊ぶ（実験・学び）",
     "parser_desc": "各種対訳ファイルからセグメントを抽出",
     "constructor_desc": "抽出した対訳ペアを構造化",
     "analyzer_desc": "TM/TBマッチング解析",
     "manage_desc": "データの分割・結合・管理",
     "api_desc": "LLMリクエストとキャッシュ設定",
     "batch_desc": "左右のテキストを高速に一括比較",
-    "concordance_desc": "FlexSearchによる高速な一致検索"
+    "concordance_desc": "FlexSearchによる高速な一致検索",
+    "edit_distance_desc": "2つの文字列間の編集距離と変換ステップを可視化"
   },
   "shuttle": {
     "constructor": {
@@ -258,6 +263,48 @@
       "empty_not_found": "\"{query}\" に一致するデータは見つかりませんでした",
       "empty_input": "検索クエリを入力してください",
       "empty_subtext": "読み込まれた {count} 件のデータから検索します"
+    }
+  },
+  "play": {
+    "edit_distance": {
+      "title": "編集距離の可視化（動的計画法 DP）",
+      "subtitle": "レーベンシュタイン距離の計算過程・セル遷移・CATツール一致率をステップアニメーションで体験",
+      "mode_label": "比較単位:",
+      "mode_char": "文字",
+      "mode_space": "単語",
+      "mode_segmenter": "トークン",
+      "str1_label": "文字列 A (Source)",
+      "str2_label": "文字列 B (Target)",
+      "str1_placeholder_char": "文字列 A を入力 (最大20文字)...",
+      "str2_placeholder_char": "文字列 B を入力 (最大20文字)...",
+      "str1_placeholder_space": "テキスト A を入力 (スペース区切り・最大15単語)...",
+      "str2_placeholder_space": "テキスト B を入力 (スペース区切り・最大15単語)...",
+      "str1_placeholder_segmenter": "テキスト A を入力 (日本語/中国語/英語など・最大15単語)...",
+      "str2_placeholder_segmenter": "テキスト B を入力 (日本語/中国語/英語など・最大15単語)...",
+      "swap": "入れ替え",
+      "clear": "クリア",
+      "sample": "プリセット",
+      "btn_run": "計算を開始",
+      "btn_pause": "一時停止",
+      "btn_resume": "再開",
+      "btn_step": "1ステップ進める",
+      "btn_reset": "リセット",
+      "btn_skip": "最後までスキップ",
+      "speed_slow": "低速",
+      "speed_normal": "標準",
+      "speed_fast": "高速",
+      "speed_instant": "即時",
+      "distance": "編集距離 (Edit Distance)",
+      "similarity": "CAT 一致率 (Match Rate)",
+      "matrix_title": "動的計画法（DP）マトリックス",
+      "matrix_desc": "len(a)+2 × len(b)+2 のテーブルで最小コストの推移を計算",
+      "operations_title": "最適変換ステップ",
+      "operations_desc": "A から B への最短変換手順",
+      "cat_title": "CAT ツール一致率・計算式",
+      "cat_desc": "CATツール（Trados, memoQ, Phrase等）で用いられるファジーマッチ率（概算）",
+      "formula_label": "計算式:",
+      "alignment_title": "シーケンス・アライメント",
+      "live_commentary": "計算解説"
     }
   }
 }

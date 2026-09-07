@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Trash2, ChevronDown, Database, Layers, Zap, Code2, Cloud, Split, Search, BookOpen, Hammer, Percent, Scissors } from 'lucide-vue-next'
+import { Trash2, ChevronDown, Database, Layers, Zap, Code2, Cloud, Split, Search, BookOpen, Hammer, Percent, Scissors, Gamepad2, Sparkles } from 'lucide-vue-next'
 import { useShuttleStore } from '../stores/shuttleStore'
 import { useI18n } from 'vue-i18n'
 
@@ -138,6 +138,24 @@ const handleLocaleChange = (event: Event) => {
               <div class="item-text">
                 <span class="label">{{ $t('header.nav.chunk', 'テキストチャンク') }}</span>
                 <span class="desc">{{ $t('header.nav.chunk_desc', 'テキストを指定サイズで分割') }}</span>
+              </div>
+            </NuxtLink>
+          </div>
+        </div>
+
+        <!-- Play Group -->
+        <div class="nav-item has-dropdown">
+          <button class="nav-group-trigger" :class="{ active: route.path.startsWith('/play') }">
+            <Gamepad2 :size="16" />
+            <span>{{ $t('header.nav.play') }}</span>
+            <ChevronDown :size="14" class="chevron" />
+          </button>
+          <div class="dropdown-menu">
+            <NuxtLink to="/play/edit-distance" class="dropdown-item" active-class="active">
+              <Sparkles :size="14" />
+              <div class="item-text">
+                <span class="label">{{ $t('header.nav.edit_distance') }}</span>
+                <span class="desc">{{ $t('header.nav.edit_distance_desc') }}</span>
               </div>
             </NuxtLink>
           </div>

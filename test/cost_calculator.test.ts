@@ -38,7 +38,6 @@ describe('CostCalculator', () => {
     expect(log).toContain('Total Tokens: 12000')
     expect(log).toContain('Input Tokens: 5000 + 5000 (cached)')
     expect(log).toContain('Output Tokens: 2000')
-    expect(log).toContain('概算コスト: 0.6750 円')
 
     const totalLog = calc.formatTotalLog()
     expect(totalLog).toContain('セッション合計 (1 リクエスト)')
