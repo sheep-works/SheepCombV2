@@ -179,7 +179,7 @@ export class ShuttleManager {
       const termsObj = unit.ref?.tb || []
 
       const obj: any = {}
-      obj.index = unit.idx
+      obj.idx = unit.idx
       
       if (opts) {
         if (opts.src) obj.src = unit.src
@@ -238,7 +238,7 @@ export class ShuttleManager {
       const termsObj = unit.ref?.tb || []
 
       const obj: any = {}
-      obj.index = unit.idx
+      obj.idx = unit.idx
       if (opts) {
         if (opts.src) obj.src = unit.src
         if (opts.tgt) obj.tgt = tgtText

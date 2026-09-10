@@ -228,7 +228,8 @@ app.use('*', cors({
   origin: [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    'https://sheepcomb.netlify.app'
+    'https://sheepcomb.netlify.app',
+    'https://comb.lambuage.com'
   ],
   allowHeaders: ['Content-Type', 'X-API-KEY', 'X-LLM-Provider', 'X-LLM-Model', 'X-LLM-URL'],
   allowMethods: ['POST', 'GET', 'OPTIONS'],

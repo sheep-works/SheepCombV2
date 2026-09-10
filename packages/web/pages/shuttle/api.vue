@@ -247,9 +247,9 @@ function exportCSV() {
     const resItems = parseChunkResponse(chunk.response);
     let isJsonResponses = false;
     for (const rItem of resItems) {
-      if (rItem.idx !== undefined || rItem.Index !== undefined) {
+      if (rItem.idx !== undefined || rItem.Index !== undefined || rItem.index !== undefined) {
          isJsonResponses = true;
-         const idxStr = String(rItem.idx ?? rItem.Index);
+         const idxStr = String(rItem.idx ?? rItem.Index ?? rItem.index);
          feedbackMap.set(idxStr, {
            issueType: String(rItem.issueType || rItem.IssueType || ''),
            detail: String(rItem.detail || rItem.Detail || rItem.result || rItem.raw || '')
@@ -260,29 +260,38 @@ function exportCSV() {
     if (!isJsonResponses) {
       // Parse plain text responses like "Line 0: [Error]" or "Line [0]:"
       let currentIdx: string | null = null;
+      let currentIssueType = '';
       let currentFeedback: string[] = [];
       const lines = (chunk.response || '').split('\n');
       
       for (const line of lines) {
-        const match = line.match(/^(?:Line|行)\s*\[?(\d+)\]?[\s:]/i);
+        const match = line.match(/^(?:Line|行)\s*\[?(\d+)\]?(?:\s*:\s*(?:\[([^\]]+)\])?)?/i);
         if (match) {
           if (currentIdx !== null) {
-            feedbackMap.set(currentIdx, { issueType: '', detail: currentFeedback.join('\n').trim() });
+            feedbackMap.set(currentIdx, { issueType: currentIssueType, detail: currentFeedback.join('\n').trim() });
           }
           currentIdx = match[1]!;
-          currentFeedback = [line];
+          currentIssueType = match[2] ? match[2].trim() : '';
+          currentFeedback = [];
+          const remaining = line.replace(/^(?:Line|行)\s*\[?(\d+)\]?(?:\s*:\s*(?:\[([^\]]+)\])?)?\s*/i, '').trim();
+          if (remaining) {
+            currentFeedback.push(remaining);
+          }
         } else if (currentIdx !== null) {
-          currentFeedback.push(line);
+          const trimmed = line.trim();
+          if (trimmed && trimmed !== '{"raw":""}') {
+            currentFeedback.push(line);
+          }
         }
       }
       if (currentIdx !== null) {
-        feedbackMap.set(currentIdx, { issueType: '', detail: currentFeedback.join('\n').trim() });
+        feedbackMap.set(currentIdx, { issueType: currentIssueType, detail: currentFeedback.join('\n').trim() });
       }
     }
 
     if (originalData.length > 0) {
       for (const oItem of originalData) {
-        const idxStr = String(oItem.idx ?? oItem.Index ?? '');
+        const idxStr = String(oItem.idx ?? oItem.Index ?? oItem.index ?? '');
         const feedback = feedbackMap.get(idxStr);
         
         const idx = escapeCsv(idxStr);
@@ -297,7 +306,7 @@ function exportCSV() {
     } else {
       // Fallback if originalData is missing
       for (const rItem of resItems) {
-        const idx = escapeCsv(rItem.idx ?? rItem.Index ?? '');
+        const idx = escapeCsv(rItem.idx ?? rItem.Index ?? rItem.index ?? '');
         const src = escapeCsv(rItem.src ?? rItem.Source ?? '');
         const tgt = escapeCsv(rItem.tgt ?? rItem.Target ?? '');
         const note = escapeCsv(rItem.note ?? rItem.notes ?? rItem.Note ?? '');
