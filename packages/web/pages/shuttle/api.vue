@@ -25,12 +25,16 @@ onMounted(async () => {
   await store.checkConnection()
 })
 
-const modes = [
-  { id: 'units', name: 'Raw Units' },
-  { id: 'data', name: 'ShWvData' },
-  { id: 'similarity', name: 'Similarity' }
-]
+const modes = computed(() => [
+  { id: 'units', name: 'Raw Units', desc: t('shuttle.api.mode_units_desc') },
+  { id: 'data', name: 'ShWvData', desc: t('shuttle.api.mode_data_desc') },
+  { id: 'similarity', name: 'Similarity', desc: t('shuttle.api.mode_similarity_desc') }
+])
 const mode = ref('units')
+
+const currentModeDesc = computed(() => {
+  return modes.value.find(m => m.id === mode.value)?.desc || ''
+})
 
 const requestTargets = [
   { id: 'CHECK', name: 'Check' },
@@ -233,12 +237,29 @@ function exportCSV() {
     if (chunk.status !== 'success' || !chunk.response) continue;
 
     let originalData: any[] = [];
-    try {
-      const parsed = JSON.parse(chunk.data);
-      if (Array.isArray(parsed)) originalData = parsed;
-      else originalData = [parsed];
-    } catch(e) {
-      // fallback
+    if (chunk.data) {
+      try {
+        const trimmed = chunk.data.trim();
+        if (trimmed.startsWith('[')) {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) originalData = parsed;
+          else originalData = [parsed];
+        } else {
+          // Handle JSONL (one JSON object per line)
+          const lines = trimmed.split('\n');
+          for (const line of lines) {
+            const lineTrimmed = line.trim();
+            if (!lineTrimmed) continue;
+            try {
+              originalData.push(JSON.parse(lineTrimmed));
+            } catch (e) {
+              // ignore invalid lines
+            }
+          }
+        }
+      } catch(e) {
+        // fallback
+      }
     }
 
     const feedbackMap = new Map<string, {issueType: string, detail: string}>();
@@ -258,28 +279,24 @@ function exportCSV() {
     }
 
     if (!isJsonResponses) {
-      // Parse plain text responses like "Line 0: [Error]" or "Line [0]:"
+      // Parse plain text responses like "Line 0: [Error]", "Line 0: Error", "Line [0]:"
       let currentIdx: string | null = null;
       let currentIssueType = '';
       let currentFeedback: string[] = [];
       const lines = (chunk.response || '').split('\n');
       
       for (const line of lines) {
-        const match = line.match(/^(?:Line|行)\s*\[?(\d+)\]?(?:\s*:\s*(?:\[([^\]]+)\])?)?/i);
+        const match = line.match(/^(?:Line|行)\s*\[?(\d+)\]?\s*[:：]\s*(?:\[([^\]]+)\]|([^\n\r]+))?/i);
         if (match) {
           if (currentIdx !== null) {
             feedbackMap.set(currentIdx, { issueType: currentIssueType, detail: currentFeedback.join('\n').trim() });
           }
           currentIdx = match[1]!;
-          currentIssueType = match[2] ? match[2].trim() : '';
+          currentIssueType = (match[2] || match[3] || '').trim();
           currentFeedback = [];
-          const remaining = line.replace(/^(?:Line|行)\s*\[?(\d+)\]?(?:\s*:\s*(?:\[([^\]]+)\])?)?\s*/i, '').trim();
-          if (remaining) {
-            currentFeedback.push(remaining);
-          }
         } else if (currentIdx !== null) {
           const trimmed = line.trim();
-          if (trimmed && trimmed !== '{"raw":""}') {
+          if (trimmed && trimmed !== '{"raw":""}' && trimmed !== '---') {
             currentFeedback.push(line);
           }
         }
@@ -525,10 +542,13 @@ function getStatusColor(status: string) {
               <label class="config-label">{{ $t('shuttle.api.lbl_chunk_mode') }}</label>
               <div class="radio-group">
                 <div v-for="m in modes" :key="m.id" class="radio-item" :class="{ active: mode === m.id }"
-                  @click="mode = m.id">
+                  @click="mode = m.id" :title="m.desc">
                   <input type="radio" :value="m.id" v-model="mode" />
                   <span>{{ m.name }}</span>
                 </div>
+              </div>
+              <div class="mode-desc-hint" v-if="currentModeDesc">
+                {{ currentModeDesc }}
               </div>
             </div>
 
@@ -831,6 +851,13 @@ function getStatusColor(status: string) {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--accent-glow);
+}
+
+.mode-desc-hint {
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+  padding: 2px 4px;
 }
 
 .source-tabs {

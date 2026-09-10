@@ -6,7 +6,9 @@
   "engines": {
     "node": ">=22.12.0"
   },
+  "packageManager": "pnpm@11.5.1",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "dev:web": "pnpm --filter @sheep-family/web dev",
     "build:web": "pnpm --filter @sheep-family/web build",
     "dev:api": "pnpm --filter @sheep-family/api run dev",

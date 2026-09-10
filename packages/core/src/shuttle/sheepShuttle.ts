@@ -226,9 +226,7 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
       if (!this.data) {
         throw new Error('No data available')
       }
-      // manager.getManagedData('JSONL_CHUNKED', ...) returns newline-separated chunk strings
-      const rawData = this.manager.getManagedData('JSONL_CHUNKED', this.data, maxCharsPerChunk, false, options)
-      const chunkStrings = rawData.split('\n').filter(s => s.trim().length > 0)
+      const chunkStrings = this.manager.chunkJsonlChunks(this.data, maxCharsPerChunk, requestTarget, options)
       this.chunks = chunkStrings.map((s, i) => ({
         chunkId: i,
         data: s,
@@ -239,8 +237,7 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
       if (!this.data) {
         throw new Error('No data available')
       }
-      const rawData = this.manager.chunkJsonlBySimilarity(this.data, maxCharsPerChunk, options)
-      const chunkStrings = rawData.split('\n').filter(s => s.trim().length > 0)
+      const chunkStrings = this.manager.chunkJsonlBySimilarityChunks(this.data, maxCharsPerChunk, options)
       this.chunks = chunkStrings.map((s, i) => ({
         chunkId: i,
         data: s,

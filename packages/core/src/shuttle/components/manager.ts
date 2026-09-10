@@ -160,9 +160,9 @@ export class ShuttleManager {
     return lines.join('\n')
   }
 
-  chunkJsonl(data: ShWvData, maxCharsPerLine: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', options?: ChunkOptions): string {
-    const lines: string[] = []
-    let currentChunk: any[] = []
+  chunkJsonlChunks(data: ShWvData, maxCharsPerChunk: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', options?: ChunkOptions): string[] {
+    const chunks: string[] = []
+    let currentChunk: string[] = []
     let currentLen = 0
 
     const opts = options ? createChunkOptions(options) : undefined
@@ -200,26 +200,31 @@ export class ShuttleManager {
         }
       }
       const strObj = JSON.stringify(obj)
-      const len = strObj.length
+      const len = strObj.length + 1 // +1 for newline
 
-      if (currentLen + len > maxCharsPerLine && currentChunk.length > 0) {
-        lines.push(JSON.stringify(currentChunk))
+      if (currentLen + len > maxCharsPerChunk && currentChunk.length > 0) {
+        chunks.push(currentChunk.join('\n'))
         currentChunk = []
         currentLen = 0
       }
 
-      currentChunk.push(obj)
+      currentChunk.push(strObj)
       currentLen += len
     }
 
     if (currentChunk.length > 0) {
-      lines.push(JSON.stringify(currentChunk))
+      chunks.push(currentChunk.join('\n'))
     }
 
-    return lines.join('\n')
+    return chunks
   }
 
-  chunkJsonlBySimilarity(data: ShWvData, maxCharsPerChunk: number, options?: ChunkOptions): string {
+  chunkJsonl(data: ShWvData, maxCharsPerLine: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', options?: ChunkOptions): string {
+    const chunks = this.chunkJsonlChunks(data, maxCharsPerLine, requestTarget, options)
+    return chunks.join('\n')
+  }
+
+  chunkJsonlBySimilarityChunks(data: ShWvData, maxCharsPerChunk: number, options?: ChunkOptions): string[] {
     const units = data.body.units
     const unitMap = new Map<number, ShWvUnit>(units.map(u => [u.idx, u]))
     const usedIdxs = new Set<number>()
@@ -292,54 +297,57 @@ export class ShuttleManager {
     }
 
     const chunks: string[] = []
-    let currentChunk: any[] = []
+    let currentChunk: string[] = []
     let currentLen = 0
 
     for (const group of groups) {
       if (group.length === 0) continue
       
-      const groupStr = JSON.stringify(group)
-      const groupLen = groupStr.length
+      const groupLines = group.map(item => JSON.stringify(item))
+      const groupStrLen = groupLines.reduce((acc, l) => acc + l.length + 1, 0)
 
-      if (groupLen > maxCharsPerChunk) {
+      if (groupStrLen > maxCharsPerChunk) {
         if (currentChunk.length > 0) {
-          chunks.push(JSON.stringify(currentChunk))
+          chunks.push(currentChunk.join('\n'))
           currentChunk = []
           currentLen = 0
         }
         
-        let subChunk: any[] = []
+        let subChunk: string[] = []
         let subLen = 0
-        for (const item of group) {
-          const itemStr = JSON.stringify(item)
-          const itemLen = itemStr.length
+        for (const itemLine of groupLines) {
+          const itemLen = itemLine.length + 1
           if (subLen + itemLen > maxCharsPerChunk && subChunk.length > 0) {
-            chunks.push(JSON.stringify(subChunk))
+            chunks.push(subChunk.join('\n'))
             subChunk = []
             subLen = 0
           }
-          subChunk.push(item)
+          subChunk.push(itemLine)
           subLen += itemLen
         }
         if (subChunk.length > 0) {
-          chunks.push(JSON.stringify(subChunk))
+          chunks.push(subChunk.join('\n'))
         }
       } else {
-        if (currentLen + groupLen > maxCharsPerChunk && currentChunk.length > 0) {
-          chunks.push(JSON.stringify(currentChunk))
+        if (currentLen + groupStrLen > maxCharsPerChunk && currentChunk.length > 0) {
+          chunks.push(currentChunk.join('\n'))
           currentChunk = []
           currentLen = 0
         }
-        currentChunk.push(...group)
-        currentLen += groupLen
+        currentChunk.push(...groupLines)
+        currentLen += groupStrLen
       }
     }
 
     if (currentChunk.length > 0) {
-      chunks.push(JSON.stringify(currentChunk))
+      chunks.push(currentChunk.join('\n'))
     }
 
-    return chunks.join('\n')
+    return chunks
+  }
+
+  chunkJsonlBySimilarity(data: ShWvData, maxCharsPerChunk: number, options?: ChunkOptions): string {
+    return this.chunkJsonlBySimilarityChunks(data, maxCharsPerChunk, options).join('\n')
   }
 
   updateFromJsonl(data: ShWvData, content: string): ShWvUnit[] {

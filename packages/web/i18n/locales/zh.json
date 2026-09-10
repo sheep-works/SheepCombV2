@@ -159,10 +159,13 @@
       "empty_viewer": "无数据显示。\\n请在“解析”页面创建，或加载 JSON 文件。"
     },
     "api": {
-      "err_offline": "API 服务器 (SheepBobbin) 离线。请检查。",
+      "err_offline": "API 服务器 (SheepBobbin) 处于离线状态。请确认其是否正在运行。",
       "title_request": "请求设置",
       "lbl_chunk_mode": "分块模式",
-      "lbl_req_type": "请求类型",
+      "mode_units_desc": "无需解析与结构化直接请求",
+      "mode_data_desc": "利用TM/TB注重上下文语境",
+      "mode_similarity_desc": "将相似句子重排至同一分块",
+      "lbl_req_type": "处理类型",
       "lbl_prompt": "自定义提示 (可选)",
       "btn_load_prompt": "加载提示词文件",
       "btn_reset_prompt": "恢复默认提示词",
