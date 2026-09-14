@@ -97,7 +97,7 @@ export class ShuttleProcessor {
   /**
    * Split translation pairs into JSONL chunks.
    */
-  public chunkUnits(units: TranslationPair[], maxChars: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', options?: ChunkOptions): string[] {
+  public chunkUnits(units: TranslationPair[], maxChars: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' | 'DIFF' = 'CHECK', options?: ChunkOptions): string[] {
     const chunks: string[] = []
     let currentChunk: string[] = []
     let currentLen = 0
@@ -108,7 +108,19 @@ export class ShuttleProcessor {
       const obj: any = {}
       obj.idx = unit.idx
       
-      if (opts) {
+      if (requestTarget === 'DIFF') {
+        obj.src = unit.src
+        // Check if tgt is already diff html (contains <ins> or <del>), otherwise calculate diff
+        if (unit.tgt && (unit.tgt.includes('<ins>') || unit.tgt.includes('<del>'))) {
+          obj.tgt = unit.tgt
+        } else {
+          // Dynamic diff calculation
+          obj.tgt = this.calculateDiffHtml(unit.src || '', unit.tgt || '')
+        }
+        if (unit.note) {
+          obj.notes = unit.note
+        }
+      } else if (opts) {
         if (opts.src) obj.src = unit.src
         if (opts.tgt) obj.tgt = unit.tgt
         if (opts.note && unit.note) obj.note = unit.note
@@ -143,6 +155,13 @@ export class ShuttleProcessor {
 
     return chunks
   }
+
+  private calculateDiffHtml(oldStr: string, newStr: string): string {
+    if (oldStr === newStr) return newStr
+    // Simplified diff for core package fallback if SequenceMatcher is not imported
+    return `<del>${oldStr}</del><ins>${newStr}</ins>`
+  }
+
 
   /**
    * Mulberry32 algorithm for seedable pseudo-random number generation.

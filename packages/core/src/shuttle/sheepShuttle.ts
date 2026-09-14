@@ -211,7 +211,7 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   /**
    * Create chunks for API processing and store them in this.chunks.
    */
-  public createChunks(type: 'units' | 'data' | 'similarity', maxCharsPerChunk: number = 4000, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', options?: ChunkOptions): void {
+  public createChunks(type: 'units' | 'data' | 'similarity', maxCharsPerChunk: number = 4000, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' | 'DIFF' = 'CHECK', options?: ChunkOptions): void {
     this.chunks = []
 
     if (type === 'units') {

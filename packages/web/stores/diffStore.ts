@@ -9,12 +9,14 @@ export interface DiffResult {
   t: string
   d: string
   hasDiff: boolean
+  note?: string
 }
 
 export const useDiffStore = defineStore('diff', () => {
   const srcText = ref('')
   const tgtText = ref('')
   const batchDiff = ref<DiffResult[]>([])
+  const isUsedExtracted = ref(false)
 
   /**
    * 一括差分チェックを実行
@@ -26,10 +28,13 @@ export const useDiffStore = defineStore('diff', () => {
 
     // 行数が多い方に合わせる（欠落チェックのため）
     const maxLines = Math.max(srcs.length, tgts.length)
+    const shuttle = useShuttleStore()
+    const units = shuttle.units
 
     for (let i = 0; i < maxLines; i++) {
       const s = srcs[i] || ''
       const t = tgts[i] || ''
+      const note = (isUsedExtracted.value && units[i]) ? units[i].note : undefined
 
       const hasDiff = s !== t
       const d = DiffUtils.getDiffHtml(s, t)
@@ -38,7 +43,8 @@ export const useDiffStore = defineStore('diff', () => {
         s,
         t,
         d,
-        hasDiff
+        hasDiff,
+        note
       })
     }
   }
@@ -71,22 +77,46 @@ export const useDiffStore = defineStore('diff', () => {
 
     srcText.value = shuttle.units.map(u => u.src).join('\n')
     tgtText.value = shuttle.units.map(u => u.tgt || '').join('\n')
+    isUsedExtracted.value = true
+    batchCheck()
     return true
+  }
+
+  /**
+   * 差分データからJSONL形式のテキスト文字列を生成する
+   */
+  function buildJsonlString(items?: DiffResult[]): string {
+    const targetItems = items || batchDiff.value
+    return targetItems.map(item => {
+      const record: Record<string, any> = {
+        idx: item.lineNo,
+        src: item.s,
+        tgt: item.d
+      }
+      if (isUsedExtracted.value) {
+        record.notes = item.note || ''
+      }
+      return JSON.stringify(record)
+    }).join('\n')
   }
 
   function clear() {
     srcText.value = ''
     tgtText.value = ''
     batchDiff.value = []
+    isUsedExtracted.value = false
   }
 
   return {
     srcText,
     tgtText,
     batchDiff,
+    isUsedExtracted,
     batchCheck,
     batchCheckBlock,
     importFromShuttle,
+    buildJsonlString,
     clear
   }
 })
+

@@ -163,10 +163,10 @@ const handleLocaleChange = (event: Event) => {
 
         <!-- Manual Link -->
         <div class="nav-item">
-          <a href="https://lambuage.com/sheep-comb" target="_blank" rel="noopener noreferrer" class="nav-link">
+          <NuxtLink to="/manual" class="nav-link" active-class="active">
             <BookOpen :size="16" class="nav-icon" />
             <span>{{ $t('header.nav.manual') }}</span>
-          </a>
+          </NuxtLink>
         </div>
       </div>
     </nav>

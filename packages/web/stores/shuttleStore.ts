@@ -82,6 +82,8 @@ export const useShuttleStore = defineStore('shuttle', () => {
   // Progress Integration
   const isProgressing = ref(false)
   const progressText = ref('')
+  const isIndexing = ref(false)
+  const indexedCount = ref(0)
 
 
 
@@ -99,6 +101,8 @@ export const useShuttleStore = defineStore('shuttle', () => {
   const tmCount = computed(() => tms.value.length)
   const tbCount = computed(() => tbs.value.length)
   const hasChunks = computed(() => chunks.value.length > 0)
+  const isIndexReady = computed(() => indexedCount.value > 0)
+  const isIndexBuilding = computed(() => isIndexing.value)
 
   // --- Actions ---
 
@@ -217,12 +221,21 @@ export const useShuttleStore = defineStore('shuttle', () => {
    * 検索インデックスの構築
    */
   async function buildSearchIndex() {
-    if (!shuttle.data && shuttle.units.length === 0) return;
+    if (!shuttle.data && shuttle.units.length === 0) {
+      indexedCount.value = 0
+      return
+    }
     
+    isIndexing.value = true
     isProgressing.value = true
     progressText.value = 'Preparing search index...'
-    await fallbackBuildSearchIndex()
-    isProgressing.value = false
+    try {
+      await fallbackBuildSearchIndex()
+      indexedCount.value = shuttle.searcher.getEntries().length
+    } finally {
+      isIndexing.value = false
+      isProgressing.value = false
+    }
   }
 
   async function fallbackBuildSearchIndex() {
@@ -240,8 +253,8 @@ export const useShuttleStore = defineStore('shuttle', () => {
   /**
    * コンコーダンス検索の実行
    */
-  function searchConcordance(query: string, limit: number = 100) {
-    return shuttle.searcher.search(query, limit)
+  function searchConcordance(query: string, limit: number = 100, fields?: { src?: boolean, tgt?: boolean, note?: boolean }) {
+    return shuttle.searcher.search(query, limit, fields)
   }
 
   /**
@@ -256,6 +269,7 @@ export const useShuttleStore = defineStore('shuttle', () => {
    */
   async function importSearchData(data: any) {
     await shuttle.searcher.importFullData(data)
+    indexedCount.value = shuttle.searcher.getEntries().length
     syncState()
   }
 
@@ -303,6 +317,8 @@ export const useShuttleStore = defineStore('shuttle', () => {
   function clear() {
     shuttle.reset()
     syncState()
+    indexedCount.value = 0
+    isIndexing.value = false
     currentFileName.value = ''
     isProgressing.value = false
     progressText.value = ''
@@ -346,6 +362,7 @@ export const useShuttleStore = defineStore('shuttle', () => {
     if (tms.value.length > 0) shuttle.tms = [...tms.value]
     if (tbs.value.length > 0) shuttle.tbs = [...tbs.value]
     if (chunks.value.length > 0) shuttle.chunks = [...chunks.value]
+    indexedCount.value = shuttle.searcher.getEntries().length
   }
 
   // 永続化データが復元された際にインスタンスに同期する
@@ -386,6 +403,8 @@ export const useShuttleStore = defineStore('shuttle', () => {
     isLoading,
     isProgressing,
     progressText,
+    isIndexing,
+    indexedCount,
     statusMsg,
     provider,
     providerUrl,
@@ -409,6 +428,8 @@ export const useShuttleStore = defineStore('shuttle', () => {
     tmCount,
     tbCount,
     hasChunks,
+    isIndexReady,
+    isIndexBuilding,
     // Actions
     checkConnection,
     fetchModels,

@@ -9,6 +9,12 @@ export interface SearchEntry {
     note?: string;
 }
 
+export interface SearchFieldOptions {
+    src?: boolean;
+    tgt?: boolean;
+    note?: boolean;
+}
+
 /**
  * Component for character-level concordance search using FlexSearch.
  * Optimized for CJK (Chinese, Japanese, Korean) text.
@@ -23,7 +29,7 @@ export class ShuttleSearch {
         this.config = {
             document: {
                 id: "id",
-                index: ["src", "tgt"],
+                index: ["src", "tgt", "note"],
                 store: ["src", "tgt", "file", "note"]
             },
             tokenize: "strict",
@@ -91,11 +97,24 @@ export class ShuttleSearch {
      * Perform a concordance search.
      * @param query The search string
      * @param limit Maximum results (default 100)
+     * @param fields Target fields to search within (optional)
      */
-    public search(query: string, limit: number = 100) {
+    public search(query: string, limit: number = 100, fields?: SearchFieldOptions) {
         if (!query || query.trim() === '') return [];
 
+        const useSrc = fields ? fields.src ?? true : true;
+        const useTgt = fields ? fields.tgt ?? true : true;
+        const useNote = fields ? fields.note ?? true : true;
+
+        if (!useSrc && !useTgt && !useNote) return [];
+
+        const targetFields: string[] = [];
+        if (useSrc) targetFields.push('src');
+        if (useTgt) targetFields.push('tgt');
+        if (useNote) targetFields.push('note');
+
         const results = this.index.search(query, {
+            index: targetFields,
             limit: limit * 10,
             enrich: true,
             bool: "and"
@@ -115,8 +134,9 @@ export class ShuttleSearch {
 
         const q = query.toLowerCase();
         const finalResults = candidates.filter(entry => {
-            return (entry.src && entry.src.toLowerCase().includes(q)) ||
-                (entry.tgt && entry.tgt.toLowerCase().includes(q));
+            return (useSrc && entry.src && entry.src.toLowerCase().includes(q)) ||
+                (useTgt && entry.tgt && entry.tgt.toLowerCase().includes(q)) ||
+                (useNote && entry.note && entry.note.toLowerCase().includes(q));
         });
 
         return finalResults.slice(0, limit);

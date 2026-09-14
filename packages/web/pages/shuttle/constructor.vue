@@ -123,6 +123,10 @@ async function doConvert() {
           </div>
         </div>
         <div class="header-actions">
+          <ManualLink
+            href="https://lambuage.com/sheep-comb/02_steps_desc.html#%E3%82%B9%E3%83%86%E3%83%83%E3%83%95%E3%82%9A-3-%E7%B5%B1%E5%90%88%E3%81%A8%E6%A7%8B%E9%80%A0%E5%8C%96-%E6%A7%8B%E9%80%A0%E5%8C%96%E3%83%98%E3%82%9A%E3%83%BC%E3%82%B7%E3%82%99"
+            :label="$t('manual.steps.constructor')"
+          />
           <button class="btn-clear" @click="clearFiles" :disabled="!hasFiles || isProcessing">
             <Trash2 :size="16" /> {{ $t('shuttle.constructor.clear') }}
           </button>

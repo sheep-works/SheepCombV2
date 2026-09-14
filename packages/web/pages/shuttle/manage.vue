@@ -183,9 +183,16 @@ function doClear() {
 
         <!-- Action Card -->
         <div class="card" :class="{ disabled: !hasData }">
-          <div class="card-header">
-            <Settings2 :size="18" />
-            <h2>{{ $t('shuttle.manage.title_operations') }}</h2>
+          <div class="card-header space-between" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <Settings2 :size="18" />
+              <h2>{{ $t('shuttle.manage.title_operations') }}</h2>
+            </div>
+            <ManualLink
+              href="https://lambuage.com/sheep-comb/02_steps_desc.html#%E3%82%B9%E3%83%86%E3%83%83%E3%83%95%E3%82%9A-5-%E3%83%86%E3%82%99%E3%83%BC%E3%82%BF%E3%81%AE%E5%88%86%E5%89%B2%E3%81%A8%E7%AE%A1%E7%90%86-%E7%AE%A1%E7%90%86%E3%83%98%E3%82%9A%E3%83%BC%E3%82%B7%E3%82%99"
+              :label="$t('manual.steps.manage')"
+              compact
+            />
           </div>
           <div class="action-list">
             <div class="action-group">

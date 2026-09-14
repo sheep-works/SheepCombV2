@@ -204,8 +204,13 @@ const applySampling = () => {
       <!-- Sidebar -->
       <aside class="sidebar">
         <div class="card upload-section">
-          <div class="card-header">
+          <div class="card-header space-between" style="display: flex; justify-content: space-between; align-items: center;">
             <h2>{{ $t('shuttle.parser.upload_title') }}</h2>
+            <ManualLink
+              href="https://lambuage.com/sheep-comb/02_steps_desc.html#%E3%82%B9%E3%83%86%E3%83%83%E3%83%95%E3%82%9A-1-%E3%83%86%E3%82%99%E3%83%BC%E3%82%BF%E3%81%AE%E6%8A%BD%E5%87%BA-%E6%8A%BD%E5%87%BA%E3%83%98%E3%82%9A%E3%83%BC%E3%82%B7%E3%82%99"
+              :label="$t('manual.steps.parser')"
+              compact
+            />
           </div>
           <div class="drop-zone" @drop="handleFileDrop" @dragover.prevent @click="fileInput?.click()">
             <FileUp :size="24" class="drop-icon" />
@@ -242,7 +247,14 @@ const applySampling = () => {
           <!-- フィルタ設定エリア -->
           <div class="filter-settings" v-if="store.hasUnits">
             <div class="filter-divider"></div>
-            <h3 class="filter-title">{{ $t('shuttle.parser.filter_title') }}</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <h3 class="filter-title" style="margin-bottom: 0;">{{ $t('shuttle.parser.filter_title') }}</h3>
+              <ManualLink
+                href="https://lambuage.com/sheep-comb/02_steps_desc.html#%E3%82%B9%E3%83%86%E3%83%83%E3%83%95%E3%82%9A-2-%E3%83%86%E3%82%99%E3%83%BC%E3%82%BF%E3%81%AE%E9%99%A4%E5%A4%96%E3%83%BB%E7%B5%9E%E3%82%8A%E8%BE%BC%E3%81%BF-%E3%83%95%E3%82%A3%E3%83%AB%E3%82%BF%E3%83%BB%E3%82%B5%E3%83%B3%E3%83%95%E3%82%9A%E3%83%AA%E3%83%B3%E3%82%AF%E3%82%99"
+                :label="$t('manual.steps.filter')"
+                compact
+              />
+            </div>
 
             <label class="checkbox-label" style="display: flex; align-items: center; justify-content: space-between;">
               <div style="display: flex; align-items: center; gap: 8px;">

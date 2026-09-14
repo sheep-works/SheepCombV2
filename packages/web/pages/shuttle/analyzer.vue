@@ -119,7 +119,7 @@ async function doAnalyze() {
 <template>
   <div class="analyze-view">
     <div class="content-card">
-      <div class="card-header">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
         <div class="header-main">
           <Database :size="24" class="header-icon" />
           <div class="header-text">
@@ -127,6 +127,10 @@ async function doAnalyze() {
             <p>{{ $t('shuttle.analyzer.subtitle') }}</p>
           </div>
         </div>
+        <ManualLink
+          href="https://lambuage.com/sheep-comb/02_steps_desc.html#%E3%82%B9%E3%83%86%E3%83%83%E3%83%95%E3%82%9A-4-%E7%BF%BB%E8%A8%B3%E3%83%A1%E3%83%A2%E3%83%AA%E3%81%A8%E7%94%A8%E8%AA%9E%E9%9B%86%E3%81%AE%E7%85%A7%E5%90%88-%E8%A7%A3%E6%9E%90%E3%83%98%E3%82%9A%E3%83%BC%E3%82%B7%E3%82%99"
+          :label="$t('manual.steps.analyzer')"
+        />
       </div>
 
       <!-- プロジェクト状態 -->

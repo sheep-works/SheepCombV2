@@ -9,7 +9,7 @@ definePageMeta({
   icon: 'search',
 })
 
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { Search, Hash, FileText, Database, Info, Loader2, Download, Upload } from 'lucide-vue-next'
 import { useShuttleStore } from '../../stores/shuttleStore'
 import { useI18n } from 'vue-i18n'
@@ -17,9 +17,26 @@ import { useI18n } from 'vue-i18n'
 const store = useShuttleStore()
 const { t } = useI18n()
 const searchQuery = ref('')
+const searchFields = ref({
+  src: true,
+  tgt: true,
+  note: true,
+})
 const results = ref<any[]>([])
 const isSearching = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
+
+const indexStatus = computed<'unbuilt' | 'building' | 'ready'>(() => {
+  if (store.isIndexBuilding) return 'building'
+  if (store.isIndexReady) return 'ready'
+  return 'unbuilt'
+})
+
+const indexStatusText = computed(() => {
+  if (indexStatus.value === 'building') return t('tools.concordance.status_building')
+  if (indexStatus.value === 'ready') return t('tools.concordance.status_ready')
+  return t('tools.concordance.status_unbuilt')
+})
 
 /**
  * 検索の実行
@@ -31,15 +48,15 @@ const performSearch = () => {
   }
 
   isSearching.value = true
-  // FlexSearch による高速検索
-  results.value = store.searchConcordance(searchQuery.value)
+  // FlexSearch による高速検索（対象フィールド指定）
+  results.value = store.searchConcordance(searchQuery.value, 100, searchFields.value)
   isSearching.value = false
 }
 
-// クエリの変更を監視して自動検索
-watch(searchQuery, () => {
+// クエリや検索対象フィールドの変更を監視して自動検索
+watch([searchQuery, searchFields], () => {
   performSearch()
-})
+}, { deep: true })
 
 /**
  * インデックスの再構築
@@ -115,6 +132,24 @@ const handleUpload = async (event: Event) => {
               />
             </div>
             <p class="search-hint">{{ $t('tools.concordance.search_hint') }}</p>
+
+            <div class="search-targets-group">
+              <span class="targets-label">{{ $t('tools.concordance.lbl_search_targets') }}</span>
+              <div class="targets-checkboxes">
+                <label class="checkbox-label">
+                  <input type="checkbox" v-model="searchFields.src" />
+                  <span>{{ $t('tools.concordance.target_src') }}</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" v-model="searchFields.tgt" />
+                  <span>{{ $t('tools.concordance.target_tgt') }}</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" v-model="searchFields.note" />
+                  <span>{{ $t('tools.concordance.target_note') }}</span>
+                </label>
+              </div>
+            </div>
           </div>
 
           <div class="data-status">
@@ -122,9 +157,17 @@ const handleUpload = async (event: Event) => {
               <span class="label">{{ $t('tools.concordance.lbl_target_count') }}</span>
               <span class="value">{{ $t('tools.concordance.segments', { count: store.unitCount }) }}</span>
             </div>
-            <button class="btn-text" @click="reindex">
-              <Database :size="14" /> {{ $t('tools.concordance.btn_reindex') }}
-            </button>
+            <div class="reindex-row">
+              <button class="btn-text" @click="reindex" :disabled="store.isIndexBuilding">
+                <Loader2 v-if="store.isIndexBuilding" :size="14" class="spin" />
+                <Database v-else :size="14" />
+                {{ $t('tools.concordance.btn_reindex') }}
+              </button>
+              <span class="index-status-tag" :class="indexStatus">
+                <span class="status-dot"></span>
+                {{ indexStatusText }}
+              </span>
+            </div>
             
             <div class="action-group-horizontal">
               <button class="btn-text" @click="downloadData">
@@ -178,6 +221,7 @@ const handleUpload = async (event: Event) => {
                   <th class="w-file" v-if="results.some(r => r.file)">File</th>
                   <th>Source</th>
                   <th>Target</th>
+                  <th class="w-note" v-if="results.some(r => r.note)">Note</th>
                 </tr>
               </thead>
               <tbody>
@@ -186,6 +230,7 @@ const handleUpload = async (event: Event) => {
                   <td class="file" v-if="results.some(r => r.file)">{{ item.file }}</td>
                   <td class="text src">{{ item.src }}</td>
                   <td class="text tgt">{{ item.tgt }}</td>
+                  <td class="text note" v-if="results.some(r => r.note)">{{ item.note }}</td>
                 </tr>
               </tbody>
             </table>
@@ -266,6 +311,45 @@ const handleUpload = async (event: Event) => {
   line-height: 1.4;
 }
 
+.search-targets-group {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.targets-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.targets-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition);
+}
+
+.checkbox-label:hover {
+  color: var(--text-primary);
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 .data-status {
   padding: 0 20px 20px;
   display: flex;
@@ -310,6 +394,69 @@ const handleUpload = async (event: Event) => {
 
 .btn-text:hover {
   color: var(--accent);
+}
+
+.btn-text:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.reindex-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.index-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
+  font-family: 'Inter', monospace;
+  line-height: 1.2;
+}
+
+.index-status-tag .status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.index-status-tag.unbuilt {
+  background: rgba(156, 163, 175, 0.12);
+  color: var(--text-muted);
+  border: 1px solid rgba(156, 163, 175, 0.25);
+}
+
+.index-status-tag.building {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.index-status-tag.building .status-dot {
+  animation: pulse 1.2s infinite;
+}
+
+.index-status-tag.ready {
+  background: var(--accent-glow);
+  color: var(--accent-light);
+  border: 1px solid var(--border-accent);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .info-card {
@@ -382,11 +529,13 @@ const handleUpload = async (event: Event) => {
 
 .w-idx { width: 50px; }
 .w-file { width: 120px; max-width: 120px; }
+.w-note { width: 180px; max-width: 240px; }
 
 .idx { color: var(--text-muted); font-size: 0.75rem; font-family: monospace; }
 .file { font-size: 0.75rem; color: var(--text-muted); word-break: break-all; }
 .src { color: var(--text-primary); font-weight: 500; }
 .tgt { color: var(--text-secondary); }
+.note { color: var(--text-muted); font-size: 0.8rem; line-height: 1.4; word-break: break-all; }
 
 .empty-state {
   flex: 1;

@@ -5,13 +5,18 @@ definePageMeta({
 })
 
 import { ref, computed } from 'vue'
-import { Split, Play, Trash2, Import, FileText, CheckCircle, AlertCircle, Download } from 'lucide-vue-next'
+import { Split, Play, Trash2, Import, FileText, CheckCircle, AlertCircle, Download, Cpu } from 'lucide-vue-next'
 import { useDiffStore } from '../../stores/diffStore'
+import { useShuttleStore } from '../../stores/shuttleStore'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 const store = useDiffStore()
+const shuttleStore = useShuttleStore()
 const { t } = useI18n()
+const router = useRouter()
 const isChecked = ref(false)
+const isBlockCheck = ref(false)
 const errorMsg = ref('')
 const showAllLines = ref(false)
 
@@ -26,15 +31,26 @@ const filteredDiff = computed(() => {
   }
 })
 
+const jsonlContent = computed(() => {
+  return store.buildJsonlString(filteredDiff.value)
+})
+
 const diffCount = computed(() => store.batchDiff.filter(item => item.hasDiff).length)
 
 const handleImport = () => {
   const success = store.importFromShuttle()
   if (success) {
     errorMsg.value = ''
+    isChecked.value = true
+    isBlockCheck.value = false
   } else {
     errorMsg.value = t('tools.batch.err_no_data')
   }
+}
+
+const handleEditInput = () => {
+  store.isUsedExtracted = false
+  isChecked.value = false
 }
 
 const runCheckLines = () => {
@@ -48,19 +64,41 @@ const runCheckLines = () => {
 
   store.batchCheck()
   isChecked.value = true
+  isBlockCheck.value = false
 }
 
 const runCheckBlock = () => {
   errorMsg.value = ''
   store.batchCheckBlock()
   isChecked.value = true
+  isBlockCheck.value = true
 }
 
 const clearAll = () => {
   store.clear()
   isChecked.value = false
+  isBlockCheck.value = false
   errorMsg.value = ''
   showAllLines.value = false
+}
+
+const navigateToLlmApi = () => {
+  const items = filteredDiff.value
+  const units = items.map((item) => {
+    const record: Record<string, any> = {
+      idx: item.lineNo,
+      src: item.s,
+      tgt: item.d
+    }
+    if (store.isUsedExtracted && item.note !== undefined) {
+      record.note = item.note || ''
+    }
+    return record
+  })
+
+  // shuttleStore に単位をロード
+  shuttleStore.units = units
+  router.push('/shuttle/api?target=DIFF')
 }
 
 const escapeHtml = (text: string): string => {
@@ -77,12 +115,18 @@ const downloadHtml = () => {
   const items = filteredDiff.value
   if (items.length === 0) return
 
+  const jsonlStr = store.buildJsonlString(items)
+
   let htmlContent = `<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
   <title>${t('tools.batch.html_title')}</title>
   <style>
+    :root {
+      color-scheme: light dark;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       margin: 24px;
@@ -132,11 +176,74 @@ const downloadHtml = () => {
       padding: 2px 4px;
       border-radius: 2px;
     }
+    hr {
+      margin: 24px 0;
+      border: 0;
+      border-top: 1px solid #e1e4e8;
+    }
+    details {
+      margin-top: 16px;
+      background: #f6f8fa;
+      border: 1px solid #e1e4e8;
+      border-radius: 6px;
+      padding: 12px;
+    }
+    summary {
+      font-weight: 600;
+      cursor: pointer;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: #ffffff;
+      padding: 12px;
+      border: 1px solid #e1e4e8;
+      border-radius: 4px;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #1b1b1f;
+        color: rgba(255, 255, 245, 0.9);
+      }
+      h2 {
+        color: #ffffff;
+      }
+      th, td {
+        border-color: #2e2e32;
+      }
+      th {
+        background-color: #252529;
+        color: rgba(235, 235, 245, 0.6);
+      }
+      tr:nth-child(even) {
+        background-color: #202127;
+      }
+      ins {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+      }
+      del {
+        background-color: rgba(244, 63, 94, 0.2);
+        color: #f87171;
+      }
+      hr {
+        border-top-color: #2e2e32;
+      }
+      details {
+        background: #252529;
+        border-color: #2e2e32;
+      }
+      pre {
+        background: #1b1b1f;
+        border-color: #2e2e32;
+        color: rgba(255, 255, 245, 0.9);
+      }
+    }
   </style>
 </head>
 <body>
   <h2>${t('tools.batch.html_header', { count: items.filter(item => item.hasDiff).length })}</h2>
-  <table>
+  <table id="diff_table">
     <thead>
       <tr>
         <th style="width: 30%;">${t('tools.batch.html_th_old')}</th>
@@ -159,6 +266,11 @@ const downloadHtml = () => {
 
   htmlContent += `    </tbody>
   </table>
+  <hr/>
+  <details id="diff_json">
+    <summary>一括差分JSON</summary>
+    <pre>${escapeHtml(jsonlStr)}</pre>
+  </details>
 </body>
 </html>`
 
@@ -252,12 +364,12 @@ const downloadHtml = () => {
         <div class="card result-card" v-else>
           <div class="card-header space-between">
             <h2>{{ $t('tools.batch.title_result', { count: diffCount }) }}</h2>
-            <button class="btn-sm" @click="isChecked = false">
+            <button class="btn-sm" @click="handleEditInput">
               <FileText :size="14" /> {{ $t('tools.batch.btn_edit_input') }}
             </button>
           </div>
           <div class="table-container">
-            <table class="diff-table">
+            <table id="diff_table" class="diff-table">
               <thead>
                 <tr>
                   <th class="w-idx">No.</th>
@@ -277,12 +389,23 @@ const downloadHtml = () => {
                 </tr>
               </tbody>
             </table>
+            <hr class="diff-hr" />
+            <details id="diff_json" class="diff-details">
+              <summary class="diff-summary">一括差分JSON</summary>
+              <pre class="diff-json-pre">{{ jsonlContent }}</pre>
+            </details>
+            <div class="llm-action-area" v-if="!isBlockCheck">
+              <button class="btn primary llm-btn" @click="navigateToLlmApi">
+                <Cpu :size="18" /> LLM 処理
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Error Toast -->
+
     <Transition name="slide-up">
       <div class="error-toast" v-if="errorMsg">
         <AlertCircle :size="18" />
@@ -448,6 +571,52 @@ const downloadHtml = () => {
   border-radius: 2px;
 }
 
+.diff-hr {
+  margin: 20px 16px;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.diff-details {
+  margin: 0 16px 20px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+}
+
+.diff-summary {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.diff-json-pre {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.llm-action-area {
+  padding: 0 16px 20px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.llm-btn {
+  padding: 10px 20px;
+}
+
 .error-toast {
   position: fixed;
   bottom: 24px;
@@ -462,6 +631,7 @@ const downloadHtml = () => {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   z-index: 1000;
 }
+
 
 .btn-sm {
   padding: 6px 12px;

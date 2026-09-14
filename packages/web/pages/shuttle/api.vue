@@ -28,21 +28,44 @@ onMounted(async () => {
 const modes = computed(() => [
   { id: 'units', name: 'Raw Units', desc: t('shuttle.api.mode_units_desc') },
   { id: 'data', name: 'ShWvData', desc: t('shuttle.api.mode_data_desc') },
-  { id: 'similarity', name: 'Similarity', desc: t('shuttle.api.mode_similarity_desc') }
+  { id: 'similarity', name: 'Similarity', desc: t('shuttle.api.mode_similarity_desc') },
+  { id: 'diff', name: 'Diff', desc: '差分データ（<ins>/<del>）付きJSONLでリクエスト' }
 ])
 const mode = ref('units')
+
 
 const currentModeDesc = computed(() => {
   return modes.value.find(m => m.id === mode.value)?.desc || ''
 })
 
+const defaultDiffPromptText = `ユーザーからJSONL形式のリスト（各要素に idx, src, tgt, notes を含む配列）が渡されます。
+idx は行番号に対応しています。
+
+# 入力データのスキーマ
+- idx: 行番号
+- src: 修正前
+- tgt: 修正後
+- notes: 備考
+
+tgt の修正内容は挿入を<ins>、削除を<del>で明示しています。
+
+# 処理内容
+修正を評価してその意図を汲み取り、その内容を簡潔にまとめてください。
+
+# 出力形式
+問題がある行についてのみ、以下の形式で出力してください。
+
+Line [idx]: [修正の意図および評価]
+---`
+
 const requestTargets = [
   { id: 'CHECK', name: 'Check' },
   { id: 'TRANSLATE', name: 'Translate' },
   { id: 'PROOF', name: 'Proof' },
+  { id: 'DIFF', name: 'Diff Evaluation' },
   { id: 'CUSTOM', name: 'Custom' }
 ]
-const requestTarget = ref<'CHECK' | 'TRANSLATE' | 'PROOF' | 'CUSTOM'>('CHECK')
+const requestTarget = ref<'CHECK' | 'TRANSLATE' | 'PROOF' | 'DIFF' | 'CUSTOM'>('CHECK')
 const userPrompt = ref(defaultCheckPromptText)
 const sourceLang = ref('英語')
 const targetLang = ref('日本語')
@@ -61,15 +84,44 @@ const apiTarget = computed(() => {
 })
 
 const defaultPrompt = computed(() => {
-  return requestTarget.value === 'TRANSLATE' ? defaultTransPromptText : defaultCheckPromptText
+  if (requestTarget.value === 'TRANSLATE') return defaultTransPromptText
+  if (requestTarget.value === 'DIFF') return defaultDiffPromptText
+  return defaultCheckPromptText
 })
 
 const isEndpointEditable = ref(false)
 
+const route = useRoute()
+
+onMounted(async () => {
+  store.provider = 'honox-local'
+  await store.checkConnection()
+  if (route.query.target === 'DIFF' || route.query.mode === 'DIFF') {
+    mode.value = 'diff'
+    requestTarget.value = 'DIFF'
+    userPrompt.value = defaultDiffPromptText
+    await createChunks()
+  }
+})
+
+watch(mode, (newMode) => {
+  if (newMode === 'diff') {
+    requestTarget.value = 'DIFF'
+  }
+})
+
 watch(requestTarget, (newTarget, oldTarget) => {
-  const oldDefault = oldTarget === 'TRANSLATE' ? defaultTransPromptText : defaultCheckPromptText
+  if (newTarget === 'DIFF') {
+    mode.value = 'diff'
+  } else if (mode.value === 'diff') {
+    mode.value = 'units'
+  }
+
+  const oldDefault = oldTarget === 'TRANSLATE' ? defaultTransPromptText : oldTarget === 'DIFF' ? defaultDiffPromptText : defaultCheckPromptText
   if (!userPrompt.value || userPrompt.value.trim() === oldDefault.trim()) {
-    userPrompt.value = newTarget === 'TRANSLATE' ? defaultTransPromptText : defaultCheckPromptText
+    if (newTarget === 'TRANSLATE') userPrompt.value = defaultTransPromptText
+    else if (newTarget === 'DIFF') userPrompt.value = defaultDiffPromptText
+    else userPrompt.value = defaultCheckPromptText
   }
   
   if (newTarget === 'TRANSLATE' && chunkMaxLength.value === 4000) {
@@ -79,7 +131,7 @@ watch(requestTarget, (newTarget, oldTarget) => {
   }
 
   // Update default chunk options for non-custom targets
-  if (newTarget === 'CHECK') {
+  if (newTarget === 'CHECK' || newTarget === 'DIFF') {
     chunkOptions.value = { src: true, tgt: true, note: true, history: false, terms: false }
   } else if (newTarget === 'TRANSLATE') {
     chunkOptions.value = { src: true, tgt: false, note: true, history: false, terms: false }
@@ -87,6 +139,7 @@ watch(requestTarget, (newTarget, oldTarget) => {
     chunkOptions.value = { src: false, tgt: true, note: false, history: false, terms: false }
   }
 })
+
 
 const isRequesting = ref(false)
 const errorMsg = ref<string>('')
@@ -162,7 +215,9 @@ function parseChunkResponse(responseText: string) {
 
 async function createChunks() {
   try {
-    store.createChunks(mode.value as 'units' | 'data' | 'similarity', chunkMaxLength.value, apiTarget.value, chunkOptions.value)
+    const chunkType = mode.value === 'diff' ? 'units' : (mode.value as 'units' | 'data' | 'similarity')
+    const targetType = mode.value === 'diff' ? 'DIFF' : apiTarget.value
+    store.createChunks(chunkType, chunkMaxLength.value, targetType, chunkOptions.value)
   } catch (e: any) {
     errorMsg.value = e.message
   }
@@ -498,7 +553,7 @@ function getStatusColor(status: string) {
         <!-- LLM Provider Settings -->
         <div class="card">
           <div class="card-header">
-            <h2>Provider Settings</h2>
+            <h2>{{ $t('shuttle.api.title_provider_settings') }}</h2>
             <span class="dev-badge" :style="{ background: store.isConnected ? 'rgba(0, 200, 100, 0.15)' : 'rgba(255, 100, 100, 0.15)', color: store.isConnected ? '#4ade80' : '#f87171', border: '1px solid ' + (store.isConnected ? 'rgba(74, 222, 128, 0.3)' : 'rgba(248, 113, 113, 0.3)') }">
               {{ store.isConnected ? 'Connected' : 'Not Connected' }}
             </span>
@@ -523,18 +578,27 @@ function getStatusColor(status: string) {
                     <RefreshCw :size="12" />
                   </button>
                 </div>
-                <a href="https://lambuage.com/sheep-bobbin" target="_blank" rel="noopener noreferrer" class="manual-link">
-                  {{ $t('shuttle.api.lnk_manual') }}
-                </a>
+                <ManualLink
+                  href="https://lambuage.com/sheep-bobbin"
+                  :label="$t('shuttle.api.lnk_manual')"
+                  compact
+                />
               </div>
             </div>
           </div>
         </div>
 
         <div class="card">
-          <div class="card-header">
-            <h2>{{ $t('shuttle.api.title_request') }}</h2>
-            <span class="dev-badge">SheepBobbin v2</span>
+          <div class="card-header space-between" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h2>{{ $t('shuttle.api.title_request') }}</h2>
+              <span class="dev-badge">SheepBobbin v2</span>
+            </div>
+            <ManualLink
+              href="https://lambuage.com/sheep-comb/02_steps_desc.html#%E3%82%B9%E3%83%86%E3%83%83%E3%83%95%E3%82%9A-6-ai-llm-%E3%81%B8%E3%81%AE%E4%BE%9D%E9%A0%BC-api-%E3%83%98%E3%82%9A%E3%83%BC%E3%82%B7%E3%82%99"
+              :label="$t('manual.steps.api')"
+              compact
+            />
           </div>
 
           <div class="config-section">
