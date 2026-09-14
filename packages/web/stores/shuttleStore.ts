@@ -276,8 +276,8 @@ export const useShuttleStore = defineStore('shuttle', () => {
   /**
    * チャンクの作成
    */
-  function createChunks(type: 'units' | 'data' | 'similarity', maxChars?: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', options?: ChunkOptions) {
-    shuttle.createChunks(type, maxChars, requestTarget, options)
+  function createChunks(type: 'units' | 'data' | 'similarity' | 'direct', maxChars?: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' | 'DIFF' = 'CHECK', options?: ChunkOptions, directText?: string) {
+    shuttle.createChunks(type, maxChars, requestTarget, options, directText)
     syncState()
   }
 

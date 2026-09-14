@@ -26,13 +26,14 @@ onMounted(async () => {
 })
 
 const modes = computed(() => [
-  { id: 'units', name: 'Raw Units', desc: t('shuttle.api.mode_units_desc') },
+  { id: 'units', name: 'Raw', desc: t('shuttle.api.mode_units_desc') },
   { id: 'data', name: 'ShWvData', desc: t('shuttle.api.mode_data_desc') },
   { id: 'similarity', name: 'Similarity', desc: t('shuttle.api.mode_similarity_desc') },
-  { id: 'diff', name: 'Diff', desc: '差分データ（<ins>/<del>）付きJSONLでリクエスト' }
+  { id: 'diff', name: 'Diff', desc: '差分データ（<ins>/<del>）付きJSONLでリクエスト' },
+  { id: 'direct', name: 'Direct', desc: 'テキスト（JSONL/TSV/CSV等）を直接貼り付けてリクエスト' }
 ])
 const mode = ref('units')
-
+const directInputText = ref('')
 
 const currentModeDesc = computed(() => {
   return modes.value.find(m => m.id === mode.value)?.desc || ''
@@ -62,7 +63,7 @@ const requestTargets = [
   { id: 'CHECK', name: 'Check' },
   { id: 'TRANSLATE', name: 'Translate' },
   { id: 'PROOF', name: 'Proof' },
-  { id: 'DIFF', name: 'Diff Evaluation' },
+  { id: 'DIFF', name: 'Diff' },
   { id: 'CUSTOM', name: 'Custom' }
 ]
 const requestTarget = ref<'CHECK' | 'TRANSLATE' | 'PROOF' | 'DIFF' | 'CUSTOM'>('CHECK')
@@ -215,9 +216,17 @@ function parseChunkResponse(responseText: string) {
 
 async function createChunks() {
   try {
-    const chunkType = mode.value === 'diff' ? 'units' : (mode.value as 'units' | 'data' | 'similarity')
-    const targetType = mode.value === 'diff' ? 'DIFF' : apiTarget.value
-    store.createChunks(chunkType, chunkMaxLength.value, targetType, chunkOptions.value)
+    if (mode.value === 'direct') {
+      if (!directInputText.value.trim()) {
+        errorMsg.value = '貼り付けエリアにテキストを入力してください'
+        return
+      }
+      store.createChunks('direct', chunkMaxLength.value, apiTarget.value, chunkOptions.value, directInputText.value)
+    } else {
+      const chunkType = mode.value === 'diff' ? 'units' : (mode.value as 'units' | 'data' | 'similarity')
+      const targetType = mode.value === 'diff' ? 'DIFF' : apiTarget.value
+      store.createChunks(chunkType, chunkMaxLength.value, targetType, chunkOptions.value)
+    }
   } catch (e: any) {
     errorMsg.value = e.message
   }
@@ -614,6 +623,17 @@ function getStatusColor(status: string) {
               <div class="mode-desc-hint" v-if="currentModeDesc">
                 {{ currentModeDesc }}
               </div>
+            </div>
+
+            <!-- Direct Input Textarea -->
+            <div class="config-group" v-if="mode === 'direct'">
+              <label class="config-label">貼り付けエリア <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(JSONL, TSV, CSV, プレーンテキストに対応)</span></label>
+              <textarea 
+                v-model="directInputText" 
+                class="prompt-textarea" 
+                style="min-height: 120px; font-family: monospace; font-size: 0.8rem;" 
+                placeholder="ここにテキスト（JSONL、ExcelからのコピペTSV、CSV等）を直接貼り付けてください"
+              ></textarea>
             </div>
 
             <div class="config-group">

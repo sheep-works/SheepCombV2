@@ -211,10 +211,21 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   /**
    * Create chunks for API processing and store them in this.chunks.
    */
-  public createChunks(type: 'units' | 'data' | 'similarity', maxCharsPerChunk: number = 4000, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' | 'DIFF' = 'CHECK', options?: ChunkOptions): void {
+  public createChunks(type: 'units' | 'data' | 'similarity' | 'direct', maxCharsPerChunk: number = 4000, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' | 'DIFF' = 'CHECK', options?: ChunkOptions, directText?: string): void {
     this.chunks = []
 
-    if (type === 'units') {
+    if (type === 'direct') {
+      if (!directText) {
+        throw new Error('No text provided for direct input')
+      }
+      const chunkStrings = this.processor.chunkDirectText(directText, maxCharsPerChunk)
+      this.chunks = chunkStrings.map((s, i) => ({
+        chunkId: i,
+        data: s,
+        status: 'pending',
+        response: ''
+      }))
+    } else if (type === 'units') {
       const chunkStrings = this.processor.chunkUnits(this.units, maxCharsPerChunk, requestTarget, options)
       this.chunks = chunkStrings.map((s, i) => ({
         chunkId: i,

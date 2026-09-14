@@ -62,6 +62,7 @@ const runCheckLines = () => {
     }
   }
 
+  store.isUsedExtracted = false
   store.batchCheck()
   isChecked.value = true
   isBlockCheck.value = false
@@ -69,6 +70,7 @@ const runCheckLines = () => {
 
 const runCheckBlock = () => {
   errorMsg.value = ''
+  store.isUsedExtracted = false
   store.batchCheckBlock()
   isChecked.value = true
   isBlockCheck.value = true

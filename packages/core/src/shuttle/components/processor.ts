@@ -156,6 +156,36 @@ export class ShuttleProcessor {
     return chunks
   }
 
+  /**
+   * Split raw text lines (JSONL, CSV, TSV, etc.) directly into chunks.
+   */
+  public chunkDirectText(rawText: string, maxChars: number): string[] {
+    const lines = rawText.split('\n')
+    const chunks: string[] = []
+    let currentChunk: string[] = []
+    let currentLen = 0
+
+    for (const line of lines) {
+      if (!line && currentChunk.length === 0) continue
+      const len = line.length + 1 // +1 for newline
+
+      if (currentLen + len > maxChars && currentChunk.length > 0) {
+        chunks.push(currentChunk.join('\n'))
+        currentChunk = []
+        currentLen = 0
+      }
+
+      currentChunk.push(line)
+      currentLen += len
+    }
+
+    if (currentChunk.length > 0) {
+      chunks.push(currentChunk.join('\n'))
+    }
+
+    return chunks
+  }
+
   private calculateDiffHtml(oldStr: string, newStr: string): string {
     if (oldStr === newStr) return newStr
     // Simplified diff for core package fallback if SequenceMatcher is not imported
