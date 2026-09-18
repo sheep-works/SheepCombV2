@@ -52,6 +52,28 @@ export interface ShWvFileInfo {
 }
 
 /**
+ * Workflow configuration details for ShWv dataset.
+ */
+export interface ShWvWorkflow {
+  /** Workflow step index (e.g., 0: Extract in SheepComb Web, 1: Translation in SheepWeave, 2: Review, etc.) */
+  index: number
+  /** Role performing this workflow step (e.g., "Extract", "Translation", "Review") */
+  role: string
+  /** Tool or system name executing the workflow (e.g., "SheepComb Web", "Sheep") */
+  name: string
+  /**
+   * Segmentation mode used for extraction:
+   * 
+   * | 値 | 説明・挙動 |
+   * | :--- | :--- |
+   * | `line` (デフォルト) | **行単位**。<br>テキストパース時に改行でセグメント分割します（`splitByNewline = true`）。Tikal 抽出時は `-seg` フラグを付けません。 |
+   * | `seg` | **センテンス単位（文分割）**。<br>Tikal による XLIFF 抽出時に `-seg` フラグを付与し、SRX等のルールに基づいた文単位のセグメンテーションを行います。 |
+   * | `raw` | **改行分割なし（生データ保持）**。<br>パース時に改行による自動分割を行いません（`splitByNewline = false`）。 |
+   */
+  segmentation?: 'line' | 'seg' | 'raw' | string
+}
+
+/**
  * Metadata for the ShWv dataset including languages, files, and workflow.
  */
 export interface ShWvMeta {
@@ -70,7 +92,7 @@ export interface ShWvMeta {
   /** Paths to Termbase (TB) files used */
   tbFiles?: string[]
   /** Workflow configuration details */
-  workflow?: { index: number; role: string; name: string; segmentation?: string }
+  workflow?: ShWvWorkflow
 }
 
 /**
@@ -307,3 +329,37 @@ export function createChunkOptions(options?: ChunkOptions): Required<ChunkOption
     terms: options?.terms ?? false,
   }
 }
+
+/**
+ * Quality Assurance (QA) issue category.
+ */
+export type QaIssueType = 'Number' | 'Tag' | 'Term' | 'Consistency' | 'UnmodifiedPe'
+
+/**
+ * Individual QA issue detected during segment checking.
+ */
+export interface QaIssue {
+  /** Type of issue detected */
+  issue_type: QaIssueType
+  /** 1-based segment index */
+  idx: number
+  /** Description message of the issue */
+  message: string
+}
+
+/**
+ * Configuration options for QA checks.
+ */
+export interface QaConfig {
+  /** Check number mismatch between source and target */
+  check_numbers?: boolean
+  /** Check inline tags/placeholders mismatch */
+  check_tags?: boolean
+  /** Check target glossary/termbase usage */
+  check_terms?: boolean
+  /** Check translation consistency for 100% matching segments */
+  check_consistency?: boolean
+  /** Check unmodified pre-translation / PE leakage on referenced segments */
+  check_unmodified_pe?: boolean
+}
+

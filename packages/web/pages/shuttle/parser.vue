@@ -10,7 +10,7 @@ definePageMeta({
 })
 
 import { ref, computed } from 'vue'
-import { FileUp, Search, Download, Database, Trash2, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-vue-next'
+import { FileUp, Search, Download, Database, Trash2, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileEdit, X, Check } from 'lucide-vue-next'
 // Note: Using relative paths instead of Nuxt aliases (~~, ~, @) to ensure stable resolution.
 import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
@@ -73,13 +73,38 @@ const handleJumpPage = () => {
 const selectedFiles = ref<File[]>([])
 const splitByNewline = ref(true)
 
+const validParserExts = ['xlf', 'xliff', 'mxliff', 'sdlxliff', 'mqxliff', 'tmx', 'tbx', 'csv', 'tsv', 'xlsx', 'docx', 'json', 'jsonl']
+
+/**
+ * サポートされている拡張子のファイルをフィルタリングし、不正なファイルがあれば通知
+ */
+function filterValidFiles(files: File[]): File[] {
+  const valid: File[] = []
+  const invalid: string[] = []
+  for (const f of files) {
+    const ext = f.name.split('.').pop()?.toLowerCase() || ''
+    if (validParserExts.includes(ext)) {
+      valid.push(f)
+    } else {
+      invalid.push(f.name)
+    }
+  }
+  if (invalid.length > 0) {
+    store.setStatus(`対象外のファイルを除外しました: ${invalid.join(', ')}`, 'error')
+  }
+  return valid
+}
+
 /**
  * ドラッグ&ドロップによるファイル選択のハンドリング
  */
 const handleFileDrop = (e: DragEvent) => {
   e.preventDefault()
   if (e.dataTransfer?.files) {
-    selectedFiles.value = Array.from(e.dataTransfer.files)
+    const valid = filterValidFiles(Array.from(e.dataTransfer.files))
+    if (valid.length > 0) {
+      selectedFiles.value = [...selectedFiles.value, ...valid]
+    }
   }
 }
 
@@ -89,7 +114,11 @@ const handleFileDrop = (e: DragEvent) => {
 const handleFileSelect = (e: Event) => {
   const target = e.target as HTMLInputElement
   if (target.files) {
-    selectedFiles.value = Array.from(target.files)
+    const valid = filterValidFiles(Array.from(target.files))
+    if (valid.length > 0) {
+      selectedFiles.value = [...selectedFiles.value, ...valid]
+    }
+    target.value = ''
   }
 }
 
@@ -194,8 +223,79 @@ const applySampling = () => {
   store.setStatus(t('shuttle.parser.msg_sampling_applied', { chars: samplingTotalChars.value, seed }), 'success')
 }
 
+// --- 直接入力 (Direct Input) モーダル ---
+const showDirectInputModal = ref(false)
+const directSrcText = ref('')
+const directTgtText = ref('')
+const directNoteText = ref('')
 
+const directSrcLines = computed(() => directSrcText.value ? directSrcText.value.split(/\r?\n/) : [])
+const directTgtLines = computed(() => directTgtText.value ? directTgtText.value.split(/\r?\n/) : [])
+const directNoteLines = computed(() => directNoteText.value ? directNoteText.value.split(/\r?\n/) : [])
 
+const maxDirectLines = computed(() => {
+  return Math.max(directSrcLines.value.length, directTgtLines.value.length, directNoteLines.value.length, 0)
+})
+
+function openDirectInputModal() {
+  showDirectInputModal.value = true
+}
+
+function closeDirectInputModal() {
+  showDirectInputModal.value = false
+}
+
+function clearDirectInput() {
+  directSrcText.value = ''
+  directTgtText.value = ''
+  directNoteText.value = ''
+}
+
+function applyDirectInput() {
+  const srcLines = directSrcText.value.split(/\r?\n/)
+  const tgtLines = directTgtText.value.split(/\r?\n/)
+  const noteLines = directNoteText.value.split(/\r?\n/)
+  const total = Math.max(srcLines.length, tgtLines.length, noteLines.length)
+
+  if (total === 0 || (total === 1 && !srcLines[0] && !tgtLines[0] && !noteLines[0])) {
+    store.setStatus('入力されたテキストがありません', 'error')
+    return
+  }
+
+  const pairs: TranslationPair[] = []
+  for (let i = 0; i < total; i++) {
+    const src = srcLines[i] ?? ''
+    const tgt = tgtLines[i] ?? ''
+    const note = noteLines[i]?.trim() ? noteLines[i] : undefined
+    pairs.push({
+      idx: i + 1,
+      src,
+      tgt,
+      note,
+    })
+  }
+
+  // 末尾の連続する空行をトリム
+  while (pairs.length > 0) {
+    const last = pairs[pairs.length - 1]!
+    if (!last.src.trim() && !last.tgt.trim() && !last.note) {
+      pairs.pop()
+    } else {
+      break
+    }
+  }
+
+  if (pairs.length === 0) {
+    store.setStatus('有効なテキスト行がありません', 'error')
+    return
+  }
+
+  selectedFiles.value = []
+  store.setDirectUnits(pairs, 'Direct_Input')
+  currentPage.value = 1
+  closeDirectInputModal()
+  store.setStatus(`直接入力から ${pairs.length} 件のセグメントを取り込みました`, 'success')
+}
 </script>
 
 <template>
@@ -216,7 +316,21 @@ const applySampling = () => {
             <FileUp :size="24" class="drop-icon" />
             <p v-if="selectedFiles.length === 0">{{ $t('shuttle.parser.drag_drop') }}</p>
             <p v-else class="file-count">{{ $t('shuttle.parser.files_selected', { count: selectedFiles.length }) }}</p>
-            <input type="file" ref="fileInput" hidden multiple @change="handleFileSelect" />
+            <span class="drop-ext-hint">.xlf, .mxliff, .sdlxliff, .tmx, .tbx, .xlsx, .docx, .csv, .json, .jsonl</span>
+            <input
+              type="file"
+              ref="fileInput"
+              hidden
+              multiple
+              accept=".xlf,.xliff,.mxliff,.sdlxliff,.mqxliff,.tmx,.tbx,.csv,.tsv,.xlsx,.docx,.json,.jsonl"
+              @change="handleFileSelect"
+            />
+          </div>
+          <div class="direct-input-box">
+            <button class="btn-direct-input" @click="openDirectInputModal" type="button">
+              <FileEdit :size="15" />
+              <span>テキスト直接入力 (ペースト)</span>
+            </button>
           </div>
           <div class="file-list" v-if="selectedFiles.length > 0">
             <div v-for="f in selectedFiles" :key="f.name" class="file-tag">
@@ -408,6 +522,86 @@ const applySampling = () => {
         </div>
       </section>
     </div>
+
+    <!-- 直接入力モーダル -->
+    <Teleport to="body">
+      <div class="modal-backdrop" v-if="showDirectInputModal" @click.self="closeDirectInputModal">
+        <div class="direct-input-modal">
+          <div class="modal-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <FileEdit :size="22" style="color: var(--accent);" />
+              <div>
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700;">テキスト直接入力 (ペースト)</h3>
+                <p style="margin: 2px 0 0; font-size: 0.76rem; color: var(--text-muted);">Excel等の列をコピーして各欄に行単位で貼り付けます。行番号で一致した対訳ペアとしてパースされます。</p>
+              </div>
+            </div>
+            <button class="btn-close-modal" @click="closeDirectInputModal" type="button"><X :size="18" /></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="direct-grid">
+              <!-- 原文 (src) -->
+              <div class="direct-col">
+                <div class="col-header">
+                  <span class="col-title">原文 (Source / src) <span class="req">*必須</span></span>
+                  <span class="col-count">{{ directSrcLines.length }} 行</span>
+                </div>
+                <textarea
+                  v-model="directSrcText"
+                  class="direct-textarea"
+                  placeholder="原文を行ごとに貼り付け...&#10;例:&#10;Hello&#10;Thank you&#10;Goodbye"
+                ></textarea>
+              </div>
+
+              <!-- 訳文 (tgt) -->
+              <div class="direct-col">
+                <div class="col-header">
+                  <span class="col-title">訳文 (Target / tgt)</span>
+                  <span class="col-count">{{ directTgtLines.length }} 行</span>
+                </div>
+                <textarea
+                  v-model="directTgtText"
+                  class="direct-textarea"
+                  placeholder="訳文を行ごとに貼り付け (任意)...&#10;例:&#10;こんにちは&#10;ありがとう&#10;さようなら"
+                ></textarea>
+              </div>
+
+              <!-- ノート (notes) -->
+              <div class="direct-col">
+                <div class="col-header">
+                  <span class="col-title">ノート (Notes / 備考)</span>
+                  <span class="col-count">{{ directNoteLines.length }} 行</span>
+                </div>
+                <textarea
+                  v-model="directNoteText"
+                  class="direct-textarea"
+                  placeholder="ノートを行ごとに貼り付け (任意)...&#10;例:&#10;挨拶1&#10;感謝&#10;挨拶2"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <div class="modal-meta-info">
+              <span v-if="maxDirectLines > 0">
+                最大 <strong>{{ maxDirectLines }}</strong> 行のセグメントを取り込みます
+              </span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-modal-secondary" @click="clearDirectInput" type="button">
+                クリア
+              </button>
+              <button class="btn-modal-secondary" @click="closeDirectInputModal" type="button">
+                キャンセル
+              </button>
+              <button class="btn-modal-primary" @click="applyDirectInput" :disabled="maxDirectLines === 0" type="button">
+                <Check :size="16" /> パースして取り込む
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -435,6 +629,14 @@ const applySampling = () => {
 .file-count {
   color: var(--accent);
   font-weight: 600;
+}
+
+.drop-ext-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .file-list {
@@ -761,5 +963,211 @@ td.note {
   font-size: 0.8rem;
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+/* Direct Input Styles */
+.direct-input-box {
+  margin-top: 14px;
+}
+
+.btn-direct-input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-xs);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-direct-input:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
+/* Modal Styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 24px;
+}
+
+.direct-input-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 960px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-close-modal:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.modal-body {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.direct-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  height: 100%;
+}
+
+@media (max-width: 768px) {
+  .direct-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.direct-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.col-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+}
+
+.col-title {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.req {
+  color: var(--accent);
+  font-size: 0.7rem;
+  margin-left: 2px;
+}
+
+.col-count {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.direct-textarea {
+  flex: 1;
+  min-height: 320px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 12px;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: monospace;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  transition: var(--transition);
+  white-space: pre;
+}
+
+.direct-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-secondary);
+}
+
+.modal-meta-info {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.btn-modal-secondary {
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: var(--radius-xs);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-modal-secondary:hover {
+  background: var(--bg-hover);
+}
+
+.btn-modal-primary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: var(--accent-gradient);
+  color: white;
+  border: none;
+  border-radius: var(--radius-xs);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-modal-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-modal-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

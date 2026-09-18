@@ -56,7 +56,18 @@ export class ShuttleAnalyzer {
 
       // 1. Process TM Matches (External and Internal)
       const tmSources = currentResult.t
-        .map((idx: number) => memories[idx])
+        .map((idx: number) => {
+          const s = memories[idx]
+          if (!s) return undefined
+          // 外部TMのインデックスは負数（-(元のidx)）として保持（0除外のため1-basedを保証）
+          const rawIdx = typeof s.idx === 'number' && s.idx !== 0 ? Math.abs(s.idx) : (idx + 1)
+          return {
+            idx: -rawIdx,
+            src: s.src,
+            tgt: s.tgt || (s as any).pre || '',
+            file: s.file || 'TM'
+          }
+        })
         .filter((s: any) => s !== undefined)
 
       const internalSources = currentResult.i
@@ -138,13 +149,13 @@ export class ShuttleAnalyzer {
       }
     }
 
-    // 3. Synchronization of back-references
+    // 3. Synchronization of back-references (内部参照のみ)
     for (let i = units.length - 1; i >= 0; i--) {
       const currentUnit = units[i]
       if (!currentUnit || !currentUnit.ref) continue
 
       for (const tm of currentUnit.ref.tms) {
-        if (tm.idx !== -1) {
+        if (tm.idx > 0) {
           const referencedUnit = units.find(u => u.idx === tm.idx)
           if (referencedUnit) {
             if (tm.ratio === 100) {
@@ -175,7 +186,8 @@ export class ShuttleAnalyzer {
         idx: s.idx,
         src: s.src,
         tgt: s.tgt,
-        ratio: ratio
+        ratio: ratio,
+        file: (s as any).file
       }
 
       results.push({ tm, opcodes })

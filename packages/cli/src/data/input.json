@@ -1,20 +1,51 @@
 {
+  "define": {
+    "name": "SHWV_DATA",
+    "version": "1.3"
+  },
   "meta": {
-    "bilingualPath": "dummy.xlf",
-    "files": [{ "name": "dummy.xlf", "start": 0, "end": 0 }],
-    "sourceLang": "ja",
-    "targetLang": "en"
+    "bilingualPath": "sample.xlf",
+    "files": [{ "name": "sample.xlf", "start": 1, "end": 4 }],
+    "sourceLang": "en",
+    "targetLang": "ja"
   },
   "body": {
     "units": [
       {
-        "idx": 0,
-        "src": "こんにちは",
-        "pre": "Hello",
-        "tgt": "Hello World",
-        "ref": { "tms": [], "tb": [], "quoted": [] }
+        "idx": 1,
+        "src": "Press 1 for Sales, 2 for Support.",
+        "pre": "",
+        "tgt": "営業は1を、サポートは3を押してください。",
+        "ref": { "tms": [], "tb": [], "quoted": [], "quoted100": [] }
+      },
+      {
+        "idx": 2,
+        "src": "Click <b>Next</b> to proceed.",
+        "pre": "",
+        "tgt": "進むには「次へ」をクリックします。",
+        "ref": { "tms": [], "tb": [], "quoted": [], "quoted100": [] }
+      },
+      {
+        "idx": 3,
+        "src": "Open the Dashboard.",
+        "pre": "",
+        "tgt": "管理画面を開きます。",
+        "ref": {
+          "tms": [],
+          "tb": [{ "src": "Dashboard", "tgts": ["ダッシュボード"] }],
+          "quoted": [],
+          "quoted100": []
+        }
+      },
+      {
+        "idx": 4,
+        "src": "Press 1 for Sales, 2 for Support.",
+        "pre": "",
+        "tgt": "営業は1を、サポートは2を押してください。",
+        "ref": { "tms": [], "tb": [], "quoted": [], "quoted100": [1] }
       }
     ],
     "terms": []
   }
 }
+

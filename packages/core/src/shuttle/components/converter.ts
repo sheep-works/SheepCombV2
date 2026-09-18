@@ -12,7 +12,7 @@ export class ShuttleConverter {
    * Convert TranslationPairs to ShWvData.
    * Performs tag protection (replacing XML tags with {@idx} and storing in placeholders).
    */
-  fromUnits(units: TranslationPair[], files: ShWvFileInfo[], projectInfo?: ProjectInfo): ShWvData {
+  fromUnits(units: TranslationPair[], files: ShWvFileInfo[], projectInfo?: ProjectInfo, segmentation?: string): ShWvData {
     const allUnits: ShWvUnit[] = []
 
     for (const p of units) {
@@ -67,7 +67,7 @@ export class ShuttleConverter {
     return {
       define: {
         name: 'SHWV_DATA',
-        version: '1.2'
+        version: '1.3'
       },
       meta: {
         bilingualPath: '',
@@ -75,7 +75,13 @@ export class ShuttleConverter {
         sourceLang,
         targetLang,
         tmFiles: [...this.parent.tmFiles],
-        tbFiles: [...this.parent.tbFiles]
+        tbFiles: [...this.parent.tbFiles],
+        workflow: {
+          index: 0,
+          role: 'Extract',
+          name: 'SheepComb Web',
+          segmentation: segmentation || this.parent.segmentation || 'line'
+        }
       },
       body: {
         units: allUnits,

@@ -8,7 +8,8 @@ import * as path from 'node:path'
 import { ShuttleAdapter as SheepShuttle } from './shuttle.js'
 import { PATHS } from './config.js'
 import { analyzeProject } from './pipeline.js'
-import { SheepShuttle as CoreShuttle } from '@sheep-family/core'
+import { SheepShuttle as CoreShuttle, checkShWvData } from '@sheep-family/core'
+import type { QaConfig, QaIssue } from '@sheep-family/types'
 
 function ensureOutDir() {
   if (!fs.existsSync(PATHS.outDir)) {
@@ -77,12 +78,51 @@ export async function runShuttleMenu(rl: Interface): Promise<void> {
   console.log('│ 13. API Greet     (接続確認・モデル情報) │')
   console.log('│ 14. API Translate (一括翻訳処理)         │')
   console.log('│ 15. API Check     (品質チェック・校正)   │')
+  console.log('│ ─ QA (品質チェック) ──────────────────── │')
+  console.log('│ 16. runQa         (品質チェック実行)     │')
   console.log('│ 0.  戻る                                 │')
   console.log('└──────────────────────────────────────────┘')
 
-  const choice = await rl.question('選択 (0-15): ')
+  const choice = await rl.question('選択 (0-16): ')
 
   if (choice === '0') {
+    return
+  }
+
+  if (choice === '16') {
+    const data = loadShwvData()
+    if (!data) return
+
+    console.log('\n  ⌛ 品質チェック実行中...')
+    try {
+      const issues = checkShWvData(data)
+      if (issues.length === 0) {
+        console.log('  ✅ 問題は検出されませんでした。(All checks passed!)')
+      } else {
+        console.log(`\n  ⚠ 合計 ${issues.length} 件の品質問題が検出されました:\n`)
+        
+        // カテゴリ別集計
+        const counts: Record<string, number> = { Number: 0, Tag: 0, Term: 0, Consistency: 0, UnmodifiedPe: 0 }
+        for (const issue of issues) {
+          counts[issue.issue_type] = (counts[issue.issue_type] || 0) + 1
+          console.log(`    [行 ${issue.idx.toString().padStart(3)}] [${issue.issue_type.padEnd(12)}] ${issue.message}`)
+        }
+
+        console.log('\n  【内訳】')
+        console.log(`    - 数字 (Number)        : ${counts.Number} 件`)
+        console.log(`    - タグ (Tag)           : ${counts.Tag} 件`)
+        console.log(`    - 用語 (Term)          : ${counts.Term} 件`)
+        console.log(`    - 整合性 (Consistency) : ${counts.Consistency} 件`)
+        console.log(`    - PE修正漏れ (UnmodifiedPe): ${counts.UnmodifiedPe} 件`)
+      }
+
+      const outPath = path.join(PATHS.outDir, 'qa_issues.json')
+      ensureOutDir()
+      fs.writeFileSync(outPath, JSON.stringify(issues, null, 2), 'utf-8')
+      console.log(`\n  💾 QA レポート保存: ${outPath}`)
+    } catch (e: any) {
+      console.log(`  ❌ QA エラー: ${e.message}`)
+    }
     return
   }
 

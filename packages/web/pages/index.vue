@@ -12,7 +12,6 @@ const { t } = useI18n()
 
 const shuttleLinks = computed(() => [
   { to: '/shuttle/parser', label: t('header.nav.parser'), desc: t('index.parser_desc'), icon: Database },
-  { to: '/shuttle/constructor', label: t('header.nav.constructor'), desc: t('index.constructor_desc'), icon: Layers },
   { to: '/shuttle/analyzer', label: t('header.nav.analyzer'), desc: t('index.analyzer_desc'), icon: Zap },
   { to: '/shuttle/manage', label: t('header.nav.manage'), desc: t('index.manage_desc'), icon: Code2 },
   { to: '/shuttle/builder', label: t('header.nav.builder'), desc: t('header.nav.builder_desc'), icon: Box },

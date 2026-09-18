@@ -15,7 +15,9 @@ import type {
   ManagedDataType,
   ProcessorOptions,
   ProjectInfo,
-  ChunkOptions
+  ChunkOptions,
+  QaConfig,
+  QaIssue
 } from '@sheep-family/types'
 import { type ChunkInfo } from '@sheep-family/core'
 
@@ -180,6 +182,21 @@ export const useShuttleStore = defineStore('shuttle', () => {
   }
 
   /**
+   * テキスト直接入力によるユニットの設定
+   */
+  function setDirectUnits(newUnits: TranslationPair[], fileName: string = 'direct_input.txt') {
+    shuttle.units = [...newUnits]
+    shuttle.files = [{
+      name: fileName,
+      start: newUnits.length > 0 ? newUnits[0]!.idx : 1,
+      end: newUnits.length > 0 ? newUnits[newUnits.length - 1]!.idx : 1,
+    }]
+    shuttle.data = null
+    currentFileName.value = fileName
+    syncState()
+  }
+
+  /**
    * 既存の ShWvData をセット（ファイル読み込み時など）
    */
   async function loadShwvData(newData: ShWvData, name: string = '') {
@@ -215,6 +232,13 @@ export const useShuttleStore = defineStore('shuttle', () => {
     // Automatically build search index after analysis
     buildSearchIndex()
     syncState()
+  }
+
+  /**
+   * QA チェックの実行
+   */
+  function runQa(config?: QaConfig): QaIssue[] {
+    return shuttle.runQa(config)
   }
 
   /**
@@ -434,6 +458,7 @@ export const useShuttleStore = defineStore('shuttle', () => {
     checkConnection,
     fetchModels,
     parseFiles,
+    setDirectUnits,
     loadShwvData,
     addTms,
     addTbs,
@@ -441,6 +466,7 @@ export const useShuttleStore = defineStore('shuttle', () => {
     sampling,
     convert,
     analyze,
+    runQa,
     createChunks,
     processRequests,
     clearChunks,

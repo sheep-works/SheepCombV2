@@ -65,13 +65,6 @@ const handleLocaleChange = (event: Event) => {
                 <span class="desc">{{ $t('header.nav.parser_desc') }}</span>
               </div>
             </NuxtLink>
-            <NuxtLink to="/shuttle/constructor" class="dropdown-item" active-class="active">
-              <Layers :size="14" />
-              <div class="item-text">
-                <span class="label">{{ $t('header.nav.constructor') }}</span>
-                <span class="desc">{{ $t('header.nav.constructor_desc') }}</span>
-              </div>
-            </NuxtLink>
             <NuxtLink to="/shuttle/analyzer" class="dropdown-item" active-class="active">
               <Zap :size="14" />
               <div class="item-text">

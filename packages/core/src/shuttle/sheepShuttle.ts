@@ -1,4 +1,5 @@
-import type { ShWvData, TranslationPair, TranslationPairWithFile, ShWvFileInfo, ManagedDataType, ProcessorOptions, ProjectInfo, ChunkOptions } from '@sheep-family/types'
+import type { ShWvData, TranslationPair, TranslationPairWithFile, ShWvFileInfo, ManagedDataType, ProcessorOptions, ProjectInfo, ChunkOptions, QaConfig, QaIssue } from '@sheep-family/types'
+import { checkShWvData } from '../qa/qaChecker.js'
 
 import { ShuttleParser } from './components/parser.js'
 import { ShuttleProcessor } from './components/processor.js'
@@ -29,6 +30,7 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   public tmFiles: string[] = []
   public tbFiles: string[] = []
   public chunks: ChunkInfo[] = []
+  public segmentation: 'line' | 'seg' | 'raw' | string = 'line'
 
   // Sub-components
   public parser: ShuttleParser
@@ -123,6 +125,7 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
    * Parse main source files and store result in units/files.
    */
   public async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[], onProgress?: (msg: string) => void, splitByNewline: boolean = true) {
+    this.segmentation = splitByNewline ? 'line' : 'raw'
     const result = await this.parser.parse(files, onProgress, splitByNewline);
     this.units = result.units as T[]
     this.files = result.files
@@ -145,8 +148,8 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   /**
    * Convert the current units/files into ShWvData.
    */
-  public convert(projectInfo?: ProjectInfo): void {
-    this.data = this.converter.fromUnits(this.units, this.files, projectInfo)
+  public convert(projectInfo?: ProjectInfo, segmentation?: string): void {
+    this.data = this.converter.fromUnits(this.units, this.files, projectInfo, segmentation || this.segmentation)
   }
 
   /**
@@ -398,6 +401,16 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
       chunk.response = (error as Error).message;
       throw error;
     }
+  }
+
+  /**
+   * Run QA checks on the current ShWvData.
+   */
+  public runQa(config?: QaConfig): QaIssue[] {
+    if (!this.data) {
+      return []
+    }
+    return checkShWvData(this.data, config)
   }
 
   /**
