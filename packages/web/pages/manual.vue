@@ -6,9 +6,9 @@ definePageMeta({
 })
 
 const DOCS_URL = 'https://lambuage.com/sheep-comb'
-const YOUTUBE_VIDEO_ID = 'FlilrjkswME'
-const YOUTUBE_URL = `https://youtu.be/${YOUTUBE_VIDEO_ID}`
-const YOUTUBE_EMBED_URL = `https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?rel=0`
+const YOUTUBE_PLAYLIST_ID = 'PLZo3GhAxn8uE'
+const YOUTUBE_URL = `https://www.youtube.com/playlist?list=${YOUTUBE_PLAYLIST_ID}`
+const YOUTUBE_EMBED_URL = `https://www.youtube-nocookie.com/embed/videoseries?list=${YOUTUBE_PLAYLIST_ID}&rel=0`
 </script>
 
 <template>

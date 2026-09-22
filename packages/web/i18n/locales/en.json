@@ -339,5 +339,22 @@
     "video_desc": "Learn key concepts and practical workflows quickly with intuitive step-by-step videos.",
     "video_btn": "Watch on YouTube",
     "embed_title": "Video Manual"
+  },
+  "footer": {
+    "desc": "Multilingual data processing, analysis, and LLM integration platform.",
+    "official_site": "Lambuage",
+    "github": "GitHub",
+    "license": "License",
+    "copyright": "© 2026 Lambuage / sheep-works. All rights reserved."
+  },
+  "license": {
+    "title": "License Information",
+    "subtitle": "Licenses for SheepCombWeb and third-party open source software",
+    "app_license_title": "SheepCombWeb License",
+    "app_license_desc": "SheepCombWeb is released under the MIT License.",
+    "oss_license_title": "Third-Party Open Source Licenses",
+    "oss_license_desc": "SheepCombWeb is built using the following open source libraries. We are grateful to the authors and open-source communities.",
+    "view_license": "View License Text",
+    "hide_license": "Hide License Text"
   }
 }

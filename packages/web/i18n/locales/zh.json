@@ -339,5 +339,22 @@
     "video_desc": "通过视频直观了解实际操作演示与完整工作流，快速上手各项功能。",
     "video_btn": "在 YouTube 上观看",
     "embed_title": "视频手册"
+  },
+  "footer": {
+    "desc": "多语言数据处理、分析与LLM集成平台。",
+    "official_site": "Lambuage",
+    "github": "GitHub",
+    "license": "开源许可证",
+    "copyright": "© 2026 Lambuage / sheep-works. 保留所有权利。"
+  },
+  "license": {
+    "title": "许可证信息",
+    "subtitle": "SheepCombWeb 及其使用的第三方开源软件许可证",
+    "app_license_title": "SheepCombWeb 许可证",
+    "app_license_desc": "SheepCombWeb 基于 MIT License 发布。",
+    "oss_license_title": "第三方开源软件许可证",
+    "oss_license_desc": "SheepCombWeb 使用了以下开源软件库。衷心感谢所有开发者与开源社区的贡献。",
+    "view_license": "查看许可证正文",
+    "hide_license": "收起许可证正文"
   }
 }

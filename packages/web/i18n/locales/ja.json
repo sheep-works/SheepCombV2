@@ -338,5 +338,22 @@
     "video_desc": "実際の画面を見ながら基本操作や一連のワークフローを動画で直感的に学べます。",
     "video_btn": "YouTube で見る",
     "embed_title": "動画マニュアル"
+  },
+  "footer": {
+    "desc": "多言語データ処理・解析・LLM連携プラットフォーム",
+    "official_site": "Lambuage",
+    "github": "GitHub",
+    "license": "ライセンス",
+    "copyright": "© 2026 Lambuage / sheep-works. All rights reserved."
+  },
+  "license": {
+    "title": "ライセンス情報",
+    "subtitle": "SheepCombWeb のライセンスおよび使用しているオープンソースソフトウェアのライセンス表記",
+    "app_license_title": "SheepCombWeb ライセンス",
+    "app_license_desc": "SheepCombWeb は MIT License の下で公開されています。",
+    "oss_license_title": "サードパーティ OSS ライセンス",
+    "oss_license_desc": "SheepCombWeb の開発・動作には以下のオープンソースソフトウェアが使用されています。各開発者・コミュニティの皆様に感謝いたします。",
+    "view_license": "ライセンス本文を表示",
+    "hide_license": "ライセンス本文を閉じる"
   }
 }
