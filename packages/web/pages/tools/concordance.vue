@@ -7,6 +7,7 @@
 definePageMeta({
   title: 'コンコーダンス',
   icon: 'search',
+  hideFooter: true,
 })
 
 import { ref, watch, computed } from 'vue'
@@ -256,12 +257,19 @@ const handleUpload = async (event: Event) => {
 .concordance-view {
   padding: 24px;
   height: calc(100vh - 60px);
+  max-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .concordance-layout {
   display: grid;
   grid-template-columns: 320px 1fr;
   gap: 24px;
+  flex: 1;
+  min-height: 0;
   height: 100%;
 }
 
@@ -269,6 +277,9 @@ const handleUpload = async (event: Event) => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
 }
 
 .search-input-area {
@@ -488,6 +499,18 @@ const handleUpload = async (event: Event) => {
 
 .results-area {
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.results-area .card {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .title-group {
@@ -498,6 +521,7 @@ const handleUpload = async (event: Event) => {
 
 .table-container {
   flex: 1;
+  min-height: 0;
   overflow: auto;
 }
 

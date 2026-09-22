@@ -2,6 +2,7 @@
 definePageMeta({
   title: 'テキストチャンク',
   icon: 'scissors',
+  hideFooter: true,
 })
 
 import { ref, computed } from 'vue'
