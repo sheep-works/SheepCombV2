@@ -160,7 +160,7 @@ export class ShuttleManager {
     return lines.join('\n')
   }
 
-  chunkJsonlChunks(data: ShWvData, maxCharsPerChunk: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', options?: ChunkOptions): string[] {
+  chunkJsonlChunks(data: ShWvData, maxCharsPerChunk: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' | 'DIFF' = 'CHECK', options?: ChunkOptions): string[] {
     const chunks: string[] = []
     let currentChunk: string[] = []
     let currentLen = 0
@@ -219,7 +219,7 @@ export class ShuttleManager {
     return chunks
   }
 
-  chunkJsonl(data: ShWvData, maxCharsPerLine: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' = 'CHECK', options?: ChunkOptions): string {
+  chunkJsonl(data: ShWvData, maxCharsPerLine: number, requestTarget: 'CHECK' | 'TRANSLATE' | 'PROOF' | 'DIFF' = 'CHECK', options?: ChunkOptions): string {
     const chunks = this.chunkJsonlChunks(data, maxCharsPerLine, requestTarget, options)
     return chunks.join('\n')
   }
