@@ -2,7 +2,6 @@
 definePageMeta({
   title: 'テキストチャンク',
   icon: 'scissors',
-  hideFooter: true,
 })
 
 import { ref, computed } from 'vue'
@@ -131,7 +130,7 @@ const clearChunks = () => {
 
 <style scoped>
 .chunk-view {
-  height: calc(100vh - 64px);
+  min-height: calc(100vh - 140px);
   display: flex;
   flex-direction: column;
   padding: 24px;
@@ -141,7 +140,6 @@ const clearChunks = () => {
   display: flex;
   gap: 24px;
   flex: 1;
-  min-height: 0;
 }
 
 .sidebar {
@@ -149,6 +147,9 @@ const clearChunks = () => {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  position: sticky;
+  top: 84px;
+  align-self: start;
 }
 
 .main-content {
@@ -296,8 +297,9 @@ const clearChunks = () => {
 
 .text-area {
   flex: 1;
+  min-height: 420px;
   width: 100%;
-  resize: none;
+  resize: vertical;
   padding: 16px;
   border: 1px solid var(--border);
   background: var(--bg-input);

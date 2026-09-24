@@ -408,6 +408,138 @@ export class ShuttleManager {
     return currentIdx
   }
 
+  // ==========================================
+  // Virtual Scope, Mapping & Virtual Merge/Fetch
+  // ==========================================
+
+  /**
+   * Parses range expressions like "100-500", "1-50, 80-100", "10, 20, 30" into a Set of numbers.
+   */
+  public parseRangeExpression(rangeExpr: string): Set<number> {
+    const indices = new Set<number>()
+    const parts = rangeExpr.split(',').map(s => s.trim()).filter(s => s.length > 0)
+    for (const part of parts) {
+      if (part.includes('-')) {
+        const [startStr, endStr] = part.split('-').map(s => s.trim())
+        const start = parseInt(startStr, 10)
+        const end = parseInt(endStr, 10)
+        if (!isNaN(start) && !isNaN(end)) {
+          const min = Math.min(start, end)
+          const max = Math.max(start, end)
+          for (let i = min; i <= max; i++) {
+            indices.add(i)
+          }
+        }
+      } else {
+        const single = parseInt(part, 10)
+        if (!isNaN(single)) {
+          indices.add(single)
+        }
+      }
+    }
+    return indices
+  }
+
+  /**
+   * Returns scoped units filtered by workflow configuration (range / files).
+   * If neither is specified, returns all units.
+   */
+  public getScopedUnits(data: ShWvData, workflow = data.meta.workflow): ShWvUnit[] {
+    if (!workflow || (!workflow.range && !workflow.files)) {
+      return data.body.units
+    }
+
+    const { range, files } = workflow
+    const rangeSet = range ? this.parseRangeExpression(range) : null
+
+    let fileSet: Set<number> | null = null
+    if (files) {
+      fileSet = new Set<number>()
+      const targetFileNames = (Array.isArray(files) ? files : files.split(','))
+        .map(f => f.trim().toLowerCase())
+        .filter(f => f.length > 0)
+
+      for (const f of data.meta.files || []) {
+        if (targetFileNames.includes(f.name.toLowerCase())) {
+          for (let i = f.start; i <= f.end; i++) {
+            fileSet.add(i)
+          }
+        }
+      }
+    }
+
+    return data.body.units.filter(unit => {
+      if (rangeSet && fileSet) {
+        return rangeSet.has(unit.idx) && fileSet.has(unit.idx)
+      }
+      if (rangeSet) return rangeSet.has(unit.idx)
+      if (fileSet) return fileSet.has(unit.idx)
+      return true
+    })
+  }
+
+  /**
+   * Returns 0-based editor line to 1-based unit.idx mapping array for scoped units.
+   */
+  public getLineToIdxMap(data: ShWvData, workflow = data.meta.workflow): number[] {
+    const scopedUnits = this.getScopedUnits(data, workflow)
+    return scopedUnits.map(u => u.idx)
+  }
+
+  /**
+   * Merges partial or external units into ShWvData (Virtual Merge).
+   * Matches by unit.idx and updates target, pre, status, or note.
+   * @param data Main ShWvData instance to update
+   * @param patchUnits Array of units or partial unit updates
+   * @returns Array of updated unit indices
+   */
+  public virtualMerge(data: ShWvData, patchUnits: Array<Partial<ShWvUnit> & { idx: number }>): number[] {
+    const unitMap = new Map<number, ShWvUnit>()
+    for (const u of data.body.units) {
+      unitMap.set(u.idx, u)
+    }
+
+    const updatedIndices: number[] = []
+
+    for (const patch of patchUnits) {
+      const targetUnit = unitMap.get(patch.idx)
+      if (targetUnit) {
+        let changed = false
+        if (patch.tgt !== undefined && patch.tgt !== targetUnit.tgt) {
+          targetUnit.tgt = patch.tgt
+          changed = true
+        }
+        if (patch.pre !== undefined && patch.pre !== targetUnit.pre) {
+          targetUnit.pre = patch.pre
+          changed = true
+        }
+        if (patch.status !== undefined && patch.status !== targetUnit.status) {
+          targetUnit.status = patch.status
+          changed = true
+        }
+        if (patch.note !== undefined && patch.note !== targetUnit.note) {
+          targetUnit.note = patch.note
+          changed = true
+        }
+        if (changed) {
+          updatedIndices.push(patch.idx)
+        }
+      }
+    }
+
+    return updatedIndices
+  }
+
+  /**
+   * Mock implementation for fetching remote/shared unit patches (Virtual Fetch).
+   * In future implementations, this will fetch delta/patch data from a remote endpoint or shared storage.
+   */
+  public async virtualFetch(sourceUri: string): Promise<Array<Partial<ShWvUnit> & { idx: number }>> {
+    // Mock / Stub: returns empty array or logs fetch attempt
+    console.info(`[ShuttleManager] virtualFetch called for source: ${sourceUri} (mock)`)
+    return []
+  }
+
   // Wrappers
   public getManagedData(type: ManagedDataType, data: ShWvData, maxCharsPerChunk: number = 4000, targetOnly: boolean = false, options?: ChunkOptions): string {
     switch (type) {

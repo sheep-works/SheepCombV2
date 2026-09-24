@@ -36,7 +36,7 @@ export interface ShWvDefine {
   /** Fixed dataset header name */
   name: 'SHWV_DATA'
   /** ShWv format schema version */
-  version: '1.3' | '1.2' | '1.1' | '1.0'
+  version: '1.4' | '1.3' | '1.2' | '1.1' | '1.0'
 }
 
 /**
@@ -71,6 +71,16 @@ export interface ShWvWorkflow {
    * | `raw` | **改行分割なし（生データ保持）**。<br>パース時に改行による自動分割を行いません（`splitByNewline = false`）。 |
    */
   segmentation?: 'line' | 'seg' | 'raw' | string
+  /**
+   * Scope: line / idx range specification (e.g. "100-500", "1-100, 201-300").
+   * If omitted, all units in dataset are scoped.
+   */
+  range?: string
+  /**
+   * Scope: target file name(s) (e.g. "Chapter1.xlsx, Chapter2.xlsx" or array of file names).
+   * If specified, units belonging to these files are scoped.
+   */
+  files?: string[] | string
 }
 
 /**

@@ -111,6 +111,7 @@ const playLinks = computed(() => [
 .home-view {
   padding: 60px 24px;
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
 }
 

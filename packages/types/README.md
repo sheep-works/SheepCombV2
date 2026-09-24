@@ -74,7 +74,8 @@
 | **v1.0** | **初期コア仕様**<br>・基本3層構造（`define`, `meta`, `body.units`）<br>・セグメント単位の対訳（`src`, `tgt`, `pre`, `status`, `note`） | 最小限の必須フィールド |
 | **v1.1** | **照合参照・タグ・文結合の体系化**<br>・`ref` オブジェクト（`tms`, `tb`, `quoted`, `quoted100`）<br>・`placeholders`（インラインタグ・プレースホルダーマップ）<br>・`isSub`（文分割・従属セグメントフラグ） | `ref.tms ?? []`<br>`ref.tb ?? []`<br>`placeholders ?? {}`<br>`isSub ?? false` |
 | **v1.2** | **ポストエディット参照の導入**<br>・`ShWvUnit` に `isPeRef?: boolean` を追加<br>・外部TM照合と内部類似引用の識別性向上 | `isPeRef ?? false` |
-| **v1.3** | **ワークフロー工程管理の追加（現行最新）**<br>・`meta.workflow`（`index`, `role`, `name`, `segmentation`）を追加<br>・SheepComb Web（抽出時）では `index: 0`, `role: 'Extract'`, `name: 'SheepComb Web'`<br>・SheepWeave など後続ツールでの工程進行（`advanceWorkflow`）による `tgt` → `pre` 繰り上げ | `meta.workflow` 未定義時は `{ index: 1, role: 'Translation', name: 'Sheep', segmentation: 'line' }` に自動初期化 |
+| **v1.3** | **ワークフロー工程管理の追加**<br>・`meta.workflow`（`index`, `role`, `name`, `segmentation`）を追加<br>・SheepComb Web（抽出時）では `index: 0`, `role: 'Extract'`, `name: 'SheepComb Web'`<br>・SheepWeave など後続ツールでの工程進行（`advanceWorkflow`）による `tgt` → `pre` 繰り上げ | `meta.workflow` 未定義時は `{ index: 1, role: 'Translation', name: 'Sheep', segmentation: 'line' }` に自動初期化 |
+| **v1.4** | **仮想スコープ（分業フィルター）＆マージ機構の追加（現行最新）**<br>・`meta.workflow` に `range`（行・idx範囲）および `files`（対象ファイル指定）を追加<br>・物理分割を行わずに作業範囲のみを抽出（仮想スライス）し、内部マッチ参照（`idx`）を保ったままチーム分業とマージ（`virtualMerge`）を実現 | `range`, `files` 未定義時はプロジェクト全行を対象として動作 |
 
 ---
 
@@ -86,7 +87,7 @@ export interface ShWvDefine {
   /** 固定データセット識別名 */
   name: 'SHWV_DATA'
   /** スキーマバージョン */
-  version: '1.3' | '1.2' | '1.1' | '1.0'
+  version: '1.4' | '1.3' | '1.2' | '1.1' | '1.0'
 }
 ```
 
@@ -106,6 +107,10 @@ export interface ShWvWorkflow {
    * - raw: 改行分割なし（生データ保持）。パース時に改行による自動分割を行わない（splitByNewline = false）。
    */
   segmentation?: 'line' | 'seg' | 'raw' | string
+  /** [v1.4+] 作業担当行・idx範囲 (例: "100-500", "1-100, 201-300") */
+  range?: string
+  /** [v1.4+] 作業対象ファイル名 (例: "Chapter1.xlsx, Chapter2.xlsx" または string[]) */
+  files?: string[] | string
 }
 ```
 

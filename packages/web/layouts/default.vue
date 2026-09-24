@@ -1,14 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted } from 'vue'
 import { initWasm } from '@sheep-family/core/wasm'
 
-const route = useRoute()
 const isWasmReady = ref(false)
-
-const showFooter = computed(() => {
-  return !route.meta.hideFooter
-})
 
 onMounted(async () => {
   try {
@@ -21,12 +15,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="app-shell" :class="{ 'full-screen-tool': !showFooter }">
+  <div class="app-shell">
     <AppHeader v-model:wasm-ready="isWasmReady" />
     <main class="main-content">
       <slot />
     </main>
-    <AppFooter v-if="showFooter" />
+    <AppFooter />
   </div>
 </template>
 
@@ -39,13 +33,6 @@ onMounted(async () => {
 
 .main-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.full-screen-tool {
-  height: 100vh;
-  overflow: hidden;
+  width: 100%;
 }
 </style>
