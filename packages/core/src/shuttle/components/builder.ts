@@ -1,5 +1,5 @@
 // @ts-nocheck
-import type { ShWvData } from '@sheep-family/types'
+import type { ShWvData, BuildOptions } from '@sheep-family/types'
 import type { SheepShuttle } from '../sheepShuttle.js'
 
 export class ShuttleBuilder {
@@ -12,7 +12,7 @@ export class ShuttleBuilder {
   /**
    * Build an XLIFF file from ShWvData and original XML content.
    */
-  async build(xmlContent: string, data: ShWvData): Promise<string> {
+  async build(xmlContent: string, data: ShWvData, options?: BuildOptions): Promise<string> {
     const shwvUnits = data.body.units
     const parser = new DOMParser()
     const doc = parser.parseFromString(xmlContent, 'application/xml')
@@ -20,18 +20,31 @@ export class ShuttleBuilder {
     let currentIdx = 0
     const transUnits = doc.getElementsByTagName('trans-unit')
 
+    const hasMqNs = doc.documentElement?.getAttribute('xmlns:mq') !== null || xmlContent.includes('xmlns:mq=')
+    const hasMNs = doc.documentElement?.getAttribute('xmlns:m') !== null || xmlContent.includes('xmlns:m=')
+    const lockDuplicates = !!options?.lockDuplicates
+    const lockThreshold = options?.lockThreshold ?? 100
+
     for (let i = 0; i < transUnits.length; i++) {
       const tu = transUnits[i]
       if (currentIdx < shwvUnits.length) {
         // Aggregate all isSub units that belong to this trans-unit
         let combinedTgt = ''
         let isFirst = true
+        let shouldLock = false
 
         while (currentIdx < shwvUnits.length) {
           const unit = shwvUnits[currentIdx]!
           if (!isFirst) combinedTgt += '\n'
 
           combinedTgt += (unit.tgt ? unit.tgt : (unit.pre ? unit.pre : unit.src))
+
+          if (lockDuplicates && unit.ref?.tms?.length) {
+            const maxRatio = Math.max(...unit.ref.tms.map(t => t.ratio))
+            if (maxRatio >= lockThreshold) {
+              shouldLock = true
+            }
+          }
 
           currentIdx++
           isFirst = false
@@ -53,6 +66,16 @@ export class ShuttleBuilder {
         }
 
         targetNode.textContent = combinedTgt
+
+        if (shouldLock && tu) {
+          tu.setAttribute('translate', 'no')
+          if (hasMqNs) {
+            tu.setAttribute('mq:locked', 'locked')
+          }
+          if (hasMNs) {
+            tu.setAttribute('m:locked', 'true')
+          }
+        }
       } else {
         currentIdx++
       }

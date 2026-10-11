@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@sheep-family/types": "workspace:*",
+    "@toon-format/toon": "^4.4.0",
     "@xmldom/xmldom": "^0.9.10",
     "difflib-ts": "1.0.3",
     "flexsearch": "^0.8.212",

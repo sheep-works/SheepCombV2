@@ -1,5 +1,6 @@
 import type { TranslationPair, TranslationPairWithFile, ProcessorOptions, DntFilterType, ChunkOptions } from '@sheep-family/types'
 import { createChunkOptions } from '@sheep-family/types'
+import { encode } from '@toon-format/toon'
 import type { SheepShuttle } from '../sheepShuttle.js'
 
 export interface SamplingTranslationPair extends TranslationPairWithFile {
@@ -103,6 +104,58 @@ export class ShuttleProcessor {
     let currentLen = 0
 
     const opts = options ? createChunkOptions(options) : undefined
+    const isToon = opts?.useToon || opts?.format === 'toon'
+
+    if (isToon) {
+      const chunks: string[] = []
+      let currentItems: any[] = []
+
+      for (const unit of units) {
+        const obj: any = {}
+        obj.idx = unit.idx
+
+        if (requestTarget === 'DIFF') {
+          obj.src = unit.src ?? ''
+          if (unit.tgt && (unit.tgt.includes('<ins>') || unit.tgt.includes('<del>'))) {
+            obj.tgt = unit.tgt
+          } else {
+            obj.tgt = this.calculateDiffHtml(unit.src || '', unit.tgt || '')
+          }
+          obj.notes = unit.note ?? ''
+        } else if (opts) {
+          if (opts.src) obj.src = unit.src ?? ''
+          if (opts.tgt) obj.tgt = unit.tgt ?? ''
+          if (opts.note) obj.note = unit.note ?? ''
+        } else {
+          if (requestTarget === 'TRANSLATE') {
+            obj.src = unit.src ?? ''
+            obj.note = unit.note ?? ''
+          } else if (requestTarget === 'PROOF') {
+            obj.tgt = unit.tgt ?? ''
+          } else {
+            obj.src = unit.src ?? ''
+            obj.tgt = unit.tgt ?? ''
+            obj.notes = unit.note ?? ''
+          }
+        }
+
+        const testItems = [...currentItems, obj]
+        const testEncoded = encode(testItems)
+
+        if (testEncoded.length > maxChars && currentItems.length > 0) {
+          chunks.push(encode(currentItems))
+          currentItems = [obj]
+        } else {
+          currentItems.push(obj)
+        }
+      }
+
+      if (currentItems.length > 0) {
+        chunks.push(encode(currentItems))
+      }
+
+      return chunks
+    }
 
     for (const unit of units) {
       const obj: any = {}

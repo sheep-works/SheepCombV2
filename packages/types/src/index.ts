@@ -325,18 +325,25 @@ export interface ChunkOptions {
   history?: boolean
   /** Include terms */
   terms?: boolean
+  /** Format of chunks ('jsonl' or 'toon') */
+  format?: 'jsonl' | 'toon'
+  /** Use TOON format (experimental) */
+  useToon?: boolean
 }
 
 /**
  * Helper function to instantiate ChunkOptions with defaults.
  */
 export function createChunkOptions(options?: ChunkOptions): Required<ChunkOptions> {
+  const useToon = options?.useToon ?? (options?.format === 'toon')
   return {
     src: options?.src ?? false,
     tgt: options?.tgt ?? false,
     note: options?.note ?? false,
     history: options?.history ?? false,
     terms: options?.terms ?? false,
+    format: useToon ? 'toon' : (options?.format ?? 'jsonl'),
+    useToon,
   }
 }
 
@@ -371,5 +378,37 @@ export interface QaConfig {
   check_consistency?: boolean
   /** Check unmodified pre-translation / PE leakage on referenced segments */
   check_unmodified_pe?: boolean
+}
+
+/**
+ * Options for rebuilding bilingual files (XLIFF/MXLIFF/MQXLIFF).
+ */
+export interface BuildOptions {
+  /**
+   * If true, lock duplicate or high-similarity segments.
+   */
+  lockDuplicates?: boolean
+  /**
+   * Match similarity ratio threshold (0-100) to apply lock. Defaults to 100.
+   */
+  lockThreshold?: number
+}
+
+/**
+ * Options for batch applying terms/glossaries.
+ */
+export interface ApplyTermsOptions {
+  /**
+   * Target field to apply replacements ('tgt' or 'pre'). Defaults to 'tgt'.
+   */
+  targetField?: 'tgt' | 'pre'
+  /**
+   * If the target field is empty, whether to use source text as base. Defaults to true.
+   */
+  fallbackToSrc?: boolean
+  /**
+   * Whether to enforce word boundaries on alphanumeric terms to avoid partial matching (e.g. 'admin' -> 'administrator'). Defaults to true.
+   */
+  matchWholeWord?: boolean
 }
 

@@ -1,5 +1,6 @@
-import type { ShWvData, ShWvUnit, ShWvRefTm, ExportPair, ChunkedJsonlItem, ManagedDataType, ChunkOptions } from '@sheep-family/types'
+import type { ShWvData, ShWvUnit, ShWvRefTm, ExportPair, ChunkedJsonlItem, ManagedDataType, ChunkOptions, ApplyTermsOptions } from '@sheep-family/types'
 import { createChunkOptions } from '@sheep-family/types'
+import { encode } from '@toon-format/toon'
 import type { SheepShuttle } from '../sheepShuttle.js'
 
 export class ShuttleManager {
@@ -166,6 +167,62 @@ export class ShuttleManager {
     let currentLen = 0
 
     const opts = options ? createChunkOptions(options) : undefined
+    const isToon = opts?.useToon || opts?.format === 'toon'
+
+    if (isToon) {
+      const chunks: string[] = []
+      let currentItems: any[] = []
+
+      for (const unit of data.body.units) {
+        const tgtText = unit.tgt || unit.pre || ''
+        const historyObj = unit.ref?.tms
+          ? unit.ref.tms
+              .sort((a, b) => b.ratio - a.ratio)
+              .slice(0, 2)
+              .map((tm: ShWvRefTm) => ({ src: tm.src, tgt: tm.tgt, diff: tm.diff }))
+          : []
+
+        const termsObj = unit.ref?.tb || []
+
+        const obj: any = {}
+        obj.idx = unit.idx
+
+        if (opts) {
+          if (opts.src) obj.src = unit.src ?? ''
+          if (opts.tgt) obj.tgt = tgtText
+          if (opts.note) obj.note = unit.note ?? ''
+          if (opts.history && historyObj.length > 0) obj.history = historyObj
+          if (opts.terms && termsObj.length > 0) obj.terms = termsObj
+        } else {
+          if (requestTarget === 'TRANSLATE') {
+            obj.src = unit.src ?? ''
+            obj.note = unit.note ?? ''
+          } else if (requestTarget === 'PROOF') {
+            obj.tgt = tgtText
+          } else {
+            obj.src = unit.src ?? ''
+            obj.tgt = tgtText
+            if (historyObj.length > 0) obj.history = historyObj
+          }
+        }
+
+        const testItems = [...currentItems, obj]
+        const testEncoded = encode(testItems)
+
+        if (testEncoded.length > maxCharsPerChunk && currentItems.length > 0) {
+          chunks.push(encode(currentItems))
+          currentItems = [obj]
+        } else {
+          currentItems.push(obj)
+        }
+      }
+
+      if (currentItems.length > 0) {
+        chunks.push(encode(currentItems))
+      }
+
+      return chunks
+    }
 
     for (const unit of data.body.units) {
       const tgtText = unit.tgt || unit.pre || ''
@@ -294,6 +351,46 @@ export class ShuttleManager {
       }
 
       groups.push(tempChunk)
+    }
+
+    const isToon = opts?.useToon || opts?.format === 'toon'
+
+    if (isToon) {
+      const chunks: string[] = []
+      let currentItems: any[] = []
+
+      for (const group of groups) {
+        if (group.length === 0) continue
+
+        const testItems = [...currentItems, ...group]
+        const testEncoded = encode(testItems)
+
+        if (testEncoded.length > maxCharsPerChunk) {
+          if (currentItems.length > 0) {
+            chunks.push(encode(currentItems))
+            currentItems = []
+          }
+
+          for (const item of group) {
+            const itemTest = [...currentItems, item]
+            const itemEncoded = encode(itemTest)
+            if (itemEncoded.length > maxCharsPerChunk && currentItems.length > 0) {
+              chunks.push(encode(currentItems))
+              currentItems = [item]
+            } else {
+              currentItems.push(item)
+            }
+          }
+        } else {
+          currentItems.push(...group)
+        }
+      }
+
+      if (currentItems.length > 0) {
+        chunks.push(encode(currentItems))
+      }
+
+      return chunks
     }
 
     const chunks: string[] = []
@@ -538,6 +635,117 @@ export class ShuttleManager {
     // Mock / Stub: returns empty array or logs fetch attempt
     console.info(`[ShuttleManager] virtualFetch called for source: ${sourceUri} (mock)`)
     return []
+  }
+
+  /**
+   * Batch apply Termbase (TB) replacements across units in ShWvData.
+   * Prevents collision/double-replacement (especially in CJK characters) using two-phase placeholder replacement:
+   * 1. Sort terms in descending order by source text length.
+   * 2. Replace term.src with unique indexed placeholder markers (__TB_TERM_{idx}__).
+   * 3. Replace placeholder markers with term.tgt candidate.
+   *
+   * @param data ShWvData dataset to modify
+   * @param options Configuration options (targetField: 'tgt' | 'pre', fallbackToSrc: boolean)
+   * @returns Number of units updated
+   */
+  public applyTerms(data: ShWvData, options?: ApplyTermsOptions): number {
+    const targetField = options?.targetField ?? 'tgt'
+    const fallbackToSrc = options?.fallbackToSrc ?? true
+    const matchWholeWord = options?.matchWholeWord ?? true
+    let updatedCount = 0
+
+    if (!data?.body?.units) return 0
+
+    const escapeRegExp = (str: string): string => {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    }
+
+    const globalTerms = data.body.terms || []
+
+    for (const unit of data.body.units) {
+      // Gather applicable terms for this unit
+      const termMap = new Map<string, string>()
+
+      // 1. Add global dataset terms
+      for (const t of globalTerms) {
+        if (t.src && t.tgt) {
+          termMap.set(t.src, t.tgt)
+        }
+      }
+
+      // 2. Add unit-specific TB matches (prefer unit TB if present)
+      if (unit.ref?.tb && unit.ref.tb.length > 0) {
+        for (const t of unit.ref.tb) {
+          if (t.src && t.tgts && t.tgts.length > 0 && t.tgts[0]) {
+            termMap.set(t.src, t.tgts[0])
+          }
+        }
+      }
+
+      if (termMap.size === 0) continue
+
+      // Convert to array and filter out empty strings
+      const terms: { src: string; tgt: string }[] = []
+      termMap.forEach((tgt, src) => {
+        if (src.trim()) {
+          terms.push({ src, tgt })
+        }
+      })
+
+      if (terms.length === 0) continue
+
+      // Step 1: Sort by length descending (longest match first)
+      terms.sort((a, b) => b.src.length - a.src.length)
+
+      // Determine base text based on targetField and fallback rules:
+      // If targetField === 'tgt': unit.tgt -> unit.pre -> unit.src
+      // If targetField === 'pre': unit.pre -> unit.src
+      let originalText = unit[targetField] || ''
+      if (!originalText && targetField === 'tgt') {
+        originalText = unit.pre || ''
+      }
+      if (!originalText && fallbackToSrc) {
+        originalText = unit.src || ''
+      }
+      if (!originalText) continue
+
+      let currentText = originalText
+      const markers: { marker: string; tgt: string }[] = []
+
+      // Step 2: Replace source term with indexed marker
+      terms.forEach((term, idx) => {
+        let pattern: string
+        if (matchWholeWord) {
+          const startsWithWord = /^\w/.test(term.src)
+          const endsWithWord = /\w$/.test(term.src)
+          pattern = `${startsWithWord ? '\\b' : ''}${escapeRegExp(term.src)}${endsWithWord ? '\\b' : ''}`
+        } else {
+          pattern = escapeRegExp(term.src)
+        }
+
+        const reg = new RegExp(pattern, 'g')
+        if (reg.test(currentText)) {
+          const marker = `__TB_TERM_${idx}__`
+          markers.push({ marker, tgt: term.tgt })
+          currentText = currentText.replace(new RegExp(pattern, 'g'), marker)
+        }
+      })
+
+      // Step 3: Replace marker with target term
+      if (markers.length > 0) {
+        for (const { marker, tgt } of markers) {
+          const reg = new RegExp(escapeRegExp(marker), 'g')
+          currentText = currentText.replace(reg, tgt)
+        }
+
+        if (currentText !== unit[targetField]) {
+          unit[targetField] = currentText
+          updatedCount++
+        }
+      }
+    }
+
+    return updatedCount
   }
 
   // Wrappers
