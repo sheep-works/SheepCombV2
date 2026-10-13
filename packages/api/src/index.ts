@@ -73,7 +73,7 @@ function loadServerConfig() {
         const data = fs.readFileSync(configPath, 'utf-8');
         serverConfig = JSON.parse(data);
         console.log('[API Info] Loaded configuration from Electron config.json:', serverConfig);
-        
+
         // Copy keys to process.env so existing auth & vertexClient code works out-of-the-box
         if (serverConfig.API_KEY_SHEEP && serverConfig.API_KEY_SHEEP.trim()) {
           process.env.API_KEY_SHEEP = serverConfig.API_KEY_SHEEP.trim();
@@ -201,7 +201,7 @@ app.use('*', async (c, next) => {
 
   const duration = Date.now() - startTime;
   const status = c.res.status;
-  
+
   let resBodyStr = '';
   try {
     const clonedRes = c.res.clone();
@@ -216,7 +216,7 @@ app.use('*', async (c, next) => {
   } catch {
     resBodyStr = '(Could not parse response body)';
   }
-  
+
   console.log(`[DEBUG Response #${reqId}] ${method} ${path} -> Status ${status} (${duration}ms)`);
   if (resBodyStr) {
     console.log(`  Response Body:\n${resBodyStr}`);
@@ -229,9 +229,11 @@ app.use('*', cors({
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'https://sheepcomb.netlify.app',
-    'https://comb.lambuage.com'
+    'https://comb.lambuage.com',
+    'https://lambuage.com',
+    'https://www.lambuage.com'
   ],
-  allowHeaders: ['Content-Type', 'X-API-KEY', 'X-LLM-Provider', 'X-LLM-Model', 'X-LLM-URL'],
+  allowHeaders: ['Content-Type', 'X-API-KEY', 'X-LLM-Provider', 'X-LLM-Model', 'X-LLM-URL', 'X-LLM-Key', 'X-LLM-API-Key', 'Authorization'],
   allowMethods: ['POST', 'GET', 'OPTIONS'],
   credentials: true,
 }));
@@ -245,7 +247,7 @@ const authMiddleware = async (c: any, next: any) => {
       .map(([_, v]) => v)
   );
 
-  const mask = (key: string | undefined) => 
+  const mask = (key: string | undefined) =>
     key ? `${key.slice(0, 4)}...${key.slice(-4)} (len: ${key.length})` : 'undefined';
 
   const isMatched = apiKey && validKeys.has(apiKey);
@@ -270,17 +272,17 @@ function getLlmProviderAndModel(c: any) {
   const provider = c.req.header('X-LLM-Provider') || serverConfig.ACTIVE_PROVIDER || 'vertex';
   const customKey = c.req.header('X-LLM-Key') || c.req.header('X-LLM-API-Key') || undefined;
   const modelName = c.req.header('X-LLM-Model') || (
-    provider === 'ollama' ? serverConfig.OLLAMA_MODEL : 
-    provider === 'lmstudio' ? serverConfig.LMSTUDIO_MODEL :
-    provider === 'gemini' ? serverConfig.GEMINI_MODEL :
-    provider === 'openai' ? (serverConfig.OPENAI_MODEL || process.env.OPENAI_MODEL || 'gpt-4o-mini') :
-    provider === 'claude' ? (serverConfig.CLAUDE_MODEL || process.env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001') :
-    provider === 'deepseek' ? (serverConfig.DEEPSEEK_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-chat') :
-    (provider === 'vertex' || provider === 'vertex-sheep') ? (serverConfig.VERTEX_MODEL || process.env.VERTEX_MODEL || 'gemini-3.1-pro-preview') : undefined
+    provider === 'ollama' ? serverConfig.OLLAMA_MODEL :
+      provider === 'lmstudio' ? serverConfig.LMSTUDIO_MODEL :
+        provider === 'gemini' ? serverConfig.GEMINI_MODEL :
+          provider === 'openai' ? (serverConfig.OPENAI_MODEL || process.env.OPENAI_MODEL || 'gpt-4o-mini') :
+            provider === 'claude' ? (serverConfig.CLAUDE_MODEL || process.env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001') :
+              provider === 'deepseek' ? (serverConfig.DEEPSEEK_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-chat') :
+                (provider === 'vertex' || provider === 'vertex-sheep') ? (serverConfig.VERTEX_MODEL || process.env.VERTEX_MODEL || 'gemini-3.1-pro-preview') : undefined
   );
   const url = c.req.header('X-LLM-URL') || (
-    provider === 'ollama' ? serverConfig.OLLAMA_URL : 
-    provider === 'lmstudio' ? serverConfig.LMSTUDIO_URL : undefined
+    provider === 'ollama' ? serverConfig.OLLAMA_URL :
+      provider === 'lmstudio' ? serverConfig.LMSTUDIO_URL : undefined
   );
   return { provider, modelName, url, customKey };
 }
@@ -481,7 +483,7 @@ async function processChunkWithSdk(
       console.log(`[API Local LLM] Model: ${modelName}`);
       console.log(localCalculator.formatLog(res));
       console.log(localCalculator.formatTotalLog());
-      
+
       logTokensTsv(provider, modelName, usage.inputTokens ?? 0, usage.outputTokens ?? 0);
     }
 
