@@ -242,6 +242,7 @@ export class ShuttleManager {
         if (opts.src) obj.src = unit.src
         if (opts.tgt) obj.tgt = tgtText
         if (opts.note && unit.note) obj.note = unit.note
+        if (opts.memo && unit.memo) obj.memo = unit.memo
         if (opts.history && historyObj.length > 0) obj.history = historyObj
         if (opts.terms && termsObj.length > 0) obj.terms = termsObj
       } else {
@@ -305,6 +306,7 @@ export class ShuttleManager {
         if (opts.src) obj.src = unit.src
         if (opts.tgt) obj.tgt = tgtText
         if (opts.note && unit.note) obj.note = unit.note
+        if (opts.memo && unit.memo) obj.memo = unit.memo
         if (opts.history && historyObj.length > 0) obj.history = historyObj
         if (opts.terms && termsObj.length > 0) obj.terms = termsObj
       } else {
@@ -585,7 +587,7 @@ export class ShuttleManager {
 
   /**
    * Merges partial or external units into ShWvData (Virtual Merge).
-   * Matches by unit.idx and updates target, pre, status, or note.
+   * Matches by unit.idx and updates target, pre, status, note, or memo.
    * @param data Main ShWvData instance to update
    * @param patchUnits Array of units or partial unit updates
    * @returns Array of updated unit indices
@@ -616,6 +618,10 @@ export class ShuttleManager {
         }
         if (patch.note !== undefined && patch.note !== targetUnit.note) {
           targetUnit.note = patch.note
+          changed = true
+        }
+        if (patch.memo !== undefined && patch.memo !== targetUnit.memo) {
+          targetUnit.memo = patch.memo
           changed = true
         }
         if (changed) {

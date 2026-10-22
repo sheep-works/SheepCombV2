@@ -36,7 +36,7 @@ export interface ShWvDefine {
   /** Fixed dataset header name */
   name: 'SHWV_DATA'
   /** ShWv format schema version */
-  version: '1.4' | '1.3' | '1.2' | '1.1' | '1.0'
+  version: '1.5' | '1.4' | '1.3' | '1.2' | '1.1' | '1.0'
 }
 
 /**
@@ -129,6 +129,8 @@ export interface ShWvUnit {
   tgt: string
   /** Optional translator note */
   note?: string
+  /** Optional user-defined memo or remark */
+  memo?: string
   /** Flag indicating if segment is subordinate (e.g., part of a split segment) */
   isSub?: boolean
   /** Segment status code */
@@ -183,6 +185,8 @@ export interface ShWvRefTb {
   src: string
   /** Candidate target translations for the term */
   tgts: string[]
+  /** Forbidden target translations for the term (do-not-use terms) */
+  forbiddens?: string[]
   /** Usage note or term definition */
   note?: string
   /** Source TB file name */
@@ -321,6 +325,8 @@ export interface ChunkOptions {
   tgt?: boolean
   /** Include notes */
   note?: boolean
+  /** Include user-defined memo */
+  memo?: boolean
   /** Include edit history */
   history?: boolean
   /** Include terms */
@@ -340,6 +346,7 @@ export function createChunkOptions(options?: ChunkOptions): Required<ChunkOption
     src: options?.src ?? false,
     tgt: options?.tgt ?? false,
     note: options?.note ?? false,
+    memo: options?.memo ?? false,
     history: options?.history ?? false,
     terms: options?.terms ?? false,
     format: useToon ? 'toon' : (options?.format ?? 'jsonl'),

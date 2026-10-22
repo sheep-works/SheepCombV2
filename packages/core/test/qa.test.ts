@@ -152,6 +152,31 @@ describe('QA Checker', () => {
       expect(issues[0].issue_type).toBe('Term')
       expect(issues[0].message).toContain("Target term missing: '設定 / 環境設定'")
     })
+
+    it('should return issue when forbidden term is used', () => {
+      const unit: ShWvUnit = {
+        idx: 3,
+        src: 'Open the settings menu.',
+        tgt: 'コンフィグメニューを開きます。',
+        pre: '',
+        ref: {
+          tms: [],
+          tb: [
+            {
+              src: 'settings',
+              tgts: [],
+              forbiddens: ['コンフィグ', 'セッティング'],
+            },
+          ],
+          quoted: [],
+          quoted100: [],
+        },
+      }
+      const issues = checkTerms(unit)
+      expect(issues).toHaveLength(1)
+      expect(issues[0].issue_type).toBe('Term')
+      expect(issues[0].message).toContain("Forbidden term used: 'コンフィグ' (Source: 'settings')")
+    })
   })
 
   describe('checkConsistency', () => {
@@ -308,6 +333,57 @@ describe('QA Checker', () => {
       const shuttle = new SheepShuttle()
       shuttle.setNewData(mockData)
       expect(shuttle.runQa()).toEqual(issues)
+    })
+  })
+
+  describe('ShWvData v1.5 (memo & forbiddens in chunks and virtualMerge)', () => {
+    it('should include memo in JSONL chunks when ChunkOptions.memo is true and merge memo in virtualMerge', () => {
+      const mockData: ShWvData = {
+        define: { name: 'SHWV_DATA', version: '1.5' },
+        meta: {
+          bilingualPath: '',
+          files: [{ name: 'test.txt', start: 1, end: 1 }],
+          sourceLang: 'en',
+          targetLang: 'ja',
+        },
+        body: {
+          units: [
+            {
+              idx: 1,
+              src: 'Hello',
+              tgt: 'こんにちは',
+              pre: '',
+              note: 'File note',
+              memo: 'User memo',
+              ref: {
+                tms: [],
+                tb: [{ src: 'Hello', tgts: ['こんにちは'], forbiddens: ['ハロー'] }],
+                quoted: [],
+                quoted100: [],
+              },
+            },
+          ],
+          terms: [],
+        },
+      }
+
+      const shuttle = new SheepShuttle()
+      const chunks = shuttle.manager.chunkJsonlChunks(mockData, 4000, 'CHECK', {
+        src: true,
+        tgt: true,
+        note: true,
+        memo: true,
+        terms: true,
+      })
+      expect(chunks).toHaveLength(1)
+      const parsed = JSON.parse(chunks[0]!)
+      expect(parsed.memo).toBe('User memo')
+      expect(parsed.note).toBe('File note')
+      expect(parsed.terms[0].forbiddens).toEqual(['ハロー'])
+
+      const updated = shuttle.manager.virtualMerge(mockData, [{ idx: 1, memo: 'Updated memo' }])
+      expect(updated).toEqual([1])
+      expect(mockData.body.units[0]!.memo).toBe('Updated memo')
     })
   })
 })

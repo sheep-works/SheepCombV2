@@ -13,7 +13,7 @@
 {
   "define": {
     "name": "SHWV_DATA",
-    "version": "1.3"
+    "version": "1.5"
   },
   "meta": {
     "bilingualPath": "",
@@ -40,7 +40,8 @@
         "pre": "事前翻訳または前工程の訳文",
         "tgt": "編集対象の訳文",
         "status": 0,
-        "note": "備考",
+        "note": "備考（原文ファイル由来）",
+        "memo": "ユーザー独自の備考",
         "isSub": false,
         "isPeRef": false,
         "placeholders": { "0": "{0}" },
@@ -75,7 +76,8 @@
 | **v1.1** | **照合参照・タグ・文結合の体系化**<br>・`ref` オブジェクト（`tms`, `tb`, `quoted`, `quoted100`）<br>・`placeholders`（インラインタグ・プレースホルダーマップ）<br>・`isSub`（文分割・従属セグメントフラグ） | `ref.tms ?? []`<br>`ref.tb ?? []`<br>`placeholders ?? {}`<br>`isSub ?? false` |
 | **v1.2** | **ポストエディット参照の導入**<br>・`ShWvUnit` に `isPeRef?: boolean` を追加<br>・外部TM照合と内部類似引用の識別性向上 | `isPeRef ?? false` |
 | **v1.3** | **ワークフロー工程管理の追加**<br>・`meta.workflow`（`index`, `role`, `name`, `segmentation`）を追加<br>・SheepComb Web（抽出時）では `index: 0`, `role: 'Extract'`, `name: 'SheepComb Web'`<br>・SheepWeave など後続ツールでの工程進行（`advanceWorkflow`）による `tgt` → `pre` 繰り上げ | `meta.workflow` 未定義時は `{ index: 1, role: 'Translation', name: 'Sheep', segmentation: 'line' }` に自動初期化 |
-| **v1.4** | **仮想スコープ（分業フィルター）＆マージ機構の追加（現行最新）**<br>・`meta.workflow` に `range`（行・idx範囲）および `files`（対象ファイル指定）を追加<br>・物理分割を行わずに作業範囲のみを抽出（仮想スライス）し、内部マッチ参照（`idx`）を保ったままチーム分業とマージ（`virtualMerge`）を実現 | `range`, `files` 未定義時はプロジェクト全行を対象として動作 |
+| **v1.4** | **仮想スコープ（分業フィルター）＆マージ機構の追加**<br>・`meta.workflow` に `range`（行・idx範囲）および `files`（対象ファイル指定）を追加<br>・物理分割を行わずに作業範囲のみを抽出（仮想スライス）し、内部マッチ参照（`idx`）を保ったままチーム分業とマージ（`virtualMerge`）を実現 | `range`, `files` 未定義時はプロジェクト全行を対象として動作 |
+| **v1.5** | **ユーザー備考（memo）および使用禁止用語（forbiddens）の追加（現行最新）**<br>・`ShWvUnit` にユーザーが独自に付与できる備考フィールド `memo?: string` を追加（原文ファイル由来の `note` と区別）<br>・`ShWvRefTb` に使用禁止用語リスト `forbiddens?: string[]` を追加 | `memo`, `forbiddens` 未定義時は省略として動作 |
 
 ---
 
@@ -87,7 +89,7 @@ export interface ShWvDefine {
   /** 固定データセット識別名 */
   name: 'SHWV_DATA'
   /** スキーマバージョン */
-  version: '1.4' | '1.3' | '1.2' | '1.1' | '1.0'
+  version: '1.5' | '1.4' | '1.3' | '1.2' | '1.1' | '1.0'
 }
 ```
 
@@ -136,7 +138,8 @@ export interface ShWvUnit {
   src: string          // 原文テキスト
   pre: string          // 事前翻訳 / MT / 前工程の訳文
   tgt: string          // 編集・AI翻訳対象のアクティブな訳文
-  note?: string        // 備考・コメント
+  note?: string        // 原文ファイル由来の備考・コメント
+  memo?: string        // [v1.5+] ユーザーが独自に付与できる備考
   isSub?: boolean      // [v1.1+] 分割文などの従属フラグ
   status?: number      // 翻訳ステータス (0: 未翻訳, 1: 下書き, 2: 完了)
   isPeRef?: boolean    // [v1.2+] ポストエディット参照フラグ
@@ -145,7 +148,7 @@ export interface ShWvUnit {
 }
 ```
 
-### 3.4 `ShWvRef`
+### 3.4 `ShWvRef` / `ShWvRefTb`
 ```typescript
 export interface ShWvRef {
   /** 翻訳メモリ (TM) の一致候補 */
@@ -157,6 +160,14 @@ export interface ShWvRef {
   /** 100% 完全一致する参照先 idx リスト */
   quoted100: number[]
 }
+
+export interface ShWvRefTb {
+  src: string           // 一致した原文用語
+  tgts: string[]        // 訳語候補リスト
+  forbiddens?: string[] // [v1.5+] 使用禁止用語リスト
+  note?: string         // 用語に関する備考・定義
+  file?: string         // 参照元のTBファイル名
+}
 ```
 
 ---
@@ -164,7 +175,7 @@ export interface ShWvRef {
 ## 4. パーサー・消費側の実装指針（フォールバック原則）
 
 1. **バージョンの許容性**:
-   `define.name === 'SHWV_DATA'` であれば、`define.version` が `1.0` 〜 `1.3` のいずれであってもパース可能である必要があります。
+   `define.name === 'SHWV_DATA'` であれば、`define.version` が `1.0` 〜 `1.5` のいずれであってもパース可能である必要があります。
 2. **オプショナル項目の初期化**:
    - `ref` やその配下の `tms`, `tb`, `quoted` が欠落している場合は空配列 `[]` として扱う。
    - `meta.workflow` が存在しない場合は初期ステップ（`index: 1`）として扱う。

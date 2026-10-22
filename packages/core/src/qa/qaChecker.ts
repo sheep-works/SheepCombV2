@@ -97,7 +97,7 @@ export function checkTags(unit: ShWvUnit): QaIssue | null {
 
 /**
  * 3. 用語チェック (Termbase check)
- * unit.ref.tb を使用して訳語の含有をチェック
+ * unit.ref.tb を使用して訳語の含有および使用禁止用語の混入をチェック
  */
 export function checkTerms(unit: ShWvUnit): QaIssue[] {
   const issues: QaIssue[] = []
@@ -106,15 +106,28 @@ export function checkTerms(unit: ShWvUnit): QaIssue[] {
 
   const tgt = restorePlaceholders(unit.tgt || '', unit.placeholders)
   for (const tb of tbList) {
-    if (!tb.tgts || tb.tgts.length === 0) continue
-    // 候補訳語（tb.tgts）のいずれかが訳文に含まれているか
-    const matched = tb.tgts.some(cand => tgt.includes(cand))
-    if (!matched) {
-      issues.push({
-        issue_type: 'Term',
-        idx: unit.idx,
-        message: `Target term missing: '${tb.tgts.join(' / ')}' (Source: '${tb.src}')`,
-      })
+    if (tb.tgts && tb.tgts.length > 0) {
+      // 候補訳語（tb.tgts）のいずれかが訳文に含まれているか
+      const matched = tb.tgts.some(cand => tgt.includes(cand))
+      if (!matched) {
+        issues.push({
+          issue_type: 'Term',
+          idx: unit.idx,
+          message: `Target term missing: '${tb.tgts.join(' / ')}' (Source: '${tb.src}')`,
+        })
+      }
+    }
+
+    if (tb.forbiddens && tb.forbiddens.length > 0) {
+      // 使用禁止用語（tb.forbiddens）が訳文に含まれていないか
+      const usedForbiddens = tb.forbiddens.filter(f => f && tgt.includes(f))
+      if (usedForbiddens.length > 0) {
+        issues.push({
+          issue_type: 'Term',
+          idx: unit.idx,
+          message: `Forbidden term used: '${usedForbiddens.join(' / ')}' (Source: '${tb.src}')`,
+        })
+      }
     }
   }
   return issues

@@ -177,6 +177,7 @@ export class ShuttleProcessor {
         if (opts.src) obj.src = unit.src
         if (opts.tgt) obj.tgt = unit.tgt
         if (opts.note && unit.note) obj.note = unit.note
+        if (opts.memo && (unit as any).memo) obj.memo = (unit as any).memo
       } else {
         if (requestTarget === 'TRANSLATE') {
           obj.src = unit.src
