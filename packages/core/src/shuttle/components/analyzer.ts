@@ -27,16 +27,17 @@ export class ShuttleAnalyzer {
     data: ShWvData,
     memories: TranslationPairWithFile[],
     termbase: TranslationPairWithFile[],
-    wasmAnalyzeAll: (tmList: string[], textList: string[], tbList: string[], minRatio: number, counts: number) => WasmAnalyzeResult[],
+    wasmAnalyzeAll?: (tmList: string[], textList: string[], tbList: string[], minRatio: number, counts: number) => WasmAnalyzeResult[],
     legacy: boolean = false
   ): Promise<void> {
+    const isLegacy = legacy || !wasmAnalyzeAll
     const units = data.body.units
     const tmList = memories.map(m => m.src)
     const textList = units.map(u => u.src)
     const tbList = termbase.map(t => t.src)
 
     // Call WASM analytical functions
-    const results = wasmAnalyzeAll(tmList, textList, tbList, 0.6, 5)
+    const results = !isLegacy && wasmAnalyzeAll ? wasmAnalyzeAll(tmList, textList, tbList, 0.6, 5) : []
 
     // First, clear old analysis data for all units
     for (const unit of units) {
@@ -49,60 +50,62 @@ export class ShuttleAnalyzer {
     // Process results for each unit
     for (let i = 0; i < units.length; i++) {
       const currentUnit = units[i]
-      const currentResult = results[i]
-      if (!currentUnit || !currentResult) {
+      if (!currentUnit) {
         continue
       }
+      const currentResult = results[i]
 
       // 1. Process TM Matches (External and Internal)
-      const tmSources = currentResult.t
-        .map((idx: number) => {
-          const s = memories[idx]
-          if (!s) return undefined
-          // 外部TMのインデックスは負数（-(元のidx)）として保持（0除外のため1-basedを保証）
-          const rawIdx = typeof s.idx === 'number' && s.idx !== 0 ? Math.abs(s.idx) : (idx + 1)
-          return {
-            idx: -rawIdx,
-            src: s.src,
-            tgt: s.tgt || (s as any).pre || '',
-            file: s.file || 'TM'
+      if (currentResult) {
+        const tmSources = currentResult.t
+          .map((idx: number) => {
+            const s = memories[idx]
+            if (!s) return undefined
+            // 外部TMのインデックスは負数（-(元のidx)）として保持（0除外のため1-basedを保証）
+            const rawIdx = typeof s.idx === 'number' && s.idx !== 0 ? Math.abs(s.idx) : (idx + 1)
+            return {
+              idx: -rawIdx,
+              src: s.src,
+              tgt: s.tgt || (s as any).pre || '',
+              file: s.file || 'TM'
+            }
+          })
+          .filter((s: any) => s !== undefined)
+
+        const internalSources = currentResult.i
+          .map((idx: number) => {
+            const u = units[idx]
+            if (!u) return undefined
+            return {
+              idx: u.idx,
+              src: u.src,
+              tgt: u.tgt || u.pre || '',
+              file: 'Internal'
+            }
+          })
+          .filter((s: any) => s !== undefined)
+
+        const allSources = [...tmSources, ...internalSources]
+
+        // Deduplicate by src + tgt
+        const uniqueSources: TranslationPair[] = []
+        const seenTm = new Set<string>()
+        for (const s of allSources) {
+          if (!s) { continue }
+          const key = s.src + '|||' + s.tgt
+          if (!seenTm.has(key)) {
+            seenTm.add(key)
+            uniqueSources.push(s)
           }
-        })
-        .filter((s: any) => s !== undefined)
-
-      const internalSources = currentResult.i
-        .map((idx: number) => {
-          const u = units[idx]
-          if (!u) return undefined
-          return {
-            idx: u.idx,
-            src: u.src,
-            tgt: u.tgt || u.pre || '',
-            file: 'Internal'
-          }
-        })
-        .filter((s: any) => s !== undefined)
-
-      const allSources = [...tmSources, ...internalSources]
-
-      // Deduplicate by src + tgt
-      const uniqueSources: TranslationPair[] = []
-      const seenTm = new Set<string>()
-      for (const s of allSources) {
-        if (!s) { continue }
-        const key = s.src + '|||' + s.tgt
-        if (!seenTm.has(key)) {
-          seenTm.add(key)
-          uniqueSources.push(s)
         }
+
+        // Calculate precise ratios and diffs
+        const diffedTms = this.computeDiffsForWasm(uniqueSources, currentUnit.src)
+        currentUnit.ref.tms = diffedTms.slice(0, 5)
       }
 
-      // Calculate precise ratios and diffs
-      const diffedTms = this.computeDiffsForWasm(uniqueSources, currentUnit.src)
-      currentUnit.ref.tms = diffedTms.slice(0, 5)
-
       // 2. Process TB Matches (Glossary)
-      if (!legacy) {
+      if (!isLegacy && currentResult) {
         // WASM Aho-Corasick result
         const tbIndices = currentResult.g || []
         for (const tbIdx of tbIndices) {
@@ -110,16 +113,28 @@ export class ShuttleAnalyzer {
           if (!tb) continue
 
           const tbTarget = tb.tgt || ''
+          const tbForbiddens = tb.forbiddens || []
           let existingEntry = currentUnit.ref.tb.find(t => t.src === tb.src)
 
           if (existingEntry) {
-            if (!existingEntry.tgts.includes(tbTarget)) {
+            if (tbTarget && !existingEntry.tgts.includes(tbTarget)) {
               existingEntry.tgts.push(tbTarget)
+            }
+            if (tbForbiddens.length > 0) {
+              if (!existingEntry.forbiddens) {
+                existingEntry.forbiddens = []
+              }
+              for (const f of tbForbiddens) {
+                if (!existingEntry.forbiddens.includes(f)) {
+                  existingEntry.forbiddens.push(f)
+                }
+              }
             }
           } else {
             currentUnit.ref.tb.push({
               src: tb.src,
-              tgts: [tbTarget],
+              tgts: tbTarget ? [tbTarget] : [],
+              ...(tbForbiddens.length > 0 ? { forbiddens: [...tbForbiddens] } : {}),
               file: (tb.file as string) || ''
             })
           }
@@ -131,16 +146,28 @@ export class ShuttleAnalyzer {
           if (!tb) continue
           if (tb.src && currentUnit.src.includes(tb.src)) {
             const tbTarget = tb.tgt || ''
+            const tbForbiddens = tb.forbiddens || []
             let existingEntry = currentUnit.ref.tb.find(t => t.src === tb.src)
 
             if (existingEntry) {
-              if (!existingEntry.tgts.includes(tbTarget)) {
+              if (tbTarget && !existingEntry.tgts.includes(tbTarget)) {
                 existingEntry.tgts.push(tbTarget)
+              }
+              if (tbForbiddens.length > 0) {
+                if (!existingEntry.forbiddens) {
+                  existingEntry.forbiddens = []
+                }
+                for (const f of tbForbiddens) {
+                  if (!existingEntry.forbiddens.includes(f)) {
+                    existingEntry.forbiddens.push(f)
+                  }
+                }
               }
             } else {
               currentUnit.ref.tb.push({
                 src: tb.src,
-                tgts: [tbTarget],
+                tgts: tbTarget ? [tbTarget] : [],
+                ...(tbForbiddens.length > 0 ? { forbiddens: [...tbForbiddens] } : {}),
                 file: (tb.file as string) || ''
               })
             }

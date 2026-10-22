@@ -69,7 +69,7 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   public async addTms(files: { name: string, content: string | ArrayBuffer | Uint8Array }[]): Promise<void> {
     const result = await this.parser.parse(files)
     const unitsWithFile = result.units.map(u => {
-      const file = result.files.find(f => u.idx >= f.start && u.idx < f.end)
+      const file = result.files.find(f => u.idx >= f.start && u.idx <= f.end)
       return { ...u, file: file ? file.name : 'Unknown' } as TranslationPairWithFile
     })
     this.tms.push(...unitsWithFile)
@@ -98,7 +98,7 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   public async addTbs(files: { name: string, content: string | ArrayBuffer | Uint8Array }[]): Promise<void> {
     const result = await this.parser.parse(files)
     const unitsWithFile = result.units.map(u => {
-      const file = result.files.find(f => u.idx >= f.start && u.idx < f.end)
+      const file = result.files.find(f => u.idx >= f.start && u.idx <= f.end)
       return { ...u, file: file ? file.name : 'Unknown' } as TranslationPairWithFile
     })
     this.tbs.push(...unitsWithFile)
@@ -155,9 +155,9 @@ export class SheepShuttle<T extends TranslationPair = TranslationPair> {
   /**
    * Analyze the current data using TM/TB and WASM.
    */
-  public async analyze(analyzeAll?: any): Promise<void> {
+  public async analyze(analyzeAll?: any, legacy: boolean = false): Promise<void> {
     if (!this.data) return
-    await this.analyzer.analyze(this.data, this.tms, this.tbs, analyzeAll)
+    await this.analyzer.analyze(this.data, this.tms, this.tbs, analyzeAll, legacy)
   }
 
   /**

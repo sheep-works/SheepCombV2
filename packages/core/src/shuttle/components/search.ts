@@ -30,7 +30,7 @@ export class ShuttleSearch {
             document: {
                 id: "id",
                 index: ["src", "tgt", "note"],
-                store: ["src", "tgt", "file", "note"]
+                store: ["id", "src", "tgt", "file", "note"]
             },
             tokenize: "strict",
             // Custom encoder to generate N-grams (Bi-gram + Uni-gram)
@@ -127,7 +127,7 @@ export class ShuttleSearch {
             for (const item of fieldRes.result) {
                 if (!seenIds.has(item.id)) {
                     seenIds.add(item.id);
-                    candidates.push(item.doc as SearchEntry);
+                    candidates.push({ ...item.doc, id: item.id } as SearchEntry);
                 }
             }
         }

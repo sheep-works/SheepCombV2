@@ -120,6 +120,24 @@
     Forbidden term used: '<検出された禁止用語>' (Source: '<原文用語>')
     ```
 
+### 3.5 用語集 (TB) からの `forbiddens` 読み取り・組み込みパイプライン
+- 対象ファイル:
+  - `packages/types/src/index.ts` (`TranslationPair.forbiddens?: string[]`)
+  - `packages/core/src/shuttle/components/subparser/xlsxParser.ts` (`parseXlsx`, `parseCsv`)
+  - `packages/core/src/shuttle/components/subparser/jsonParser.ts` (`parseJson`, `parseJsonl`)
+  - `packages/core/src/shuttle/components/parser.ts`
+  - `packages/core/src/shuttle/components/analyzer.ts` (`ShuttleAnalyzer.analyze`)
+  - `packages/core/src/shuttle/sheepShuttle.ts` (`addTbs`, `analyze`)
+- **挙動**:
+  1. **ファイル名判定（ファイル単位）**:
+     - ファイル名に `forbidden` または `forbiddens`（大文字小文字無視、例: `forbidden_terms.xlsx`, `FORBIDDEN.csv` 等）が含まれる場合、B列（訳語）を推奨訳ではなく `forbiddens: [tgt]` として抽出（`tgt: ''`）。
+  2. **`__FORBIDDEN__` マーカー判定（行単位）**:
+     - 通常ファイル名であっても、C列以降のテキスト（備考）に `__FORBIDDEN__`（大文字小文字無視）が含まれる場合、B列を禁止用語（`forbiddens: [tgt]`）に振り分け、備考からマーカーを除去。
+  3. **JSON / JSONL 判定**:
+     - オブジェクト内の `forbiddens: [...]` または `forbidden: "..."` プロパティ、および `note` 内の `__FORBIDDEN__` マーカーを読み取り。
+  4. **アナライザーでの `unit.ref.tb` への蓄積**:
+     - 原文マッチング時、WASM / Legacy いずれのモードでも、同一 `src` の推奨訳 (`tgts`) と禁止用語 (`forbiddens`) を1つの `ShWvRefTb` に重複なくマージ・格納。
+
 ---
 
 ## 4. API・プロンプト・下流プロジェクトへの影響と指針

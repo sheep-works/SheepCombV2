@@ -13,6 +13,8 @@ export interface TranslationPair {
   tgt: string
   /** Optional translator note or annotation */
   note?: string
+  /** Forbidden translations for termbase entries */
+  forbiddens?: string[]
   /** Flag indicating whether this is a subordinate / joined segment */
   isSub?: boolean
   /** Translation status code (e.g. 0: untranslated, 1: draft, 2: completed) */

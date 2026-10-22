@@ -4,7 +4,7 @@ import type { TranslationPair } from '@sheep-family/types'
 /**
  * XLSX/CSV to TranslationPair parser.
  */
-export async function parseXlsx(content: string | ArrayBuffer | Uint8Array, startIdx: number, onProgress?: (msg: string) => void): Promise<TranslationPair[]> {
+export async function parseXlsx(content: string | ArrayBuffer | Uint8Array, startIdx: number, onProgress?: (msg: string) => void, fileName?: string): Promise<TranslationPair[]> {
   const units: TranslationPair[] = []
   let type: 'string' | 'array' | 'buffer' = 'array'
   
@@ -27,19 +27,28 @@ export async function parseXlsx(content: string | ArrayBuffer | Uint8Array, star
   // Convert to array of arrays
   const rows = xlsx.utils.sheet_to_json<string[]>(sheet, { header: 1 })
 
+  const isForbiddenFile = Boolean(fileName && /forbidden/i.test(fileName))
+
   let currentIdx = startIdx
   for (const row of rows) {
     if (!row || row.length === 0) continue
     const src = row[0]?.toString() || ''
     const tgt = row[1]?.toString() || ''
-    const note = row.slice(2).join(' | ')
+    let note = row.slice(2).join(' | ')
 
     if (src) {
+      let isForbidden = isForbiddenFile
+      if (note && /__forbidden__/i.test(note)) {
+        isForbidden = true
+        note = note.replace(/__forbidden__/gi, '').trim()
+      }
+
       units.push({
         idx: currentIdx++,
         src,
-        tgt,
-        note: note || undefined
+        tgt: isForbidden ? '' : tgt,
+        note: note || undefined,
+        ...(isForbidden && tgt ? { forbiddens: [tgt] } : {})
       })
     }
 
@@ -51,6 +60,6 @@ export async function parseXlsx(content: string | ArrayBuffer | Uint8Array, star
   return units
 }
 
-export async function parseCsv(content: string | ArrayBuffer | Uint8Array, startIdx: number, onProgress?: (msg: string) => void): Promise<TranslationPair[]> {
-  return parseXlsx(content, startIdx, onProgress)
+export async function parseCsv(content: string | ArrayBuffer | Uint8Array, startIdx: number, onProgress?: (msg: string) => void, fileName?: string): Promise<TranslationPair[]> {
+  return parseXlsx(content, startIdx, onProgress, fileName)
 }

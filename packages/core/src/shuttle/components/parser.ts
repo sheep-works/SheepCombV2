@@ -49,11 +49,11 @@ export class ShuttleParser {
         } else if (ext === 'tbx' && typeof content === 'string') {
           pairs = await parseTbx(content, globalIdx)
         } else if (['xlsx', 'csv', 'tsv'].includes(ext)) {
-          pairs = (ext === 'csv' || ext === 'tsv') ? await parseCsv(content, globalIdx, onProgress) : await parseXlsx(content as any, globalIdx, onProgress)
+          pairs = (ext === 'csv' || ext === 'tsv') ? await parseCsv(content, globalIdx, onProgress, file.name) : await parseXlsx(content as any, globalIdx, onProgress, file.name)
         } else if (ext === 'jsonl' && typeof content === 'string') {
-          pairs = await parseJsonl(content, globalIdx)
+          pairs = await parseJsonl(content, globalIdx, file.name)
         } else if (ext === 'json' && typeof content === 'string') {
-          pairs = await parseJson(content, globalIdx)
+          pairs = await parseJson(content, globalIdx, file.name)
         } else if (ext === 'docx' && (file.content instanceof ArrayBuffer || file.content instanceof Uint8Array)) {
           pairs = await parseDocx(file.content as ArrayBuffer, globalIdx)
         }

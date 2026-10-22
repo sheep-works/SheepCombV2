@@ -385,5 +385,119 @@ describe('QA Checker', () => {
       expect(updated).toEqual([1])
       expect(mockData.body.units[0]!.memo).toBe('Updated memo')
     })
+
+    it('should parse forbidden terms from CSV by filename and by __FORBIDDEN__ marker, then analyze and run QA', async () => {
+      const shuttle = new SheepShuttle()
+
+      // 1. Add TB files: one with filename containing "forbidden", one with __FORBIDDEN__ marker in note
+      const forbiddenCsv = `Device,端末\nBug,バグ`
+      const regularCsv = `Apple,アップル,推奨訳\nApple,リンゴ,旧表記のため禁止 __FORBIDDEN__`
+
+      await shuttle.addTbs([
+        { name: 'project_forbiddens.csv', content: forbiddenCsv },
+        { name: 'glossary.csv', content: regularCsv },
+      ])
+
+      // Check parsed TB entries in shuttle.tbs
+      const forbiddenEntries = shuttle.tbs.filter(t => t.file === 'project_forbiddens.csv')
+      expect(forbiddenEntries).toHaveLength(2)
+      expect(forbiddenEntries[0]!.forbiddens).toEqual(['端末'])
+      expect(forbiddenEntries[0]!.tgt).toBe('')
+
+      const regularEntries = shuttle.tbs.filter(t => t.file === 'glossary.csv')
+      expect(regularEntries).toHaveLength(2)
+      expect(regularEntries[0]!.tgt).toBe('アップル')
+      expect(regularEntries[0]!.forbiddens).toBeUndefined()
+      expect(regularEntries[1]!.tgt).toBe('')
+      expect(regularEntries[1]!.forbiddens).toEqual(['リンゴ'])
+      expect(regularEntries[1]!.note).toBe('旧表記のため禁止')
+
+      // 2. Set up ShWvData with units and analyze
+      const mockData: ShWvData = {
+        define: { name: 'SHWV_DATA', version: '1.5' },
+        meta: {
+          bilingualPath: '',
+          files: [{ name: 'test.txt', start: 1, end: 2 }],
+          sourceLang: 'en',
+          targetLang: 'ja',
+        },
+        body: {
+          units: [
+            {
+              idx: 1,
+              src: 'Check this Apple Device.',
+              tgt: 'このアップル端末を確認してください。', // '端末' is forbidden!
+              pre: '',
+              ref: { tms: [], tb: [], quoted: [], quoted100: [] },
+            },
+            {
+              idx: 2,
+              src: 'Found a Bug on Apple.',
+              tgt: 'リンゴで問題を発見。', // 'リンゴ' is forbidden, and 'アップル' is missing!
+              pre: '',
+              ref: { tms: [], tb: [], quoted: [], quoted100: [] },
+            },
+          ],
+          terms: [],
+        },
+      }
+
+      shuttle.setNewData(mockData)
+      await shuttle.analyze(false, true) // legacy true to test substring matching directly
+
+      // Check unit.ref.tb populated correctly
+      const unit1Tb = shuttle.data!.body.units[0]!.ref.tb
+      const appleTb = unit1Tb.find(t => t.src === 'Apple')
+      expect(appleTb).toBeDefined()
+      expect(appleTb?.tgts).toContain('アップル')
+      expect(appleTb?.forbiddens).toContain('リンゴ')
+
+      const deviceTb = unit1Tb.find(t => t.src === 'Device')
+      expect(deviceTb).toBeDefined()
+      expect(deviceTb?.forbiddens).toContain('端末')
+
+      // 3. Run QA
+      const issues = shuttle.runQa()
+      // Unit 1: 'Device' forbidden term '端末' used
+      const unit1Issues = issues.filter(i => i.idx === 1)
+      expect(unit1Issues.some(i => i.message.includes("Forbidden term used: '端末'"))).toBe(true)
+
+      // Unit 2: 'Apple' forbidden term 'リンゴ' used, and 'アップル' missing
+      const unit2Issues = issues.filter(i => i.idx === 2)
+      expect(unit2Issues.some(i => i.message.includes("Forbidden term used: 'リンゴ'"))).toBe(true)
+      expect(unit2Issues.some(i => i.message.includes("Target term missing: 'アップル'"))).toBe(true)
+    })
+
+    it('should parse forbidden terms from JSON and JSONL files', async () => {
+      const shuttle = new SheepShuttle()
+
+      const jsonContent = JSON.stringify([
+        { src: 'Dog', tgt: 'イヌ', forbiddens: ['ワンちゃん', 'ポチ'] },
+        { src: 'Cat', tgt: 'ネコ', forbidden: 'ニャンコ' },
+      ])
+      const jsonlContent = `{"src": "Bird", "tgt": "トリ", "note": "ペット用語は禁止 __FORBIDDEN__"}\n{"src": "Fish", "tgt": "サカナ"}`
+
+      await shuttle.addTbs([
+        { name: 'terms.json', content: jsonContent },
+        { name: 'terms.jsonl', content: jsonlContent },
+      ])
+
+      const dog = shuttle.tbs.find(t => t.src === 'Dog')
+      expect(dog?.tgt).toBe('イヌ')
+      expect(dog?.forbiddens).toEqual(['ワンちゃん', 'ポチ'])
+
+      const cat = shuttle.tbs.find(t => t.src === 'Cat')
+      expect(cat?.tgt).toBe('ネコ')
+      expect(cat?.forbiddens).toEqual(['ニャンコ'])
+
+      const bird = shuttle.tbs.find(t => t.src === 'Bird')
+      expect(bird?.tgt).toBe('')
+      expect(bird?.forbiddens).toEqual(['トリ'])
+      expect(bird?.note).toBe('ペット用語は禁止')
+
+      const fish = shuttle.tbs.find(t => t.src === 'Fish')
+      expect(fish?.tgt).toBe('サカナ')
+      expect(fish?.forbiddens).toBeUndefined()
+    })
   })
 })
