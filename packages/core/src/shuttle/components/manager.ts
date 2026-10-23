@@ -106,7 +106,7 @@ export class ShuttleManager {
   splitByFile(data: ShWvData): Map<string, ExportPair[]> {
     const result = new Map<string, ExportPair[]>()
     for (const file of data.meta.files) {
-      const fileUnits = data.body.units.slice(file.start, file.end + 1)
+      const fileUnits = data.body.units.filter(u => u.idx >= file.start && u.idx <= file.end)
       const pairs = this.getPairs(fileUnits)
       const name = file.name.replace(/\.[^.]+$/, '') + '.json'
       result.set(name, pairs)

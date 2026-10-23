@@ -180,3 +180,20 @@ export interface ShWvRefTb {
    - `ref` やその配下の `tms`, `tb`, `quoted` が欠落している場合は空配列 `[]` として扱う。
    - `meta.workflow` が存在しない場合は初期ステップ（`index: 1`）として扱う。
    - `pre` が存在しない場合は空文字列 `""` として扱う。
+
+
+---
+
+## 5. インデックスおよび範囲仕様（1-based Indexing）
+
+SheepShuttle / SheepFamily におけるセグメント番号およびファイル範囲は、**すべて「1 スタート（1-based）」** で統一されています。
+
+1. **セグメント番号 (`idx`)**:
+   - `TranslationPair.idx` および `ShWvUnit.idx` は **`1` から始まる正の整数** です。
+   - `0` は使用しません（外部 TM のインデックスを負数 `-idx` で表現する際などに 0 除外を前提とするため、有効セグメントは常に 1 以上であることが保証されます）。
+2. **ファイル範囲 (`meta.files[].start` / `meta.files[].end`)**:
+   - 該当ファイルに属する先頭ユニットの `idx` を `start`、末尾ユニットの `idx` を `end` とする **閉区間 `[start, end]`（両端含む）** です。
+   - 例: 47 ユニットのファイルの場合、`start: 1, end: 47`。続くファイルは `start: 48, end: 94` となります。
+3. **ファイル単位でのユニット抽出実装指針**:
+   - `body.units` 配列から特定ファイルのユニットを取り出す際は、JavaScript 配列の 0-based インデックスと混同して `slice(file.start, file.end + 1)` してはいけません。
+   - 必ず `units.filter(u => u.idx >= file.start && u.idx <= file.end)` でフィルタリングしてください。

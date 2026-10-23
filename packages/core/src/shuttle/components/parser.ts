@@ -27,7 +27,8 @@ export class ShuttleParser {
   public async parse(files: { name: string, content: string | ArrayBuffer | Uint8Array }[], onProgress?: (msg: string) => void, splitByNewline: boolean = true): Promise<ParsedResult> {
     const fileinfo: ShWvFileInfo[] = []
     const allUnits: TranslationPair[] = []
-    let globalIdx = 0
+    // 1-based indexing for units and file ranges (Single Source of Truth in @sheep-family/types)
+    let globalIdx = 1
 
     for (const file of files) {
       if (onProgress) onProgress(`Reading file: ${file.name}...`)

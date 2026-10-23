@@ -267,17 +267,12 @@ export class ShuttleProcessor {
       ? this.parent.data.meta.files
       : (this.parent.files && this.parent.files.length > 0)
         ? this.parent.files
-        : [{ name: 'default', start: 0, end: this.parent.units.length - 1 }]
+        : [{ name: 'default', start: 1, end: this.parent.units.length }]
 
     const unitsByFile: TranslationPair[][] = []
     for (const file of filesInfo) {
-      const start = Math.max(0, file.start)
-      const end = Math.min(this.parent.units.length - 1, file.end)
-      if (start <= end) {
-        unitsByFile.push(this.parent.units.slice(start, end + 1))
-      } else {
-        unitsByFile.push([])
-      }
+      const fileUnits = this.parent.units.filter(u => u.idx >= file.start && u.idx <= file.end)
+      unitsByFile.push(fileUnits)
     }
 
     const fileTotals: number[] = []
